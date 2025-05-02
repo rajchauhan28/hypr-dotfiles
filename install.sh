@@ -48,21 +48,16 @@ if [ ! -d "$CONFIG_FOLDER/waybar" ]; then
     exit 1
 fi
 
-if [ ! -d "$CONFIG_FOLDER/rofi" ]; then
-    echo "Error: Rofi config folder does not exist in $CONFIG_FOLDER."
-    exit 1
-fi
-
 # Copy your configuration files to the respective directories
 cp -r "$CONFIG_FOLDER/hypr"/* "$HYPR_CONFIG_DIR/"
 cp -r "$CONFIG_FOLDER/waybar"/* "$WAYBAR_CONFIG_DIR/"
-cp -r "$CONFIG_FOLDER/rofi"/* "$ROFI_CONFIG_DIR/"
+
 
 # Step 3: Set appropriate permissions (if needed)
 echo "Setting proper file permissions..."
 chmod -R 700 "$HYPR_CONFIG_DIR"
 chmod -R 700 "$WAYBAR_CONFIG_DIR"
-chmod -R 700 "$ROFI_CONFIG_DIR"
+#chmod -R 700 "$ROFI_CONFIG_DIR"
 
 # Step 4: Enable and start services (Optional)
 echo "Starting services..."
@@ -72,8 +67,8 @@ systemctl --user enable pipewire --now
 systemctl --user enable pipewire-pulse --now
 
 # Enable Waybar, Hyprland, and Rofi (if you're using a display manager, modify accordingly)
-# systemctl --user enable hyprland.service  # Uncomment if you have a systemd service for Hyprland
-# systemctl --user enable waybar.service  # Uncomment if you have a systemd service for Waybar
+#systemctl --user enable hyprland.service  # Uncomment if you have a systemd service for Hyprland
+#ystemctl --user enable waybar.service  # Uncomment if you have a systemd service for Waybar
 # systemctl --user enable rofi.service    # Uncomment if you have a systemd service for Rofi
 
 # Step 5: Launch Hyprland (Optional)

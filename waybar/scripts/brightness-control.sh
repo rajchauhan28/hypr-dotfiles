@@ -11,10 +11,10 @@ EOF
 }
 
 # Send a notification with brightness info
-send_notification() {
-  brightness=$(brightnessctl info | grep -oP "(?<=\()\d+(?=%)")
-  notify-send -a "state" -r 91190 -i "gpm-brightness-lcd" -h int:value:"$brightness" "Brightness: ${brightness}%" -u low
-}
+# send_notification() {
+#   brightness=$(brightnessctl info | grep -oP "(?<=\()\d+(?=%)")
+#   notify-send -a "state" -r 91190 -i "gpm-brightness-lcd" -h int:value:"$brightness" "Brightness: ${brightness}%" -u low
+# }
 
 # Get the current brightness percentage and device name
 get_brightness() {
@@ -36,7 +36,7 @@ while getopts o: opt; do
       else
         brightnessctl set +2%
       fi
-      send_notification
+      # send_notification
       ;;
     d) # Decrease brightness
       if [[ $brightness -le 1 ]]; then
@@ -46,7 +46,7 @@ while getopts o: opt; do
       else
         brightnessctl set 2%-
       fi
-      send_notification
+      # send_notification
       ;;
     *)
       print_error

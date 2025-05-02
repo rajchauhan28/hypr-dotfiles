@@ -1,29 +1,18 @@
 #!/bin/bash
 
-# Directory paths
-WALL_DIR="$HOME/wallpapers"
-WAYBAR_DIR="$HOME/.config/waybar"
-TERMINAL_CONFIG="$HOME/.config/alacritty/alacritty.toml" # or kitty.conf
+current=$(powerprofilesctl get)
 
-# Pick a random wallpaper
-WALL=$(find "$WALL_DIR" -type f | shuf -n 1)
-
-# Set wallpaper (using swww)
-swww img "$WALL" --transition-type grow --transition-duration 1
-
-# Extract theme name from wallpaper filename (e.g., "nord.jpg" → "nord")
-THEME=$(basename "$WALL" | cut -d. -f1)
-
-# Apply Waybar theme
-if [ -f "$WAYBAR_DIR/themes/$THEME.css" ]; then
-    ln -sf "$WAYBAR_DIR/themes/$THEME.css" "$WAYBAR_DIR/style.css"
-    pkill -SIGUSR2 waybar
+# Determine next profile based on current
+if [[ "$current" == "performance" ]]; then
+    next="balanced"
+elif [[ "$current" == "balanced" ]]; then
+    next="power-saver"
+else
+    next="performance"
 fi
 
-# Apply Alacritty theme
-if [ -f "$HOME/.config/alacritty/themes/$THEME.toml" ]; then
-    sed -i "s#import.*#import = [\"themes\/$THEME.toml\"]#" "$TERMINAL_CONFIG"
-    pkill -USR1 alacritty
+# Only set and notify if different
+if [[ "$current" != "$next" ]]; then
+    powerprofilesctl set "$next"
+    notify-send -t 3000 "Power Profile" "Switched to: $next"
 fi
-
-notify-send "🖼️ Theme switched to $THEME"
