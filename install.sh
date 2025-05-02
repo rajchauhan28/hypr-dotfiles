@@ -23,7 +23,7 @@ pacman -Syu --noconfirm   # Update system
 pacman -S --noconfirm hyprland waybar rofi wayland-utils xorg-xwayland \
     xorg-server xorg-xinit swaybg swaylock xdg-desktop-portal-gtk \
     libinput alsa-utils pipewire pipewire-alsa pipewire-pulse pavucontrol \
-    gst-plugin-pipewire xdg-utils feh libnotify --needed
+    gst-plugin-pipewire xdg-utils feh libnotify brightnessctl bluez bluez-utils --needed
 
 # Install any additional dependencies you might need for your specific setup
 # e.g. fonts, themes, etc.
