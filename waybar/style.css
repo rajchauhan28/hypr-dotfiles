@@ -1,7 +1,7 @@
 @import "theme.css";
 
 * {
-  min-height: 25px;
+  min-height: 20px;
   border: none;
   margin: 0;
   padding: 0;
@@ -11,7 +11,7 @@
 
 window#waybar>box {
   background: @main-bg;
-  margin: 2px;
+  margin: 4px;
 }
 
 /* --------------------------------------------------------- DROP SHADOW --- */
@@ -399,7 +399,7 @@ tooltip label {
 
 * {
   font-family: "JetBrainsMono Nerd Font";
-  font-size: 10px;
+  font-size: 14px;
   font-weight: bold;
 }
 
@@ -424,7 +424,7 @@ tooltip label,
 #custom-right3,
 #custom-right4,
 #custom-right5 {
-  font-size: 25px;
+  font-size: 14.68px;
 }
 
 /* ---------------------------------------------- left and right inverse --- */
@@ -432,18 +432,18 @@ tooltip label,
 #custom-leftin1,
 #custom-leftin2,
 #custom-rightin1 {
-  font-size: 25px;
+  font-size: 15.5px;
 }
 
 /* -------------------------------------------------------------- distro --- */
 
 #custom-distro {
-  font-size: 25px;
+  font-size: 14.6px;
 }
 
 #custom-left5,
 #custom-right2 {
-  font-size: 25px;
+  font-size: 15.68px;
 }
 
 /*
@@ -476,9 +476,9 @@ tooltip label,
     For example, if you change the font size of the
     distro icon, update it in `distro_expand`.
 
-    - distro icon → `distro_expand` (line 143)
-    - power button → `power_expand` (line 158)
-    - all other modules → `module_expand` (line 172)
+    - distro icon → `distro_expand` (line 136)
+    - power button → `power_expand` (line 151)
+    - all other modules → `module_expand` (line 165)
 */
 
 @import "animation.css";
