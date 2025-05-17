@@ -20,7 +20,7 @@ offset = "200%"
 
 [scratchpads.taskbar]
 animation = "fromLeft"
-command = "kitty --class kitty-taskbar -e flatpak run io.missioncenter.MissionCenter"
+command = "kitty --class kitty-taskbar -e htop"
 class = "kitty-taskbar"
 size = "30% 80%"
 offset = "200%"

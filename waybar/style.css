@@ -1,484 +1,143 @@
-@import "theme.css";
+@import url("file:///home/reign/.cache/wal/colors-waybar.css");
 
+/* General Styles */
 * {
-  min-height: 20px;
-  border: none;
-  margin: 0;
-  padding: 0;
+    font-family: 'JetBrainsMono Nerd Font', Iosevka, "Font Awesome 5 Free", "Font Awesome 5 Brands", "Noto Sans", sans-serif;
+    font-size: 13px;
+    min-height: 0;
+    border: none;
+    box-shadow: none;
+    background: transparent;
 }
 
-/* ----------------------------------------------------- MAIN BACKGROUND --- */
-
-window#waybar>box {
-  background: @main-bg;
-  margin: 4px;
-}
-
-/* --------------------------------------------------------- DROP SHADOW --- */
-
+/* Bar Container */
 window#waybar {
-  background: @shadow;
+    background: rgba(24, 24, 37, 0.70);
+    border-radius: 13px;
+    margin: 4px 7px;
+    padding: 0px;
+    border: 1.2px solid @color1;
+    color: @fg;
 }
 
-/* ------------------------------------------------------------ TOOLTIPS --- */
-
-tooltip {
-  background: @main-bg;
-  border: 1.5px solid @main-br;
-  border-radius: 8px;
+/* Compact pill modules (includes power button) */
+#clock, #battery, #cpu, #memory, #temperature, #backlight, #network,
+#custom-bluetooth, #custom-wifi, #custom-power, #power-profiles-daemon,
+#pulseaudio, #pulseaudio.microphone, #tray {
+    min-height: 20px;
+    background: rgba(24, 24, 37, 0.54);
+    color: @color15;
+    border-radius: 10px;
+    padding-left: 13px;
+    padding-right: 13px;
+    margin: 0 2px;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    /* Extra: for vertical centering in weird modules */
 }
 
-tooltip label {
-  color: @main-fg;
-  margin: -1.5px 3px;
+/* Special Power Pill: stronger color, bold icon */
+#custom-power {
+    font-weight: 700;
+    color: @color2; /* or use @color9 / @color11 for a red/orange pop */
+    transition: background 0.15s, color 0.15s;
 }
 
-/* ---------------------------------------- WORKSPACE BUTTONS and LABELS --- */
-
+/* -- Consistent Compact Styles for Workspaces -- */
 #workspaces button {
-  color: @module-fg;
-  border-radius: 8px;
-  box-shadow: none;
-  margin: 2px 0;
-  padding: 0 2px;
-  transition: none;
+    min-height: 20px;
+    background: transparent;
+    color: @color6;
+    border-radius: 10px;
+    padding-left: 5px;
+    /* padding-right: 15px; */
+    margin: 0 2px;
+    border: 2px solid transparent;
+    transition: background 0.2s, color 0.2s, border 0.2s;
 }
-
+#workspaces button.active,
+#workspaces button.focused {
+    color: @color0;
+    background: @color2;
+    border: 2px solid @color2;
+}
+#workspaces button.urgent {
+    color: @color0;
+    background: @color1;
+    box-shadow: 0 0 5px 2px @color1;
+}
 #workspaces button:hover {
-  color: @hover-fg;
-  background: @hover-bg;
-  text-shadow: none;
+    background: @color1;
+    color: @color3;
 }
 
-#workspaces button.active {
-  color: @active-fg;
-  background: @active-bg;
-  text-shadow: 0 0 2px rgba(0, 0, 0, 0.6);
-  box-shadow: 0 0 2px 1px rgba(0, 0, 0, 0.4);
-  margin: 2px;
-  padding: 0 6px;
+/* Media Controls Pill (Left) */
+#custom-media_controls {
+    min-height: 20px;
+    font-weight: 700;
+    background: transparent;
+    color: @color15;
+    padding-left: 12px;
+    padding-right: 12px;
+    margin: 0 3px;
+    border-radius: 10px;
+    transition: background 0.2s, color 0.2s;
+}
+#custom-media_controls:hover {
+    background: linear-gradient(90deg, @color5 5%, @color2 100%);
+
+
 }
 
-/* ------------------------------------------------------------- GENERAL --- */
-
-#custom-ws,
-#workspaces,
-#window,
-#custom-temperature,
-#memory,
-#cpu,
-#idle_inhibitor,
-#clock,
-#custom-wifi,
-#bluetooth,
-#custom-update,
-#mpris,
-#pulseaudio,
-#backlight,
-#battery,
-#custom-power {
-  opacity: 1;
-  color: @module-fg;
-  padding: 0 4px;
+/* -- Icon refinement for pulseaudio -- */
+#pulseaudio, #pulseaudio.microphone {
+    font-size: 13px;
+    color: @color6;
+}
+#pulseaudio.muted { color: #f38ba8; }
+#pulseaudio:hover, #pulseaudio.microphone:hover {
+    background: @color1;
+    color: @color5;
 }
 
-#custom-left1,
-#custom-left2,
-#custom-left3,
-#custom-left4,
-#custom-left5,
-#custom-left6,
-#custom-left7,
-#custom-left8 {
-  margin-bottom: 0;
-  text-shadow: -2px 0 2px rgba(0, 0, 0, 0.5);
+/* -- Color Tweaks for State/Module Accent -- */
+#battery          { color: @color11; }
+#power-profiles-daemon { color: @color8;}
+#clock            { color: @color8; }
+#cpu              { color: @color7; }
+#memory           { color: @color5; }
+#temperature      { color: @color2; }
+#backlight        { color: @color5; }
+#network,
+#custom-wifi      { color: @color12; }
+#custom-bluetooth { color: @color4; }
+/* Note: #custom-power is set above for a stronger accent */
+
+/* -- Hover Effects for all bubbles -- */
+#custom-power:hover, #custom-bluetooth:hover, #custom-wifi:hover, #battery:hover, 
+#clock:hover, #cpu:hover, #memory:hover, #temperature:hover, #backlight:hover {
+    background: @color1;
+    color: @color5;
+    box-shadow: 0 0 6px 2px @color0;
+    transition: background 0.17s, color 0.17s;
 }
 
-#custom-right1,
-#custom-right2,
-#custom-right3,
-#custom-right4,
-#custom-right5 {
-  margin-bottom: 0;
-  padding-right: 3px;
-  text-shadow: 2px 0 2px rgba(0, 0, 0, 0.5);
+/* Tray icons, state tweaks */
+#tray > .passive { opacity: 0.6; }
+#tray > .needs-attention {
+    background: @color2;
+    color: @color0;
 }
 
-/* ------------------------------------------------------------- MODULES --- */
-
-/* --------------------------------------------------------- window icon --- */
-
-#custom-ws {
-  background: @main-bg;
+/* Groups margin */
+.modules-left, .modules-center, .modules-right {
+    margin: 0 3px;
+    margin-top: 1px;
+    margin-bottom: 1px;
 }
 
-#custom-ws:hover {
-  color: @hover-fg;
+/* Hide window titles if none */
+#window.empty {
+    background: none;
+    padding: 0;
 }
-
-/* ---------------------------------------------------------- workspaces --- */
-
-#custom-left1 {
-  color: @workspaces;
-  background: @main-bg;
-  margin-bottom: 0;
-  padding-left: 2px;
-}
-
-#workspaces {
-  background: @workspaces;
-}
-
-#custom-right1 {
-  color: @workspaces;
-  background: @main-bg;
-  text-shadow: 3px 0 2px rgba(0, 0, 0, 0.4);
-  margin-bottom: 0;
-}
-
-/* --------------------------------------------------------- temperature --- */
-
-#custom-paddc {
-  padding-right: 22px;
-}
-
-#custom-left2 {
-  color: @temperature;
-  background: @main-bg;
-  padding-left: 3px;
-}
-
-#custom-temperature {
-  background: @temperature;
-  padding: 0 0 0 1px;
-}
-
-/* -------------------------------------------------------------- memory --- */
-
-#custom-left3 {
-  color: @memory;
-  background: @temperature;
-  padding-left: 3px;
-}
-
-#memory {
-  background: @memory;
-  padding: 0 0 0 1px;
-}
-
-#memory.warning {
-  color: @warning;
-}
-
-#memory.critical {
-  color: @critical;
-}
-
-/* ----------------------------------------------------------------- cpu --- */
-
-#custom-left4 {
-  color: @cpu;
-  background: @memory;
-  padding-left: 3px;
-}
-
-#cpu {
-  background: @cpu;
-}
-
-#custom-leftin1 {
-  color: @cpu;
-  margin-bottom: -1px;
-}
-
-/* --------------------------------------------------------- distro icon --- */
-
-#custom-left5 {
-  color: @distro-bg;
-  background: @main-bg;
-  text-shadow: none;
-  margin-bottom: -2px;
-  padding-left: 3px;
-}
-
-#custom-distro {
-  color: @distro-fg;
-  background: @distro-bg;
-  margin: 0 -1px -2px 0;
-  padding: 0 0 0 3px;
-  text-shadow: 0 0 1.5px rgba(0, 0, 0, 1);
-}
-
-#custom-right2 {
-  color: @distro-bg;
-  background: @main-bg;
-  text-shadow: none;
-  margin-bottom: -2px;
-}
-
-/* ---------------------------------------------------------------- time --- */
-
-#custom-rightin1 {
-  color: @time;
-  margin-bottom: -1px;
-}
-
-#idle_inhibitor {
-  background: @time;
-  padding: 0 0 0 7px;
-}
-
-#idle_inhibitor:hover {
-  color: @hover-fg;
-}
-
-#clock.time {
-  background: @time;
-  margin-left: -2px;
-  padding: 0 3px 0 0;
-}
-
-#custom-right3 {
-  color: @time;
-  background: @date;
-}
-
-/* ---------------------------------------------------------------- date --- */
-
-#clock.date {
-  background: @date;
-}
-
-#clock.date:hover {
-  color: @hover-fg;
-}
-
-#custom-right4 {
-  color: @date;
-  background: @tray;
-}
-
-/* ---------------------------------------------------------------- tray --- */
-
-#custom-wifi {
-  background: @tray;
-  padding: 0 8px 0 5px;
-}
-
-#custom-wifi:hover {
-  color: @hover-fg;
-}
-
-#bluetooth {
-  background: @tray;
-  padding-right: 5px;
-}
-
-#bluetooth:hover {
-  color: @hover-fg;
-}
-
-#custom-update {
-  padding-right: 8px;
-  background: @tray;
-}
-
-#custom-update:hover {
-  color: @hover-fg;
-}
-
-#custom-right5 {
-  color: @tray;
-  background: @main-bg;
-}
-
-/* ---------------------------------------------------------- media info --- */
-
-#mpris {
-  background: @main-bg;
-  padding: 0 8px 0;
-}
-
-#mpris:hover {
-  color: @hover-fg;
-}
-
-/*
-    output device
-*/
-
-#custom-left6 {
-  color: @pulseaudio;
-  background: @main-bg;
-  padding-left: 3px;
-}
-
-#pulseaudio {
-  background: @pulseaudio;
-}
-
-#pulseaudio:hover {
-  color: @hover-fg;
-}
-
-/* ---------------------------------------------------------- brightness --- */
-
-#custom-left7 {
-  color: @backlight;
-  background: @pulseaudio;
-  padding-left: 2px;
-}
-
-#backlight {
-  background: @backlight;
-}
-
-/* ------------------------------------------------------------- battery --- */
-
-#custom-left8 {
-  color: @battery;
-  background: @backlight;
-  padding-left: 2px;
-}
-
-#battery {
-  color: @module-fg;
-  background: @battery;
-}
-
-#battery.warning {
-  color: @warning;
-}
-
-#battery.critical {
-  color: @critical;
-}
-
-#battery.charging {
-  color: @charging;
-}
-
-/* -------------------------------------------------------- power button --- */
-
-#custom-leftin2 {
-  color: @battery;
-  background: @main-bg;
-  margin-bottom: -1px;
-}
-
-#custom-power {
-  color: @main-bg;
-  background: @power;
-  text-shadow: 0 0 2px rgba(0, 0, 0, 0.6);
-  box-shadow: 0 0 2px 1px rgba(0, 0, 0, 0.6);
-  border-radius: 10px;
-  margin: 2px 4px 2px 0;
-  padding: 0 6px 0 9px;
-}
-
-#custom-power:hover {
-  color: @hover-fg;
-  background: @hover-bg;
-  text-shadow: none;
-  box-shadow: none;
-}
-
-/* ---------------------------------------------------------- FONT SIZES --- */
-
-/*
-    NOTE: Be careful when changing font sizes, as they
-    can affect alignment.
-
-    Try adjusting whole numbers first, then refine with
-    decimals.
-
-    If you increase or decrease a value, make the same
-    change to all properties in this section to keep
-    the layout consistent.
-*/
-
-* {
-  font-family: "JetBrainsMono Nerd Font";
-  font-size: 14px;
-  font-weight: bold;
-}
-
-tooltip label,
-#window label,
-#mpris {
-  font-weight: normal;
-}
-
-/* ----------------------------------------------- left and right arrows --- */
-
-#custom-left1,
-#custom-left2,
-#custom-left3,
-#custom-left4,
-#custom-left5,
-#custom-left6,
-#custom-left7,
-#custom-left8,
-#custom-right1,
-#custom-right2,
-#custom-right3,
-#custom-right4,
-#custom-right5 {
-  font-size: 14.68px;
-}
-
-/* ---------------------------------------------- left and right inverse --- */
-
-#custom-leftin1,
-#custom-leftin2,
-#custom-rightin1 {
-  font-size: 15.5px;
-}
-
-/* -------------------------------------------------------------- distro --- */
-
-#custom-distro {
-  font-size: 14.6px;
-}
-
-#custom-left5,
-#custom-right2 {
-  font-size: 15.68px;
-}
-
-/*
-    Adjust these properties as well to keep the design
-    consistent.
-*/
-
-#workspaces button {
-  border-radius: 8px;
-  padding: 0 2px;
-}
-
-#workspaces button.active {
-  padding: 0 6px;
-}
-
-#custom-power {
-  border-radius: 10px;
-  padding: 0 6px 0 9px;
-}
-
-/*
-    NOTE: If your changes don’t take effect, they might
-    be overridden by `animation.css`.
-
-    To fix this, copy your updated font sizes from this
-    file and paste them into the corresponding `*_expand`
-    keyframes.
-
-    For example, if you change the font size of the
-    distro icon, update it in `distro_expand`.
-
-    - distro icon → `distro_expand` (line 136)
-    - power button → `power_expand` (line 151)
-    - all other modules → `module_expand` (line 165)
-*/
-
-@import "animation.css";
