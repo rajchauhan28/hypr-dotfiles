@@ -25,6 +25,14 @@ for dir in hypr fastfetch rofi wofi wal waybar wlogout dunst wezterm swaync; do
   fi
 done
 
-mkdir $HOME/Pictures/wallpapers
-cd $HOME/hypr-dotfiles
-cp -r "$PWD/wallpapers/"* "$HOME/Pictures/wallpapers/"
+mkdir -p "$HOME/Pictures/wallpapers"
+
+# Change to the cloned dotfiles directory
+cd "$HOME/hypr-dotfiles"
+
+# Copy wallpapers from cloned repo to user's wallpapers folder
+if [ -d "$PWD/wallpapers" ]; then
+  cp -r "$PWD/wallpapers/"* "$HOME/Pictures/wallpapers/"
+else
+  echo "Warning: wallpapers directory not found in $PWD"
+fi
