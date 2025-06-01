@@ -4,10 +4,15 @@
 
 config="$HOME/.config"
 
-sudo pacman -S hyprland hypridle hyprlock wlogout libnotify brightnessctl playerctl wofi rofi wezterm kitty polkit-gnome power-profiles-daemon noto-fonts-emoji ttf-fira-code ttf-font-awesome swww hyprpaper grim slurp blueman
 
-hyprpm add https://github.com/virtcode/hypr-dynamic-cursors
-hyprpm enable dynamic-cursors
+# Install chaotic-aur repository
+if ! grep -q "chaotic-aur" /etc/pacman.conf; then
+  wget -q -O chaotic-AUR-installer.bash https://raw.githubusercontent.com/SharafatKarim/chaotic-AUR-installer/main/install.bash && sudo bash chaotic-AUR-installer.bash && rm chaotic-AUR-installer.bash
+fi
+
+sudo pacman -S hyprland hypridle hyprlock wlogout libnotify brightnessctl yay btop playerctl wofi rofi wezterm kitty polkit-gnome power-profiles-daemon noto-fonts-emoji ttf-fira-code ttf-font-awesome swww hyprpaper grim slurp blueman cmake meson cpio pkg-config git gcc curl wget
+
+yay -S pyprland python-pywal16
 
 for dir in hypr fastfetch rofi wofi wal waybar wlogout dunst wezterm swaync; do
   src_dir="$PWD/$dir"
@@ -19,3 +24,7 @@ for dir in hypr fastfetch rofi wofi wal waybar wlogout dunst wezterm swaync; do
     echo "Warning: $src_dir not found, skipping."
   fi
 done
+
+mkdir $HOME/Pictures/wallpapers
+curl -L https://github.com/adi1090x/wallpapers/archive/refs/heads/master.zip -o wallpapers.zip && unzip wallpapers.zip && rm wallpapers.zip
+git clone --depth=1 --filter=blob:none --sparse https://github.com/D3Ext/aesthetic-wallpapers.git && cd aesthetic-wallpapers && git sparse-checkout set images && cp -r . $HOME/Pictures/wallpapers/ && cd .. && rm -rf aesthetic-wallpapers

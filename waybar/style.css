@@ -1,4 +1,5 @@
-@import url("file:///home/reign/.cache/wal/colors-waybar.css");
+@import url("file://$HOME/.cache/wal/colors-waybar.css");
+
 
 /* General Styles */
 * {
