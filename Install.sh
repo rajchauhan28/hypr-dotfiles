@@ -26,5 +26,4 @@ for dir in hypr fastfetch rofi wofi wal waybar wlogout dunst wezterm swaync; do
 done
 
 mkdir $HOME/Pictures/wallpapers
-curl -L https://github.com/adi1090x/wallpapers/archive/refs/heads/master.zip -o wallpapers.zip && unzip wallpapers.zip && rm wallpapers.zip
-git clone --depth=1 --filter=blob:none --sparse https://github.com/D3Ext/aesthetic-wallpapers.git && cd aesthetic-wallpapers && git sparse-checkout set images && cp -r . $HOME/Pictures/wallpapers/ && cd .. && rm -rf aesthetic-wallpapers
+cp -rf "$PWD/wallpapers/"* "$HOME/Pictures/wallpapers/"
