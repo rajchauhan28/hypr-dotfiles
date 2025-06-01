@@ -26,4 +26,4 @@ for dir in hypr fastfetch rofi wofi wal waybar wlogout dunst wezterm swaync; do
 done
 
 mkdir $HOME/Pictures/wallpapers
-cp -rf "$PWD/wallpapers/"* "$HOME/Pictures/wallpapers/"
+cp -r "$PWD/wallpapers/"* "$HOME/Pictures/wallpapers/"
