@@ -6,17 +6,13 @@ Just a minimalist hyprland setup easy to use with no too much over ricing. With 
 
 ## INSTALLATION
 ### Users of Arch BTW or distros from Arch BTW Family (Garuda, Manjaro, Endeavour or any pacman based distro) 
-#### Step 1 : Install required packages
+#### Step 1 : Run the `Install.sh` file
 ```bash
-sudo pacman -S hyprland waybar kitty dunst rofi polkit-gnome pywal playerctl blueman networkmanager pavucontrol brightnessctl power-profiles-daemon grim slurp wl-clipboard noto-fonts noto-fonts-emoji ttf-fira-code ttf-font-awesome swaybg hyprpaper swww
-sudo pacman -S hyprpm
-hyprpm add https://github.com/virtcode/hypr-dynamic-cursors
-hyprpm enable dynamic-cursors
+chmod +x Install.sh
+./Install.sh
 ```
 
-#### Step 2 : Copy and paste all the folder to `~/.config/`
-
-#### Step 3 : Enjoy
+#### Step 2 : Enjoy
 
 
 ![2025-05-17-164511_hyprshot](https://github.com/user-attachments/assets/ed7bbc4b-55a4-4e7a-a31d-16dd824ec22c)

@@ -19,7 +19,7 @@
         {
             "type": "title",
             "format": "\u001b[70G{user-name-colored}{at-symbol-colored}{host-name-colored} 🖥",
-            "outputColor": "cyan",
+            "outputColor": "red",
             "keyWidth": "30"
         },
         {

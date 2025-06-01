@@ -25,7 +25,7 @@
         "cpu",
         "memory",
         "temperature",
-        "backlight",
+        "custom/brightness",
         "battery",
         "clock",
         "tray",
@@ -92,7 +92,14 @@
         // Middle click: previous
         "on-click-middle": "playerctl previous"
     },
-
+	"custom/brightness": {
+	  "exec": "~/.config/waybar/scripts/brightness-control.sh",
+	  "interval": 2,
+	  "on-scroll-up": "~/.config/waybar/scripts/brightness-control.sh -o i",
+	  "on-scroll-down": "~/.config/waybar/scripts/brightness-control.sh -o d",
+	  "return-type": "json"
+	},
+	
     // ------- Right Side Modules --------
     "mpd": {
         "format": "{stateIcon} {artist} - {title} ",
@@ -132,8 +139,10 @@
     },
 
     "backlight": {
-        "format": "{percent}% {icon}",
-        "format-icons": ["", "", "", "", "", "", "", "", ""]
+      "device": "intel_backlight",
+      "format": "{percent}% {icon}",
+      "format-icons": ["", "", "", "", "", "", "", "", ""],
+      "exec": "~/.config/waybar/scripts/brightnesscontrol.sh"
     },
 
     "battery": {
