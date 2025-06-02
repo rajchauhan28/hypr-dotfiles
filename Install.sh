@@ -32,7 +32,7 @@ cd "$HOME/hypr-dotfiles"
 
 # Copy wallpapers from cloned repo to user's wallpapers folder
 if [ -d "$PWD/wallpapers" ]; then
-  cp -r "$PWD/wallpapers/"* "$HOME/Pictures/wallpapers/"
+  cp -r "$PWD/wallpapers/" "$HOME/Pictures/wallpapers/"
 else
   echo "Warning: wallpapers directory not found in $PWD"
 fi
