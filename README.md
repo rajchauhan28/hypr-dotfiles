@@ -8,8 +8,7 @@ Just a minimalist hyprland setup easy to use with no too much over ricing. With 
 ### Users of Arch BTW or distros from Arch BTW Family (Garuda, Manjaro, Endeavour or any pacman based distro) 
 #### Step 1 : Run the `Install.sh` file
 ```bash
-chmod +x Install.sh
-./Install.sh
+bash <(curl -fsSL https://raw.githubusercontent.com/rajchauhan28/hypr-dotfiles/refs/heads/main/Setup.sh)
 ```
 
 #### Step 2 : Enjoy

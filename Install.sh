@@ -10,7 +10,7 @@ if ! grep -q "chaotic-aur" /etc/pacman.conf; then
   wget -q -O chaotic-AUR-installer.bash https://raw.githubusercontent.com/SharafatKarim/chaotic-AUR-installer/main/install.bash && sudo bash chaotic-AUR-installer.bash && rm chaotic-AUR-installer.bash
 fi
 
-sudo pacman -S hyprland hypridle hyprlock wlogout libnotify brightnessctl yay btop playerctl wofi rofi wezterm kitty polkit-gnome power-profiles-daemon noto-fonts-emoji ttf-fira-code ttf-font-awesome swww hyprpaper grim slurp blueman cmake meson cpio pkg-config git gcc curl wget
+sudo pacman -S hyprland hypridle hyprlock wlogout libnotify brightnessctl yay btop playerctl wofi rofi wezterm kitty polkit-gnome power-profiles-daemon noto-fonts-emoji ttf-fira-code ttf-font-awesome swww hyprpaper grim slurp blueman cmake meson cpio pkg-config git gcc curl wget ttf-jetbrains-mono-nerd ttf-iosevka ttf-font-awesome noto-fonts
 
 yay -S pyprland python-pywal16
 
