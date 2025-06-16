@@ -1,19 +1,9 @@
 #!/bin/bash
-refresh() {
-    bluetoothctl devices | awk '{print $2 "  " substr($0, index($0,$3))}'
-}
 
-while true; do
-    menu="$(refresh; echo "🔄 Refresh"; echo "Close")" 
-    selected=$(echo "$menu" | rofi -dmenu -p "Bluetooth devices")
+WIN_ID=$(hyprctl clients -j | jq -r '.[] | select(.initialClass=="bluetuith-popup") | .address')
 
-    if [[ -z "$selected" || "$selected" == "Close" ]]; then
-        exit 0
-    elif [[ "$selected" == "🔄 Refresh" ]]; then
-        continue
-    else
-        mac=$(echo "$selected" | awk '{print $1}')
-        bluetoothctl connect "$mac"
-        exit 0
-    fi
-done
+if [[ -n "$WIN_ID" ]]; then
+    hyprctl dispatch closewindow address:$WIN_ID
+else
+    kitty --class bluetuith-popup -e bluetuith &
+fi

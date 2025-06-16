@@ -1,143 +1,166 @@
-@import url("file://$HOME/.cache/wal/colors-waybar.css");
+@import url("file:///home/reign/.cache/wal/colors-waybar.css");
 
-
-/* General Styles */
 * {
-    font-family: 'JetBrainsMono Nerd Font', Iosevka, "Font Awesome 5 Free", "Font Awesome 5 Brands", "Noto Sans", sans-serif;
-    font-size: 13px;
-    min-height: 0;
-    border: none;
-    box-shadow: none;
-    background: transparent;
+  border: none;
+  border-radius: 0;
+  font-family: "FiraCode Nerd Font", "Roboto", sans-serif;
+  font-size: 13px;
+  min-height: 0;
 }
 
-/* Bar Container */
 window#waybar {
-    background: rgba(24, 24, 37, 0.70);
-    border-radius: 13px;
-    margin: 4px 7px;
-    padding: 0px;
-    border: 1.2px solid @color1;
-    color: @fg;
+  background-color:transparent;
+  color: @foreground;
+  transition-property: background-color;
+  transition-duration: 0.5s;
 }
 
-/* Compact pill modules (includes power button) */
-#clock, #battery, #cpu, #memory, #temperature, #backlight, #network,
-#custom-bluetooth, #custom-wifi, #custom-power, #power-profiles-daemon,
-#pulseaudio, #pulseaudio.microphone, #tray {
-    min-height: 20px;
-    background: rgba(24, 24, 37, 0.54);
-    color: @color15;
-    border-radius: 10px;
-    padding-left: 13px;
-    padding-right: 13px;
-    margin: 0 2px;
-    font-weight: 500;
-    letter-spacing: 0.03em;
-    /* Extra: for vertical centering in weird modules */
+window#waybar.hidden {
+  opacity: 0.2;
 }
 
-/* Special Power Pill: stronger color, bold icon */
-#custom-power {
-    font-weight: 700;
-    color: @color2; /* or use @color9 / @color11 for a red/orange pop */
-    transition: background 0.15s, color 0.15s;
+#workspaces {
+  padding: 6px;
+  margin-right: 4px;
+  border-radius: 10px;
+  opacity: 0.88;
 }
 
-/* -- Consistent Compact Styles for Workspaces -- */
 #workspaces button {
-    min-height: 15px;
-    background: transparent;
-    color: @color6;
-    border-radius: 5px;
-    padding-left: 5px;
-    /* padding-right: 15px; */
-    margin: 0 2px;
-    border: 2px solid transparent;
-    transition: background 0.2s, color 0.2s, border 0.2s;
+  color: @foreground;
+  border-radius: 6px;
+  font-weight: bold;
+  margin: 0;
+  padding: 4px 8px;
+  border-bottom: 2px solid @color5;
 }
-#workspaces button.active,
-#workspaces button.focused {
-    color: @color0;
-    background: #ffffff;
-    border: 2px solid @color2;
-}
-#workspaces button.urgent {
-    color: @color0;
-    background: @color1;
-}
+
 #workspaces button:hover {
-    background: @color1;
-    color: @color3;
+  background: @color3;
+  color: @background;
+  border-bottom: 2px solid @color5;
 }
 
-/* Media Controls Pill (Left) */
-#custom-media_controls {
-    min-height: 20px;
-    font-weight: 700;
-    background: transparent;
-    color: @color15;
-    padding-left: 12px;
-    padding-right: 12px;
-    margin: 0 3px;
-    border-radius: 10px;
-    transition: background 0.2s, color 0.2s;
-}
-#custom-media_controls:hover {
-    background: linear-gradient(90deg, @color5 5%, @color2 100%);
-
-
+#workspaces button.focused {
+  background: @color2;
+  color: @background;
+  border-bottom: 2px solid @color5;
+  font-weight: bold;
 }
 
-/* -- Icon refinement for pulseaudio -- */
-#pulseaudio, #pulseaudio.microphone {
-    font-size: 13px;
-    color: @color6;
-}
-#pulseaudio.muted { color: #f38ba8; }
-#pulseaudio:hover, #pulseaudio.microphone:hover {
-    background: @color1;
-    color: @color5;
+#workspaces button.focused:hover {
+  background: @color4;
+  color: @foreground;
+  border-bottom: 2px solid @color5;
 }
 
-/* -- Color Tweaks for State/Module Accent -- */
-#battery          { color: @color11; }
-#power-profiles-daemon { color: @color8;}
-#clock            { color: @color8; }
-#cpu              { color: @color7; }
-#memory           { color: @color5; }
-#temperature      { color: @color2; }
-#backlight        { color: @color5; }
+#workspaces button.urgent {
+  background-color: @color1;
+}
+
+#mode {
+  background-color: @color4;
+  border-bottom: 2px solid @color5;
+}
+
+#clock,
+#battery,
+#cpu,
+#memory,
+#disk,
+#temperature,
+#custom-brightness,
 #network,
-#custom-wifi      { color: @color12; }
-#custom-bluetooth { color: @color4; }
-/* Note: #custom-power is set above for a stronger accent */
-
-/* -- Hover Effects for all bubbles -- */
-#custom-power:hover, #custom-bluetooth:hover, #custom-wifi:hover, #battery:hover, 
-#clock:hover, #cpu:hover, #memory:hover, #temperature:hover, #backlight:hover {
-    background: @color1;
-    color: @color5;
-    box-shadow: 0 0 6px 2px @color0;
-    transition: background 0.17s, color 0.17s;
+#pulseaudio,
+#custom-media,
+#custom-power,
+#tray,
+#mode,
+#idle_inhibitor,
+#mpd {
+  padding: 0 10px;
+  color: @foreground;
 }
 
-/* Tray icons, state tweaks */
-#tray > .passive { opacity: 0.6; }
+#custom-system {
+  background-color: @color4;
+  color: @background;
+  padding: 2px 10px;
+  border-radius: 10px;
+  margin-right: 8px;
+  font-size: 13px;
+}
+
+#custom-media_prev,
+#custom-media_toggle,
+#custom-media_next {
+  font-size: 18px;
+  padding: 0 6px;
+  margin: 0 2px;
+}
+
+#pulseaudio,
+#battery,
+#network,
+#clock,
+#tray,
+#custom-power,
+#power-profiles-daemon,
+#custom-wifi {
+  padding: 0 6px;
+  font-size: 13px;
+  margin: 0 2px;
+  border-radius: 6px;
+  background-color: transparent;
+  color: @foreground;
+}
+
+#battery.charging {
+  background-color: @color2;
+  color: @background;
+}
+
+label:focus {
+  background-color: @background;
+}
+
+#network.disconnected {
+  color: @color1;
+}
+
+#pulseaudio.muted {
+  color: @color1;
+}
+
+#temperature.critical {
+  background-color: @color1;
+}
+
+#tray > .passive {
+  -gtk-icon-effect: dim;
+  color: @foreground;
+}
+
 #tray > .needs-attention {
-    background: @color2;
-    color: @color0;
+  -gtk-icon-effect: highlight;
+  color: @foreground;
 }
 
-/* Groups margin */
-.modules-left, .modules-center, .modules-right {
-    margin: 0 3px;
-    margin-top: 1px;
-    margin-bottom: 1px;
+#language {
+  color: @foreground;
+  min-width: 16px;
 }
 
-/* Hide window titles if none */
-#window.empty {
-    background: none;
-    padding: 0;
+#keyboard-state {
+  background: @color2;
+  color: @background;
+  min-width: 16px;
+}
+
+#keyboard-state > label {
+  padding: 0 5px;
+}
+
+#keyboard-state > label.locked {
+  background: rgba(0, 0, 0, 0.2);
 }
