@@ -1,6 +1,7 @@
 ## Rajchauhan28's Dotfiles
 
-https://github.com/user-attachments/assets/0505de22-8055-46fd-ae23-c8eb0fda7211
+![2025-06-16-182247_hyprshot](https://github.com/user-attachments/assets/fbf54940-ba28-4f2b-a895-60b0acaba6e8)
+
 
 Just a minimalist hyprland setup easy to use with no too much over ricing. With a bit of Hindi.
 
