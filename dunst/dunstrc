@@ -492,3 +492,6 @@
 #    set_stack_tag = "volume"
 #
 # vim: ft=cfg
+[rule]
+    appname = "MediaPopup"
+    geometry = "300x5-0+400"

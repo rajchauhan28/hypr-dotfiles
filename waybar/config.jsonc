@@ -45,12 +45,15 @@
     "return-type": "json",
     "max-length": 40,
     "format-icons": {
-      "spotify": "",
-      "firefox": "",
-      "default": "🎜"
+    "spotify": "",
+    "firefox": "",
+    "mpv": "🎞",
+    "vlc": "🎬",
+    "default": "🎜"
     },
     "exec": "$HOME/.config/waybar/mediaplayer.py",
-    "interval": 2
+    "interval": 2,
+    "on-click": "~/.config/waybar/scripts/focus-media.sh"
   },
 
   "custom/media_prev": {
