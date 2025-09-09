@@ -25,15 +25,3 @@ class = "kitty-taskbar"
 size = "40% 80%"
 offset = "200%"
 
-[scratchpads.nmtui]
-animation="fromTop"
-command = "kitty --class nmtui nmtui"
-class = "nmtui"
-lazy = true
-
-[scratchpads.bluetuith]
-command = "alacritty --class kitty-dropterm -e bluetuith"
-class = "bluetuith"
-animation = "fromTop"
-size = "80% 30%"
-margin = 40

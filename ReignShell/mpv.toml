@@ -1,0 +1,4 @@
+walldir = /home/reign/.config/ReignShell/Wallpapers/
+gpu=true
+autoswitch=false 
+switchinterval=30

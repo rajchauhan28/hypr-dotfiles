@@ -1,166 +1,153 @@
 @import url("file:///home/reign/.cache/wal/colors-waybar.css");
 
+/* ===========================
+   Waybar Dark Neumorphism (Pywal)
+   =========================== */
 * {
-  border: none;
-  border-radius: 0;
-  font-family: "FiraCode Nerd Font", "Roboto", sans-serif;
+  font-family: "JetBrainsMono Nerd Font", monospace;
   font-size: 13px;
-  min-height: 0;
+  min-height: 0px;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  color: @foreground;
 }
 
+/* --- Waybar Window --- */
 window#waybar {
-  background-color: rgba(30, 40, 60, 0.3);
-  color: @foreground;
-  transition-property: background-color;
-  transition-duration: 0.5s;
+  background: transparent;
+  border-radius: 18px;
+  margin: 5px;
+  padding: 4px 10px;
 }
 
-window#waybar.hidden {
-  opacity: 0.2;
-}
-
-#workspaces {
-  padding: 6px;
-  margin-right: 4px;
-  border-radius: 10px;
-  opacity: 0.88;
-}
-
-#workspaces button {
-  color: @foreground;
-  border-radius: 6px;
-  font-weight: bold;
-  margin: 0;
-  padding: 4px 8px;
-  border-bottom: 2px solid @color5;
-}
-
-#workspaces button:hover {
-  background: @color3;
-  color: @background;
-  border-bottom: 2px solid @color5;
-}
-
-#workspaces button.focused {
-  background: @color2;
-  color: @background;
-  border-bottom: 2px solid @color5;
-  font-weight: bold;
-}
-
-#workspaces button.focused:hover {
-  background: @color4;
-  color: @foreground;
-  border-bottom: 2px solid @color5;
-}
-
-#workspaces button.urgent {
-  background-color: @color1;
-}
-
-#mode {
-  background-color: @color4;
-  border-bottom: 2px solid @color5;
-}
-
-#clock,
-#battery,
+/* --- Modules --- */
+#workspaces button,
+#custom-clock,
 #cpu,
 #memory,
-#disk,
 #temperature,
-#custom-brightness,
-#network,
-#pulseaudio,
+#custom-updates,
+#custom-network,
+#custom-bluetooth,
 #custom-media,
-#custom-power,
-#tray,
-#mode,
-#idle_inhibitor,
-#mpd {
-  padding: 0 10px;
-  color: @foreground;
-}
-
-#custom-system {
-  background-color: @color4;
-  color: @background;
-  padding: 2px 10px;
-  border-radius: 10px;
-  margin-right: 8px;
-  font-size: 13px;
-}
-
-#custom-media_prev,
-#custom-media_toggle,
-#custom-media_next {
-  font-size: 18px;
-  padding: 0 6px;
-  margin: 0 2px;
-}
-
 #pulseaudio,
-#battery,
-#network,
-#clock,
+#backlight,
+#custom-brightness,
+#custom-kdeconnect,
 #tray,
+#battery,
 #custom-power,
-#power-profiles-daemon,
-#custom-wifi {
-  padding: 0 6px;
-  font-size: 13px;
-  margin: 0 2px;
-  border-radius: 6px;
-  background-color: transparent;
+#custom-backgroundapps,
+#custom-sys-stats,
+#custom-predator {
+  border-radius: 14px;
+  margin: 4px 6px;
+  padding: 5px 10px;
+  background: @background;
+  box-shadow: 3px 3px 6px @color8, -3px -3px 6px @background;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+/* Hover effect */
+#workspaces button:hover,
+#custom-clock:hover,
+#cpu:hover,
+#memory:hover,
+#temperature:hover,
+#custom-updates:hover,
+#custom-network:hover,
+#custom-bluetooth:hover,
+#custom-media:hover,
+#custom-kdeconnect:hover,
+#pulseaudio:hover,
+#backlight:hover,
+#custom-brightness:hover,
+#tray:hover,
+#battery:hover,
+#custom-power:hover,
+#custom-sys-stats:hover,
+#custom-predator:hover {
+  background: @color8;
+  box-shadow: inset 2px 2px 4px @background, inset -2px -2px 4px @color8;
+}
+
+/* --- Workspaces (Hindi numerals centered) --- */
+#workspaces {
+  margin: 0 20px;
+}
+#workspaces button {
+  padding: 6px 12px;
+}
+#workspaces button.focused {
+  background: @color4;
   color: @foreground;
+  box-shadow: inset 2px 2px 5px @background, inset -2px -2px 5px @color8;
 }
 
-#battery.charging {
-  background-color: @color2;
-  color: @background;
+/* --- Accent colors for modules --- */
+#custom-network {
+  color: @color4;
 }
-
-label:focus {
-  background-color: @background;
+#custom-bluetooth {
+  color: @color5;
 }
-
-#network.disconnected {
+#cpu {
   color: @color1;
 }
+#memory {
+  color: @color3;
+}
+#temperature {
+  color: @color2;
+}
+#pulseaudio {
+  color: @color6;
+}
+#backlight {
+  color: @color13;
+}
+#custom-brightness {
+  color: @color11;
+}
+#custom-updates {
+  color: @color9;
+}
+#custom-power {
+  color: @color8;
+}
+#battery {
+  color: @color10;
+}
+#custom-predator {
+  color: @color7;
+}
 
-#pulseaudio.muted {
+
+#custom-kdeconnect {
+    padding: 0 10px;
+}
+
+#custom-kdeconnect.disconnected {
+    color: #666; /* Greyed out when disconnected */
+}
+
+#custom-kdeconnect.connected {
+    color: @foreground;
+}
+
+#custom-kdeconnect.notifications {
+    color: #E8A257; /* Amber/Yellow for notifications */
+}
+
+#custom-kdeconnect.media-playing {
+    color: #83a598; /* A nice green/blue for media */
+}
+
+#custom-sys-stats.warning {
+  color: @color3;
+}
+
+#custom-sys-stats.critical {
   color: @color1;
-}
-
-#temperature.critical {
-  background-color: @color1;
-}
-
-#tray > .passive {
-  -gtk-icon-effect: dim;
-  color: @foreground;
-}
-
-#tray > .needs-attention {
-  -gtk-icon-effect: highlight;
-  color: @foreground;
-}
-
-#language {
-  color: @foreground;
-  min-width: 16px;
-}
-
-#keyboard-state {
-  background: @color2;
-  color: @background;
-  min-width: 16px;
-}
-
-#keyboard-state > label {
-  padding: 0 5px;
-}
-
-#keyboard-state > label.locked {
-  background: rgba(0, 0, 0, 0.2);
 }

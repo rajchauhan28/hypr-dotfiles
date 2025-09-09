@@ -10,11 +10,7 @@ Valid actions are:
 EOF
 }
 
-# Send brightness notification
-send_notification() {
-  brightness=$(brightnessctl info | grep -oP "(?<=\()\d+(?=%)")
-  notify-send -a "state" -r 91190 -i "gpm-brightness-lcd" -h int:value:"$brightness" "Brightness: ${brightness}%" -u low
-}
+
 
 # Get brightness and device info
 get_brightness_info() {
@@ -63,11 +59,9 @@ while getopts o: opt; do
       case $OPTARG in
         i)
           brightnessctl set 2%+
-          send_notification
           ;;
         d)
           brightnessctl set 2%-
-          send_notification
           ;;
         *)
           print_error

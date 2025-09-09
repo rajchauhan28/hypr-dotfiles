@@ -1,156 +1,114 @@
 {
+  "layer": "top",
   "position": "top",
-  "height": 30,
-  "spacing": 3,
-
+  "height": 40,
   "modules-left": [
+    "custom/predator",
     "custom/media",
-    "custom/media_prev",
-    "custom/media_toggle",
-    "custom/media_next",
-    "hyprland/window"
+    "custom/kdeconnect",
+    "custom/background-apps",
+    "custom/network",
+    "custom/bluetooth"
   ],
-
   "modules-center": [
     "hyprland/workspaces"
   ],
-
   "modules-right": [
-    
-    "custom/wifi",
-    "custom/bluetooth",
-    "pulseaudio",
-    "clock",
-    "tray",
+    "custom/updates",
     "custom/brightness",
-    "power-profiles-daemon",
-    "custom/system",
+    "pulseaudio",
     "battery",
+    "custom/clock",
+    "custom/sys-stats",
     "custom/power"
+    
   ],
 
-  "hyprland/workspaces": {
-    "format": "{icon}",
-    "format-icons": {
-      "1": "१", "2": "२", "3": "३", "4": "४", "5": "५",
-      "6": "६", "7": "७", "8": "८", "9": "९", "10": "०४",
-      "urgent": "",
-      "focused": "",
-      "default": ""
-    }
-  },
-
+  // --- Custom Media ---
   "custom/media": {
-    "format": "{icon} {text}",
+    "exec": "~/.config/waybar/scripts/media_info.py",
     "return-type": "json",
-    "max-length": 40,
-    "format-icons": {
-    "spotify": "",
-    "firefox": "",
-    "mpv": "🎞",
-    "vlc": "🎬",
-    "default": "🎜"
-    },
-    "exec": "$HOME/.config/waybar/mediaplayer.py",
-    "interval": 2,
-    "on-click": "~/.config/waybar/scripts/focus-media.sh"
-  },
-
-  "custom/media_prev": {
-    "format": "⏮",
-    "on-click": "playerctl previous",
-    "tooltip": "Previous Track"
-  },
-  "custom/media_toggle": {
-    "format": "⏯",
     "on-click": "playerctl play-pause",
-    "tooltip": "Play/Pause"
-  },
-  "custom/media_next": {
-    "format": "⏭",
-    "on-click": "playerctl next",
-    "tooltip": "Next Track"
+    "on-scroll-up": "playerctl next",
+    "on-scroll-down": "playerctl previous",
+    "tooltip": false,
+    "interval": 2
   },
 
-  "custom/system": {
-    "exec": "$HOME/.config/waybar/scripts/system_status.sh",
+  "custom/predator": {
+    "format": " Acer Predator",
+    "on-click": "DAMX",
+    "tooltip": "Launch DAMX"
+  },
+
+  "custom/kdeconnect": {
+    "exec": "/home/reign/.config/waybar/scripts/kdeconnect.sh",
     "return-type": "json",
-    "interval": 2,
-    "tooltip": false
+    "on-click": "kdeconnect-sms",
+    "interval": 2
   },
 
-  "custom/wifi": {
-    "format": "",
-    "tooltip": "Open Network Manager",
-    "on-click": "kitty -e nmtui"
+  "custom/background-apps": {
+    "exec": "/home/reign/.config/waybar/scripts/background_apps.py",
+    "return-type": "json",
+    "on-click": "/home/reign/.config/waybar/scripts/background_apps.py --popup",
+    "interval": 5
   },
 
-  "custom/bluetooth": {
-  "format": "",
-  "tooltip": false,
-  "on-click": "pypr toggle bluetuith"
-},
+  "custom/sys-stats": {
+    "exec": "/home/reign/.config/waybar/scripts/sys_stat.py",
+    "return-type": "json",
+    "on-click": "/home/reign/.config/waybar/scripts/sys_stat.py --popup",
+    "interval": 2
+  },
 
-  "pulseaudio": {
-    "format": "{volume}% {icon} {format_source}",
-    "format-bluetooth": "{volume}% {icon} {format_source}",
-    "format-bluetooth-muted": " {icon} {format_source}",
-    "format-muted": " {format_source}",
-    "format-source": "{volume}% ",
-    "format-source-muted": "",
-    "format-icons": {
-      "default": ["", "", ""]
-    },
-    "on-click": "pavucontrol"
+  "custom/updates": {
+    "exec": "~/.config/waybar/scripts/system-update.sh",
+    "return-type": "json",
+    "on-click": "~/.config/waybar/sys_update.sh",
+    "interval": 1800
   },
 
   "custom/brightness": {
-  "format": "{}",
-  "return-type": "json",
-  "exec": "~/.config/waybar/scripts/brightnesscontrol.sh",
-  "interval": 2,
-  "on-scroll-up": "~/.config/waybar/scripts/brightnesscontrol.sh -o i",
-  "on-scroll-down": "~/.config/waybar/scripts/brightnesscontrol.sh -o d"
-},
+    "exec": "~/.config/waybar/scripts/brightnesscontrol.sh",
+    "return-type": "json",
+    "on-scroll-up": "~/.config/waybar/scripts/brightnesscontrol.sh -o i",
+    "on-scroll-down": "~/.config/waybar/scripts/brightnesscontrol.sh -o d",
+    "interval": 1
+  },
 
+  // --- Network ---
+  "custom/network": {
+    "exec": "~/.config/waybar/scripts/wifi.py --mode network",
+    "return-type": "json",
+    "on-click": "~/.config/waybar/scripts/wifi.py --popup network",
+    "interval": 5
+  },
+
+  // --- Bluetooth ---
+  "custom/bluetooth": {
+    "exec": "~/.config/waybar/scripts/wifi.py --mode bluetooth",
+    "return-type": "json",
+    "on-click": "~/.config/waybar/scripts/wifi.py --popup bluetooth",
+    "interval": 5
+  },
+
+  // --- Clock ---
+  "custom/clock": {
+    "exec": "~/.config/waybar/scripts/calendar_time.py",
+    "return-type": "json",
+    "on-click": "~/.config/waybar/scripts/calendar_time.py --toggle",
+    "interval": 1
+  },
   "battery": {
-    "states": {
-      "warning": 30,
-      "critical": 15
-    },
-    "format": "{capacity}% {icon}",
-    "format-full": "{capacity}% {icon}",
-    "format-charging": "{capacity}% ",
-    "format-plugged": "{capacity}% ",
-    "format-alt": "{time} {icon}",
+    "format": "{icon} {capacity}%",
+    "format-charging": " {capacity}%",
+    "format-plugged": " {capacity}%",
     "format-icons": ["", "", "", "", ""]
   },
-
-  "clock": {
-    "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
-    "format-alt": "{:%Y-%m-%d}"
-  },
-
-  "power-profiles-daemon": {
-    "format": "{icon}",
-    "tooltip-format": "Profile: {profile}\nDriver: {driver}",
-    "tooltip": true,
-    "format-icons": {
-      "default": "",
-      "performance": "",
-      "balanced": "",
-      "power-saver": ""
-    }
-  },
-
-  "tray": {
-    "spacing": 8
-  },
-
   "custom/power": {
-    "format": "⏻",
-    "tooltip": false,
-    "on-click": "wlogout -b 2",
-    "interval": 3600
+    "format": "",
+    "on-click": "wlogout",
+    "tooltip": false
   }
 }

@@ -1,73 +1,24 @@
 #!/bin/bash
 
-DIR=$HOME/Pictures/wallpapers/
-PICS=($(find ${DIR} -type f \( -name "*.jpg" -o -name "*.jpeg" -o -name "*.png" -o -name "*.gif" \)))
-RANDOMPICS=${PICS[ $RANDOM % ${#PICS[@]} ]}
+DIR="$HOME/Pictures/wallpapers/"
+WALLS=($(find "$DIR" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.gif" -o -iname "*.mp4" -o -iname "*.mkv" -o -iname "*.webm" \)))
 
-# Function to change wallpaper with swaybg
-change_swaybg(){
-  pkill swww
-  pkill swaybg
-  swaybg -m fill -i ${RANDOMPICS}
-  
-  # Use pywal to update colors
-  wal -i ${RANDOMPICS}
+RANDOMWALL=${WALLS[$RANDOM % ${#WALLS[@]}]}
 
-  # Reload Alacritty config to apply new colors using alacritty-msg
-  alacritty-msg reload
+# Kill any running mpvpaper instances
+pkill mpvpaper
 
-  # Optionally, restart Waybar to reflect theme changes
-  pkill waybar
-  waybar &
-}
+# Apply wallpaper with mpvpaper
+# "*" = all monitors, replace with e.g. eDP-1 for just one
+mpvpaper -o "no-audio --loop --panscan=1.0 --vid=1 --fs" "*" "$RANDOMWALL" &
 
-# Function to change wallpaper with swww
-change_swww(){
-  pkill swaybg
-  swww query || swww init
-  swww img ${RANDOMPICS} --transition-fps 30 --transition-type any --transition-duration 2
-  
-  # Use pywal to update colors
-  wal -i ${RANDOMPICS}
+# Use pywal for colors (uses first frame if video/gif)
+wal -i "$RANDOMWALL"
 
-  # Reload Alacritty config to apply new colors using alacritty-msg
-  alacritty-msg reload
+# Reload Alacritty config to apply new colors
+alacritty-msg reload
 
-  # Optionally, restart Waybar to reflect theme changes
-  pkill waybar
-  waybar &
-}
+# Restart Waybar to reflect theme changes
+pkill waybar
+waybar &
 
-# Function to change the current wallpaper based on whether swaybg is running
-change_current(){
-  if pidof swaybg >/dev/null; then
-    change_swaybg
-  else
-    change_swww
-  fi
-}
-
-# Function to toggle between swaybg and swww depending on the current state
-switch(){
-  if pidof swaybg >/dev/null; then
-    change_swww
-  else
-    change_swaybg
-  fi
-}
-
-# Main script logic based on the input argument
-case "$1" in
-	"swaybg")
-		change_swaybg
-		;;
-	"swww")
-		change_swww
-		;;
-  "s")
-		switch
-		;;
-	*)
-		change_current
-		;;
-esac

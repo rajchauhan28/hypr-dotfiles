@@ -66,6 +66,10 @@ fi
 # Calculate total available updates
 total_updates=$((official_updates + aur_updates + flatpak_updates))
 
+echo "Official: $official_updates, AUR: $aur_updates, Flatpak: $flatpak_updates, Total: $total_updates" >> /tmp/waybar-updates.log
+
+echo "Official: $official_updates, AUR: $aur_updates, Flatpak: $flatpak_updates, Total: $total_updates" >> /tmp/waybar-updates.log
+
 # Handle formatting based on AUR helper
 if [ "$aur_helper" == "yay" ]; then
   [ "${1}" == upgrade ] && printf "Official:  %-10s\nAUR ($aur_helper): %-10s\nFlatpak:   %-10s\n\n" "$official_updates" "$aur_updates" "$flatpak_updates" && exit
@@ -80,7 +84,7 @@ fi
 
 # Module and tooltip
 if [ $total_updates -eq 0 ]; then
-  echo "{\"text\":\"󰸟\", \"tooltip\":\"Packages are up to date\"}"
+  echo "{\"text\":\"Up to date\", \"tooltip\":\"Packages are up to date\"}"
 else
-  echo "{\"text\":\"\", \"tooltip\":\"${tooltip//\"/\\\"}\"}"
+  echo "{\"text\":\"$total_updates updates\", \"tooltip\":\"${tooltip//\"/\\\"}\"}"
 fi
