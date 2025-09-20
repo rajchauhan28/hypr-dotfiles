@@ -42,22 +42,11 @@ def emit_json():
 class LivePopup(Gtk.Window):
     def __init__(self):
         super().__init__(title="System Stats")
-        self.set_default_size(320, 160)
+        self.set_default_size(320, 180)
         self.set_decorated(False)
         self.set_border_width(8)
-        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         self.darea = Gtk.DrawingArea()
-        self.darea.set_size_request(300, 120)
-        vbox.pack_start(self.darea, True, True, 0)
-        self.labels = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
-        self.cpu_label = Gtk.Label(label="")
-        self.mem_label = Gtk.Label(label="")
-        self.temp_label = Gtk.Label(label="")
-        self.labels.pack_start(self.cpu_label, True, True, 0)
-        self.labels.pack_start(self.mem_label, True, True, 0)
-        self.labels.pack_start(self.temp_label, True, True, 0)
-        vbox.pack_start(self.labels, False, False, 0)
-        self.add(vbox)
+        self.add(self.darea)
         self.show_all()
         self.data = {"cpu": [], "mem": []}
         self.darea.connect("draw", self.on_draw)
@@ -70,36 +59,82 @@ class LivePopup(Gtk.Window):
         if len(self.data["cpu"]) > 100:
             self.data["cpu"].pop(0)
             self.data["mem"].pop(0)
-        self.cpu_label.set_text(f"CPU: {int(cpu)}%")
-        self.mem_label.set_text(f"RAM: {int(mem)}%")
-        self.temp_label.set_text(f"TEMP: {temp}°C")
         self.darea.queue_draw()
         return True
 
     def on_draw(self, widget, ctx):
         w = widget.get_allocated_width()
         h = widget.get_allocated_height()
-        ctx.set_source_rgba(0.05,0.06,0.07,0.9)
-        ctx.rectangle(0,0,w,h)
+
+        # Background
+        ctx.set_source_rgba(0.05, 0.06, 0.07, 0.9)
+        ctx.rectangle(0, 0, w, h)
         ctx.fill()
-        def draw_series(series, y_offset, color):
+
+        # Grid
+        ctx.set_source_rgba(0.2, 0.2, 0.2, 0.5)
+        ctx.set_line_width(0.5)
+        for i in range(1, 5):
+            y = i * h / 5
+            ctx.move_to(0, y)
+            ctx.line_to(w, y)
+        for i in range(1, 10):
+            x = i * w / 10
+            ctx.move_to(x, 0)
+            ctx.line_to(x, h)
+        ctx.stroke()
+
+        def draw_series(series, color, fill_color):
             n = len(series)
             if n < 2:
                 return
             maxv = max(max(series), 100)
-            step = w / max(1, n-1)
+            step = w / max(1, n - 1)
+
+            # Fill
+            ctx.set_source_rgba(*fill_color)
+            ctx.move_to(0, h)
+            for i, val in enumerate(series):
+                x = i * step
+                y = h - (val / maxv) * h
+                ctx.line_to(x, y)
+            ctx.line_to(w, h)
+            ctx.close_path()
+            ctx.fill()
+
+            # Line
             ctx.set_line_width(2.0)
             ctx.set_source_rgba(*color)
             for i, val in enumerate(series):
                 x = i * step
                 y = h - (val / maxv) * h
                 if i == 0:
-                    ctx.move_to(x,y)
+                    ctx.move_to(x, y)
                 else:
-                    ctx.line_to(x,y)
+                    ctx.line_to(x, y)
             ctx.stroke()
-        draw_series(self.data["cpu"], 0, (0.9,0.4,0.4,1.0))
-        draw_series(self.data["mem"], 0, (0.4,0.6,0.9,1.0))
+
+        # Draw graphs
+        draw_series(self.data["cpu"], (0, 1, 1, 1), (0, 1, 1, 0.2)) # Cyan
+        draw_series(self.data["mem"], (1, 0, 1, 1), (1, 0, 1, 0.2)) # Magenta
+
+        # Legend
+        ctx.select_font_face("monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
+        ctx.set_font_size(12)
+        
+        # CPU Legend
+        ctx.set_source_rgba(0, 1, 1, 1)
+        ctx.rectangle(10, 10, 10, 10)
+        ctx.fill()
+        ctx.move_to(25, 20)
+        ctx.show_text(f"CPU: {int(self.data['cpu'][-1])}%")
+
+        # RAM Legend
+        ctx.set_source_rgba(1, 0, 1, 1)
+        ctx.rectangle(10, 30, 10, 10)
+        ctx.fill()
+        ctx.move_to(25, 40)
+        ctx.show_text(f"RAM: {int(self.data['mem'][-1])}%")
 
 def popup():
     win = LivePopup()
@@ -110,4 +145,3 @@ if __name__ == "__main__":
         popup()
     else:
         emit_json()
-
