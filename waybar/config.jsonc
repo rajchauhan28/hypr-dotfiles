@@ -16,14 +16,25 @@
       "hyprland/workspaces"
     ],
     "modules-right": [
+      "hyprland/window",
       "custom/updates",
       "custom/brightness",
       "pulseaudio",
       "battery",
+      "custom/cliphist",
       "custom/clock",
       "custom/sys-stats",
       "custom/power"
     ],
+    "custom/cliphist": {
+    "format": "{}",
+    "tooltip": true,
+    "tooltip-format": "Clipboard History",
+    "exec": "echo ' '", // Static icon, or use "cliphist list | wc -l" to show count
+    "on-click": "~/.config/waybar/scripts/clip-select.sh",
+    "on-click-middle": "cliphist wipe", // Middle-click to clear the entire history
+    "on-click-right": "~/.config/waybar/scripts/clip-delete.sh"
+},
     "custom/media": {
       "exec": "~/.config/waybar/scripts/media_info.py",
       "return-type": "json",

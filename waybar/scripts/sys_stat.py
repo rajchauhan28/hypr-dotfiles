@@ -2,145 +2,75 @@
 """
 sys_stats.py
 - Emits JSON with CPU/RAM/Temp icons and percentages for Waybar.
-- On --popup opens a GTK popup with small live graphs (updates every 800ms).
-Requirements: python3-psutil, PyGObject
+- On --popup opens a webview popup with small live graphs.
+Requirements: python3-psutil
 """
 
-import sys, json, psutil, time
-import gi
-gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, GLib, Gdk, GdkPixbuf, cairo
+import sys
+import json
+import psutil
+import subprocess
+import os
+import os
 
-def get_stats():
-    cpu = psutil.cpu_percent(interval=None)
-    mem = psutil.virtual_memory().percent
-    temps = psutil.sensors_temperatures() if hasattr(psutil, "sensors_temperatures") else {}
-    cpu_temp = 0
-    # try a common sensor key
-    for key, val in temps.items():
-        if val:
-            cpu_temp = int(val[0].current)
-            break
-    return cpu, mem, cpu_temp
+def get_cpu_temp():
+    """Gets CPU temperature."""
+    try:
+        # Note: sensor names can vary. 'coretemp' and 'k10temp' are common.
+        # You might need to adjust this for your specific hardware.
+        temps = psutil.sensors_temperatures()
+        if not temps:
+            return None
+
+        if 'coretemp' in temps:
+            return temps['coretemp'][0].current
+        if 'k10temp' in temps:
+            return temps['k10temp'][0].current
+        
+        # Fallback to the first available sensor
+        for name in temps:
+            if len(temps[name]) > 0:
+                return temps[name][0].current
+
+    except (AttributeError, KeyError):
+        pass
+    return None
 
 def emit_json():
-    cpu, mem, temp = get_stats()
-    text = f" {int(cpu)}%   {int(mem)}%   {temp}°C"
-    tooltip = f"CPU {cpu}%\nRAM {mem}%\nTemp {temp}°C"
+    """Emits JSON for Waybar."""
+    cpu_percent = psutil.cpu_percent()
+    ram_percent = psutil.virtual_memory().percent
+    temp = get_cpu_temp()
 
-    css_class = 'normal' 
-    if cpu > 90 or mem > 90 or temp > 80:
-        css_class = 'critical'
-    elif cpu > 70 or mem > 70 or temp > 60:
-        css_class = 'warning'
+    text = f" {cpu_percent:.0f}% |  {ram_percent:.0f}%"
+    tooltip = f"CPU Usage: {cpu_percent:.0f}%\nRAM Usage: {ram_percent:.0f}%"
 
-    out = {"text": text, "tooltip": tooltip, "class": css_class}
-    print(json.dumps(out))
-    sys.stdout.flush()
+    if temp is not None:
+        text += f" |  {temp:.0f}°C"
+        tooltip += f"\nCPU Temp: {temp:.0f}°C"
 
-# Popup with live graphs
-class LivePopup(Gtk.Window):
-    def __init__(self):
-        super().__init__(title="System Stats")
-        self.set_default_size(320, 180)
-        self.set_decorated(False)
-        self.set_border_width(8)
-        self.darea = Gtk.DrawingArea()
-        self.add(self.darea)
-        self.show_all()
-        self.data = {"cpu": [], "mem": []}
-        self.darea.connect("draw", self.on_draw)
-        GLib.timeout_add(800, self.update_stats)
+    css_class = "normal"
+    if ram_percent > 90 or cpu_percent > 90 or (temp is not None and temp > 85):
+        css_class = "critical"
+    elif ram_percent > 80 or cpu_percent > 80 or (temp is not None and temp > 70):
+        css_class = "warning"
 
-    def update_stats(self):
-        cpu, mem, temp = get_stats()
-        self.data["cpu"].append(cpu)
-        self.data["mem"].append(mem)
-        if len(self.data["cpu"]) > 100:
-            self.data["cpu"].pop(0)
-            self.data["mem"].pop(0)
-        self.darea.queue_draw()
-        return True
-
-    def on_draw(self, widget, ctx):
-        w = widget.get_allocated_width()
-        h = widget.get_allocated_height()
-
-        # Background
-        ctx.set_source_rgba(0.05, 0.06, 0.07, 0.9)
-        ctx.rectangle(0, 0, w, h)
-        ctx.fill()
-
-        # Grid
-        ctx.set_source_rgba(0.2, 0.2, 0.2, 0.5)
-        ctx.set_line_width(0.5)
-        for i in range(1, 5):
-            y = i * h / 5
-            ctx.move_to(0, y)
-            ctx.line_to(w, y)
-        for i in range(1, 10):
-            x = i * w / 10
-            ctx.move_to(x, 0)
-            ctx.line_to(x, h)
-        ctx.stroke()
-
-        def draw_series(series, color, fill_color):
-            n = len(series)
-            if n < 2:
-                return
-            maxv = max(max(series), 100)
-            step = w / max(1, n - 1)
-
-            # Fill
-            ctx.set_source_rgba(*fill_color)
-            ctx.move_to(0, h)
-            for i, val in enumerate(series):
-                x = i * step
-                y = h - (val / maxv) * h
-                ctx.line_to(x, y)
-            ctx.line_to(w, h)
-            ctx.close_path()
-            ctx.fill()
-
-            # Line
-            ctx.set_line_width(2.0)
-            ctx.set_source_rgba(*color)
-            for i, val in enumerate(series):
-                x = i * step
-                y = h - (val / maxv) * h
-                if i == 0:
-                    ctx.move_to(x, y)
-                else:
-                    ctx.line_to(x, y)
-            ctx.stroke()
-
-        # Draw graphs
-        draw_series(self.data["cpu"], (0, 1, 1, 1), (0, 1, 1, 0.2)) # Cyan
-        draw_series(self.data["mem"], (1, 0, 1, 1), (1, 0, 1, 0.2)) # Magenta
-
-        # Legend
-        ctx.select_font_face("monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
-        ctx.set_font_size(12)
-        
-        # CPU Legend
-        ctx.set_source_rgba(0, 1, 1, 1)
-        ctx.rectangle(10, 10, 10, 10)
-        ctx.fill()
-        ctx.move_to(25, 20)
-        ctx.show_text(f"CPU: {int(self.data['cpu'][-1])}%")
-
-        # RAM Legend
-        ctx.set_source_rgba(1, 0, 1, 1)
-        ctx.rectangle(10, 30, 10, 10)
-        ctx.fill()
-        ctx.move_to(25, 40)
-        ctx.show_text(f"RAM: {int(self.data['mem'][-1])}%")
+    print(json.dumps({
+        'text': text,
+        'tooltip': tooltip,
+        'class': css_class
+    }))
 
 def popup():
-    win = LivePopup()
-    Gtk.main()
+    env = os.environ.copy()
+    env["DISPLAY"] = ":0"
+    env["PATH"] = f"{env["PATH"]}:/home/reign/.local/bin"
+    subprocess.Popen(["/home/reign/.config/waybar/scripts/webview_plot.py"], env=env)
 
 if __name__ == "__main__":
+    # Initialize cpu_percent before the loop
+    psutil.cpu_percent()
+
     if "--popup" in sys.argv:
         popup()
     else:
