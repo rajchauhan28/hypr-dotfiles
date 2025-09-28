@@ -25,7 +25,7 @@ window {
     all:unset;
     padding: 20px;
     border-radius: 0px;
-    background-color: alpha(@background,.5);
+    background-color: alpha(@background,.8);
 }
 #inner-box {
     margin: 2px;

@@ -150,4 +150,39 @@ window#waybar {
 
 #custom-sys-stats.critical {
   color: @color1;
+<<<<<<< HEAD
 }
+=======
+}
+
+#custom-clock,
+#cpu,
+#memory,
+#temperature,
+#custom-updates,
+#custom-network,
+#custom-bluetooth,
+#custom-media,
+#pulseaudio,
+#backlight,
+#custom-brightness,
+#custom-kdeconnect,
+#tray,
+#battery,
+#custom-power,
+#custom-backgroundapps,
+#custom-sys-stats,
+#custom-predator {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+#custom-cliphist {
+    padding: 0 10px;
+    color: #a6e3a1; /* A nice green, change as you like */
+    background-color: #1e1e2e; /* Match your bar's background */
+}
+
+#custom-cliphist:hover {
+    background-color: #45475a;
+}
+>>>>>>> 3216cf4 (updates waybar ui and tools)
