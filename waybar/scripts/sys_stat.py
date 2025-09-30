@@ -50,6 +50,7 @@ def emit_json():
         tooltip += f"\nCPU Temp: {temp:.0f}°C"
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 # Popup with live graphs
 class LivePopup(Gtk.Window):
     def __init__(self):
@@ -119,12 +120,23 @@ class LivePopup(Gtk.Window):
     elif ram_percent > 80 or cpu_percent > 80 or (temp is not None and temp > 70):
         css_class = "warning"
 
+=======
+    css_class = "normal"
+    if ram_percent > 90 or cpu_percent > 90 or (temp is not None and temp > 85):
+        css_class = "critical"
+    elif ram_percent > 80 or cpu_percent > 80 or (temp is not None and temp > 70):
+        css_class = "warning"
+
+>>>>>>> origin/main
     print(json.dumps({
         'text': text,
         'tooltip': tooltip,
         'class': css_class
     }))
+<<<<<<< HEAD
 >>>>>>> 3216cf4 (updates waybar ui and tools)
+=======
+>>>>>>> origin/main
 
 def popup():
     env = os.environ.copy()
@@ -140,4 +152,3 @@ if __name__ == "__main__":
         popup()
     else:
         emit_json()
-

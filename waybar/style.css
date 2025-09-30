@@ -9,8 +9,7 @@
   min-height: 0px;
   border: none;
   box-shadow: none;
-  background: transparent;
-  color: @foreground;
+  color: #333333;
 }
 
 /* --- Waybar Window --- */
@@ -45,8 +44,7 @@ window#waybar {
   margin: 4px 6px;
   padding: 5px 10px;
   background: @background;
-  box-shadow: 3px 3px 6px @color8, -3px -3px 6px @background;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition: background 0.2s;
 }
 
 /* Hover effect */
@@ -69,7 +67,6 @@ window#waybar {
 #custom-sys-stats:hover,
 #custom-predator:hover {
   background: @color8;
-  box-shadow: inset 2px 2px 4px @background, inset -2px -2px 4px @color8;
 }
 
 /* --- Workspaces (Hindi numerals centered) --- */
@@ -78,11 +75,13 @@ window#waybar {
 }
 #workspaces button {
   padding: 6px 12px;
+  border: 1px solid @color8;
+  background: rgba(0, 0, 0, 0.2);
 }
 #workspaces button.focused {
-  background: @color4;
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #FFFFFF;
   color: @foreground;
-  box-shadow: inset 2px 2px 5px @background, inset -2px -2px 5px @color8;
 }
 
 /* --- Accent colors for modules --- */
@@ -108,6 +107,12 @@ window#waybar {
   color: @color13;
 }
 #custom-brightness {
+  color: @color11;
+}
+#custom-media {
+  color: @color6;
+}
+#custom-clock {
   color: @color11;
 }
 #custom-updates {
@@ -151,8 +156,11 @@ window#waybar {
 #custom-sys-stats.critical {
   color: @color1;
 <<<<<<< HEAD
+<<<<<<< HEAD
 }
 =======
+=======
+>>>>>>> origin/main
 }
 
 #custom-clock,
@@ -185,4 +193,7 @@ window#waybar {
 #custom-cliphist:hover {
     background-color: #45475a;
 }
+<<<<<<< HEAD
 >>>>>>> 3216cf4 (updates waybar ui and tools)
+=======
+>>>>>>> origin/main

@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 {
   "layer": "top",
   "position": "top",
@@ -240,3 +241,130 @@
   }
 ]
 >>>>>>> 3216cf4 (updates waybar ui and tools)
+=======
+[
+  {
+    "layer": "top",
+    "position": "top",
+    "height": 40,
+    "name": "top-bar",
+    "modules-left": [
+      "custom/predator",
+      "custom/media",
+      "tray",
+      "custom/background-apps",
+      "custom/network",
+      "custom/bluetooth"
+    ],
+    "modules-center": [
+      "hyprland/workspaces"
+    ],
+    "modules-right": [
+      "hyprland/window",
+      "custom/updates",
+      "custom/brightness",
+      "pulseaudio",
+      "battery",
+      "custom/cliphist",
+      "custom/clock",
+      "custom/sys-stats",
+      "custom/power"
+    ],
+    "custom/cliphist": {
+    "format": "{}",
+    "tooltip": true,
+    "tooltip-format": "Clipboard History",
+    "exec": "echo ' '", // Static icon, or use "cliphist list | wc -l" to show count
+    "on-click": "~/.config/waybar/scripts/clip-select.sh",
+    "on-click-middle": "cliphist wipe", // Middle-click to clear the entire history
+    "on-click-right": "~/.config/waybar/scripts/clip-delete.sh"
+},
+    "custom/media": {
+      "exec": "~/.config/waybar/scripts/media_info.py",
+      "return-type": "json",
+      "on-click": "playerctl play-pause",
+      "on-scroll-up": "playerctl next",
+      "on-scroll-down": "playerctl previous",
+      "tooltip": false,
+      "interval": 2
+    },
+    "tray": {
+      "icon-size": 16,
+      "spacing": 10,
+      "show-passive-items": true,
+      "reverse-direction": true
+    },
+    "custom/predator": {
+      "format": " Acer Predator",
+      "on-click": "DAMX",
+      "tooltip": "Launch DAMX"
+    },
+    "custom/kdeconnect": {
+      "exec": "/home/reign/.config/waybar/scripts/kdeconnect.sh",
+      "return-type": "json",
+      "on-click": "kdeconnect-sms",
+      "interval": 2
+    },
+    "custom/background-apps": {
+      "exec": "/home/reign/.config/waybar/scripts/background_apps.py",
+      "return-type": "json",
+      "on-click": "/home/reign/.config/waybar/scripts/background_apps.py --popup",
+      "interval": 5
+    },
+    "custom/sys-stats": {
+      "exec": "/home/reign/.config/waybar/scripts/sys_stat.py",
+      "return-type": "json",
+      "on-click": "/home/reign/.config/waybar/scripts/sys_stat.py --popup",
+      "interval": 2
+    },
+    "custom/updates": {
+      "exec": "~/.config/waybar/scripts/system-update.sh",
+      "return-type": "json",
+      "on-click": "kitty --hold ~/.config/waybar/sys_update.sh update",
+      "interval": 1800
+    },
+    "custom/brightness": {
+      "exec": "~/.config/waybar/scripts/brightnesscontrol.sh",
+      "return-type": "json",
+      "on-scroll-up": "~/.config/waybar/scripts/brightnesscontrol.sh -o i",
+      "on-scroll-down": "~/.config/waybar/scripts/brightnesscontrol.sh -o d",
+      "interval": 1
+    },
+    "custom/network": {
+      "exec": "~/.config/waybar/scripts/wifi.py --mode network",
+      "return-type": "json",
+      "on-click": "~/.config/waybar/scripts/wifi.py --popup network",
+      "interval": 5
+    },
+    "custom/bluetooth": {
+      "exec": "~/.config/waybar/scripts/wifi.py --mode bluetooth",
+      "return-type": "json",
+      "on-click": "~/.config/waybar/scripts/wifi.py --popup bluetooth",
+      "interval": 5
+    },
+    "custom/clock": {
+      "exec": "~/.config/waybar/scripts/calendar_time.py",
+      "return-type": "json",
+      "on-click": "~/.config/waybar/scripts/calendar_time.py --toggle",
+      "interval": 1
+    },
+    "battery": {
+      "format": "{icon} {capacity}%",
+      "format-charging": " {capacity}%",
+      "format-plugged": " {capacity}%",
+      "format-icons": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    "custom/power": {
+      "format": "",
+      "on-click": "wlogout",
+      "tooltip": false
+    }
+  }
+]
+>>>>>>> origin/main
