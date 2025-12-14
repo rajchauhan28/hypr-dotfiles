@@ -26,13 +26,13 @@ readonly ALL_CONFIG_DIRS=(
     hypr
     mpv
     nvim
-    rofi
-    swaync
     waybar
     wlogout
     wofi
     yazi
+    ReignShell
 )
+
 # Directories containing scripts that need executable permissions
 readonly SCRIPT_DIRS=(
     "hypr"
@@ -85,16 +85,16 @@ install_packages() {
     msg "$C_CYAN" "📦 Reading package list and installing packages..."
     local package_file="package_list.txt"
     if [ ! -f "$package_file" ]; then
-        msg "$C_RED" "❌ $package_file not found! Aborting."
-        exit 1
+        msg "$C_YELLOW" "⚠️ $package_file not found. Skipping package installation."
+        return
     fi
     
     # Convert file content to an array, ignoring empty lines and comments
     mapfile -t PACKAGES < <(grep -vE '^\s*#|^\s*$' "$package_file")
     
     if [ ${#PACKAGES[@]} -eq 0 ]; then
-        msg "$C_RED" "❌ No packages found in $package_file. Aborting."
-        exit 1
+        msg "$C_YELLOW" "⚠️ No packages found in $package_file. Skipping."
+        return
     fi
     
     msg "$C_BLUE" "Installing ${#PACKAGES[@]} packages. This may take a while..."
@@ -126,7 +126,7 @@ backup_and_copy_configs() {
             msg "$C_BLUE" "  -> Installing '$dir'..."
             cp -r "$src" "$HOME/.config/"
         else
-            msg "$C_YELLOW" "⚠️ Source directory '$src' not found. Skipping."
+            msg "$C_YELLOW" "⚠️ Source directory '$src' not found in repo. Skipping."
         fi
     done
     
@@ -138,6 +138,48 @@ backup_and_copy_configs() {
     fi
     
     msg "$C_GREEN" "✅ Config files and wallpapers installed."
+}
+
+# Function to install fonts
+install_fonts() {
+    msg "$C_CYAN" "🔤 Installing fonts..."
+    local dotfiles_dir
+    dotfiles_dir=$(pwd)
+    local src="$dotfiles_dir/fonts"
+    local dest="$HOME/.local/share/fonts"
+    
+    if [ -d "$src" ]; then
+        mkdir -p "$dest"
+        msg "$C_BLUE" "  -> Copying fonts to $dest..."
+        cp -r "$src/." "$dest/"
+        msg "$C_BLUE" "  -> Updating font cache..."
+        fc-cache -f
+        msg "$C_GREEN" "✅ Fonts installed and cache updated."
+    else
+        msg "$C_YELLOW" "⚠️ Fonts directory not found in repo. Skipping."
+    fi
+}
+
+# Function to install zshrc
+install_zshrc() {
+    msg "$C_CYAN" "🐚 Installing .zshrc..."
+    local dotfiles_dir
+    dotfiles_dir=$(pwd)
+    local src="$dotfiles_dir/.zshrc"
+    local dest="$HOME/.zshrc"
+    
+    if [ -f "$src" ]; then
+        if [ -f "$dest" ]; then
+             local backup_path="$HOME/.zshrc.backup_$(date +%Y%m%d_%H%M%S)"
+             msg "$C_YELLOW" "  -> Backing up existing .zshrc to $backup_path"
+             mv "$dest" "$backup_path"
+        fi
+        msg "$C_BLUE" "  -> Copying .zshrc..."
+        cp "$src" "$dest"
+        msg "$C_GREEN" "✅ .zshrc installed."
+    else
+        msg "$C_YELLOW" "⚠️ .zshrc not found in repo. Skipping."
+    fi
 }
 
 # Function to set executable permissions for scripts.
@@ -154,6 +196,12 @@ set_script_permissions() {
 
 # Function to build and install fastfetch with GIF support from source.
 build_fastfetch_from_source() {
+    # Check if fastfetch is already installed to avoid unnecessary rebuilds
+    if command -v fastfetch &>/dev/null; then
+         msg "$C_GREEN" "✅ fastfetch is already installed."
+         return
+    fi
+
     msg "$C_CYAN" "🎞️  Building and installing Fastfetch with GIF support from source..."
     local temp_dir
     temp_dir=$(mktemp -d)
@@ -177,26 +225,45 @@ build_fastfetch_from_source() {
 # --- MAIN FUNCTION ---
 main() {
     # Display banner
-    cat <<'EOF'
-                                     __                         __                          ______   ______  __                     __            __      ______  __ __                   
-                                    |  \                       |  \                        /      \ /      \|  \                   |  \          |  \    /      \|  \  \                  
-  ______   ______        __  _______| ▓▓____   ______  __    __| ▓▓____   ______  _______ |  ▓▓▓▓▓▓\  ▓▓▓▓▓▓\ ▓▓ _______       ____| ▓▓ ______  _| ▓▓_  |  ▓▓▓▓▓▓\\▓▓ ▓▓ ______   _______ 
- /      \ |      \      |  \/       \ ▓▓    \ |      \|  \  |  \ ▓▓    \ |      \|       \ \▓▓__| ▓▓ ▓▓__/ ▓▓\▓ /       \     /      ▓▓/      \|   ▓▓ \ | ▓▓_  \▓▓  \ ▓▓/      \ /       \
-|  ▓▓▓▓▓▓\ \▓▓▓▓▓▓\      \▓▓  ▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓\ \▓▓▓▓▓▓\ ▓▓  | ▓▓ ▓▓▓▓▓▓▓\ \▓▓▓▓▓▓\ ▓▓▓▓▓▓\/      ▓▓>▓▓    ▓▓  |  ▓▓▓▓▓▓▓    |  ▓▓▓▓▓▓▓  ▓▓▓▓▓▓\\▓▓▓▓▓▓ | ▓▓ \   | ▓▓ ▓▓  ▓▓▓▓▓▓\  ▓▓▓▓▓▓▓
-| ▓▓   \▓▓/      ▓▓     |  \ ▓▓     | ▓▓  | ▓▓/      ▓▓ ▓▓  | ▓▓ ▓▓  | ▓▓/      ▓▓ ▓▓  | ▓▓  ▓▓▓▓▓▓|  ▓▓▓▓▓▓    \▓▓    \     | ▓▓  | ▓▓ ▓▓  | ▓▓ | ▓▓ __| ▓▓▓▓   | ▓▓ ▓▓ ▓▓    ▓▓\▓▓    \ 
-| ▓▓     |  ▓▓▓▓▓▓▓     | ▓▓ ▓▓_____| ▓▓  | ▓▓  ▓▓▓▓▓▓▓ ▓▓__/ ▓▓ ▓▓  | ▓▓  ▓▓▓▓▓▓▓ ▓▓  | ▓▓ ▓▓_____| ▓▓__/ ▓▓   _\▓▓▓▓▓▓\    | ▓▓__| ▓▓ ▓▓__/ ▓▓ | ▓▓|  \ ▓▓     | ▓▓ ▓▓ ▓▓▓▓▓▓▓▓_\▓▓▓▓▓▓\
-| ▓▓      \▓▓    ▓▓     | ▓▓\▓▓     \ ▓▓  | ▓▓\▓▓    ▓▓\▓▓    ▓▓ ▓▓  | ▓▓\▓▓    ▓▓ ▓▓  | ▓▓ ▓▓     \▓▓    ▓▓  |       ▓▓     \▓▓    ▓▓\▓▓    ▓▓  \▓▓  ▓▓ ▓▓     | ▓▓ ▓▓\▓▓     \       ▓▓
- \▓▓       \▓▓▓▓▓▓▓__   | ▓▓ \▓▓▓▓▓▓▓\▓▓   \▓▓ \▓▓▓▓▓▓▓ \▓▓▓▓▓▓ \▓▓   \▓▓ \▓▓▓▓▓▓▓\▓▓   \▓▓\▓▓▓▓▓▓▓▓ \▓▓▓▓▓▓    \▓▓▓▓▓▓▓       \▓▓▓▓▓▓▓ \▓▓▓▓▓▓    \▓▓▓▓ \▓▓      \▓▓\▓▓ \▓▓▓▓▓▓▓\▓▓▓▓▓▓▓ 
-                  |  \__/ ▓▓                                                                                                                                                              
-                   \▓▓    ▓▓                                                                                                                                                              
-                    \▓▓▓▓▓▓                                                                                                                                                               
-EOF
+    cat <<'BANNER'
+                                     __                         __                 
+         ______   ______  __                     __            __      ______  __ _
+_                   
+                                    |  \                       |  \                
+        /      \ /      \|  \                   |  \          |  \    /      \|  \ 
+ \                  
+  ______   ______        __  _______| ▓▓____   ______  __    __| ▓▓____   ______  _
+______ |  ▓▓▓▓▓▓\  ▓▓▓▓▓▓\ ▓▓ _______       ____| ▓▓ ______  _| ▓▓_  |  ▓▓▓▓▓▓\\▓▓ 
+▓▓ ______   _______ 
+ /      \ |      \      |  \/       \ ▓▓    \ |      \|  \  |  \ ▓▓    \ |      \| 
+      \ \▓▓__| ▓▓ ▓▓__/ ▓▓\▓ /       \     /      ▓▓/      \|   ▓▓ \ | ▓▓_  \▓▓  \ 
+▓▓/      \ /       \
+|  ▓▓▓▓▓▓\ \▓▓▓▓▓▓\      \▓▓  ▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓\ \▓▓▓▓▓▓\ ▓▓  | ▓▓ ▓▓▓▓▓▓▓\ \▓▓▓▓▓▓\ 
+▓▓▓▓▓▓\/      ▓▓>▓▓    ▓▓  |  ▓▓▓▓▓▓▓    |  ▓▓▓▓▓▓▓  ▓▓▓▓▓▓\\▓▓▓▓▓▓ | ▓▓ \   | ▓▓ ▓
+▓  ▓▓▓▓▓▓\  ▓▓▓▓▓▓▓
+| ▓▓   \▓▓/      ▓▓     |  \ ▓▓     | ▓▓  | ▓▓/      ▓▓ ▓▓  | ▓▓ ▓▓  | ▓▓/      ▓▓ 
+▓▓  | ▓▓  ▓▓▓▓▓▓|  ▓▓▓▓▓▓    \▓▓    \     | ▓▓  | ▓▓ ▓▓  | ▓▓ | ▓▓ __| ▓▓▓▓   | ▓▓ 
+▓▓ ▓▓    ▓▓\▓▓    \ 
+| ▓▓     |  ▓▓▓▓▓▓▓     | ▓▓ ▓▓_____| ▓▓  | ▓▓  ▓▓▓▓▓▓▓ ▓▓__/ ▓▓ ▓▓  | ▓▓  ▓▓▓▓▓▓▓ 
+▓▓  | ▓▓ ▓▓_____| ▓▓__/ ▓▓   _\▓▓▓▓▓▓\    | ▓▓__| ▓▓ ▓▓__/ ▓▓ | ▓▓|  \ ▓▓     | ▓▓ 
+▓▓ ▓▓▓▓▓▓▓▓_\▓▓▓▓▓▓\
+| ▓▓      \▓▓    ▓▓     | ▓▓\▓▓     \ ▓▓  | ▓▓\▓▓    ▓▓\▓▓    ▓▓ ▓▓  | ▓▓\▓▓    ▓▓ 
+▓▓  | ▓▓ ▓▓     \▓▓    ▓▓  |       ▓▓     \▓▓    ▓▓\▓▓    ▓▓  \▓▓  ▓▓ ▓▓     | ▓▓ ▓
+▓\▓▓     \       ▓▓
+ \▓▓       \▓▓▓▓▓▓▓__   | ▓▓ \▓▓▓▓▓▓▓\▓▓   \▓▓ \▓▓▓▓▓▓▓ \▓▓▓▓▓▓ \▓▓   \▓▓ \▓▓▓▓▓▓▓\
+▓▓   \▓▓\▓▓▓▓▓▓▓▓ \▓▓▓▓▓▓    \▓▓▓▓▓▓▓       \▓▓▓▓▓▓▓ \▓▓▓▓▓▓    \▓▓▓▓ \▓▓      \▓▓\
+▓▓ \▓▓▓▓▓▓▓\▓▓▓▓▓▓▓ 
+                  |  \__/ ▓▓                                                       
+                                                                                   
+BANNER
     
     msg "$C_GREEN" "🚀 Starting installation of Reign's Hyprland Dotfiles..."
     
     check_aur_helper
     install_packages
     backup_and_copy_configs
+    install_fonts
+    install_zshrc
     set_script_permissions
     build_fastfetch_from_source
     

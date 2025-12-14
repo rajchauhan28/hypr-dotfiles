@@ -1,21 +1,35 @@
 {
     "label" : "lock",
-    "action" : "hyprlock",
+    "action" : "/home/reign/.config/wlogout/scripts/anction lock",
     "keybind" : "l"
-}
-{
-    "label" : "reboot",
-    "action" : "systemctl reboot || loginctl reboot",
-    "keybind" : "r"
 }
 
 {
     "label" : "logout",
-    "action" : "pkill Hyprland || pkill sway || pkill niri || loginctl terminate-user $USER",
-    "keybind" : "e"
+    "action" : "/home/reign/.config/wlogout/scripts/anction logout",
+    "keybind" : "m"
 }
+
 {
     "label" : "shutdown",
-    "action" : "systemctl poweroff || loginctl poweroff",
+    "action" : "/home/reign/.config/wlogout/scripts/anction shutdown",
+    "keybind" : "d"
+}
+
+{
+    "label" : "reboot",
+    "action" : "/home/reign/.config/wlogout/scripts/anction reboot",
+    "keybind" : "r"
+}
+
+{
+    "label" : "suspend",
+    "action" : "/home/reign/.config/wlogout/scripts/anction suspend",
     "keybind" : "s"
+}
+
+{
+    "label" : "hibernate",
+    "action" : "/home/reign/.config/wlogout/scripts/anction hibernate",
+    "keybind" : "h"
 }

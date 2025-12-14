@@ -21,7 +21,7 @@ window#waybar {
 }
 
 /* --- Modules --- */
-#workspaces button,
+#workspaces,
 #custom-clock,
 #cpu,
 #memory,
@@ -39,16 +39,16 @@ window#waybar {
 #custom-power,
 #custom-backgroundapps,
 #custom-sys-stats,
-#custom-predator {
+#custom-home {
   border-radius: 14px;
   margin: 4px 6px;
   padding: 5px 10px;
   background: @background;
-  transition: background 0.2s;
+  transition: background 0.2s, color 0.2s, border 0.2s;
 }
 
-/* Hover effect */
-#workspaces button:hover,
+/* --- Hover effect --- */
+#workspaces:hover,
 #custom-clock:hover,
 #cpu:hover,
 #memory:hover,
@@ -65,23 +65,57 @@ window#waybar {
 #battery:hover,
 #custom-power:hover,
 #custom-sys-stats:hover,
-#custom-predator:hover {
+#custom-home:hover {
   background: @color8;
 }
 
-/* --- Workspaces (Hindi numerals centered) --- */
+/* --- Unified Workspaces Container --- */
 #workspaces {
-  margin: 0 20px;
-}
-#workspaces button {
-  padding: 6px 12px;
+  margin: 0 15px; /* Reduced margin */
+  padding: 2px 6px; /* Reduced padding */
   border: 1px solid @color8;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 18px;
 }
+
+/* Workspace buttons - Reduced size */
+#workspaces button {
+    padding: 2px 8px;
+    background: linear-gradient(90deg, transparent 0%, transparent 50%, rgba(220, 220, 220, 0) 50%, rgba(220, 220, 220, 0) 100%);
+    background-size: 200% 100%;
+    background-position: 100% 0%;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    transition: all 0.4s ease-in-out;
+    transition-property: background-position, color, opacity;
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    margin: 0 1px;
+    border-radius: 14px;
+    min-width: 16px;
+    min-height: 16px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+#workspaces button:not(.active):not(.focused) {
+    color: rgba(255, 255, 255, 0.4);
+    opacity: 0.6;
+}
+
+#workspaces button.active,
 #workspaces button.focused {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: #FFFFFF;
+     background: rgba(220, 220, 220, 0.8);
+    background-position: 0% 0%;
+    color: #000000;
+    font-weight: 800;
+    opacity: 1;
+}
+
+/* Hover effect for workspaces */
+#workspaces button:hover {
+  background: rgba(255, 255, 255, 0.15);
   color: @foreground;
+  opacity: 0.8;
 }
 
 /* --- Accent colors for modules --- */
@@ -122,47 +156,43 @@ window#waybar {
   color: @color8;
 }
 #battery {
-  color: @color10;
+  color: #a6e3a1;
 }
-#custom-predator {
+#custom-home {
   color: @color7;
 }
 
-
+/* --- KDE Connect States --- */
 #custom-kdeconnect {
-    padding: 0 10px;
+  padding: 0 10px;
 }
 
 #custom-kdeconnect.disconnected {
-    color: #666; /* Greyed out when disconnected */
+  color: #666; /* Greyed out when disconnected */
 }
 
 #custom-kdeconnect.connected {
-    color: @foreground;
+  color: @foreground;
 }
 
 #custom-kdeconnect.notifications {
-    color: #E8A257; /* Amber/Yellow for notifications */
+  color: #E8A257; /* Amber/Yellow for notifications */
 }
 
 #custom-kdeconnect.media-playing {
-    color: #83a598; /* A nice green/blue for media */
+  color: #83a598; /* A nice green/blue for media */
 }
 
+/* --- System Stats --- */
 #custom-sys-stats.warning {
   color: @color3;
 }
 
 #custom-sys-stats.critical {
   color: @color1;
-<<<<<<< HEAD
-<<<<<<< HEAD
-}
-=======
-=======
->>>>>>> origin/main
 }
 
+/* --- Module Backgrounds (semi-transparent dark base) --- */
 #custom-clock,
 #cpu,
 #memory,
@@ -180,20 +210,19 @@ window#waybar {
 #custom-power,
 #custom-backgroundapps,
 #custom-sys-stats,
-#custom-predator {
-  background: rgba(0, 0, 0, 0.2);
+#custom-home {
+  background: rgba(0, 0, 0, 0.6);
 }
 
+/* --- Clipboard History --- */
 #custom-cliphist {
-    padding: 0 10px;
-    color: #a6e3a1; /* A nice green, change as you like */
-    background-color: #1e1e2e; /* Match your bar's background */
+  padding: 0 10px;
+  color: #a6e3a1; /* A nice green */
+  background-color: #1e1e2e; /* Match your bar's background */
+  border-radius: 14px;
+  transition: background-color 0.2s;
 }
 
 #custom-cliphist:hover {
-    background-color: #45475a;
+  background-color: #45475a;
 }
-<<<<<<< HEAD
->>>>>>> 3216cf4 (updates waybar ui and tools)
-=======
->>>>>>> origin/main
