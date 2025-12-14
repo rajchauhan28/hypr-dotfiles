@@ -11,6 +11,35 @@
 
 set -e # Exit immediately if a command exits with a non-zero status.
 
+# --- BOOTSTRAP LOGIC ---
+# If package_list.txt is not found in the current directory, assume we need to clone the repo.
+if [ ! -f "package_list.txt" ]; then
+    echo -e "\033[0;34mRunning in bootstrap mode...\033[0m"
+    
+    # Check for git
+    if ! command -v git &>/dev/null; then
+        echo -e "\033[0;31mError: git is not installed. Please install git first.\033[0m"
+        exit 1
+    fi
+
+    REPO_URL="https://github.com/rajchauhan28/hypr-dotfiles.git"
+    INSTALL_DIR="$HOME/hypr-dotfiles"
+
+    if [ -d "$INSTALL_DIR" ]; then
+        echo -e "\033[0;33mDirectory $INSTALL_DIR already exists. Updating...\033[0m"
+        cd "$INSTALL_DIR"
+        git pull
+    else
+        echo -e "\033[0;34mCloning repository to $INSTALL_DIR...\033[0m"
+        git clone --depth=1 "$REPO_URL" "$INSTALL_DIR"
+        cd "$INSTALL_DIR"
+    fi
+
+    echo -e "\033[0;32mRepository ready. Launching installer...\033[0m"
+    chmod +x Install.sh
+    exec ./Install.sh "$@"
+fi
+
 # --- GLOBAL VARIABLES ---
 # Define colors for output messages
 readonly C_RESET='\033[0m'
@@ -103,6 +132,34 @@ install_packages() {
         exit 1
     fi
     msg "$C_GREEN" "✅ All packages installed successfully."
+}
+
+# Function to setup Hyprland plugins using hyprpm
+setup_hyprpm() {
+    msg "$C_CYAN" "🔌 Setting up Hyprland plugins..."
+    if ! command -v hyprpm &>/dev/null; then
+        msg "$C_YELLOW" "⚠️ hyprpm not found. Is Hyprland installed? Skipping plugin setup."
+        return
+    fi
+
+    # Update hyprpm headers
+    msg "$C_BLUE" "  -> Updating hyprpm headers..."
+    if ! hyprpm update; then
+        msg "$C_RED" "❌ Failed to update hyprpm headers."
+    fi
+
+
+
+    # Add and enable Hyprspace
+    msg "$C_BLUE" "  -> Adding Hyprspace..."
+    if hyprpm add https://github.com/KZDKM/Hyprspace; then
+        hyprpm enable Hyprspace
+        msg "$C_GREEN" "    -> Hyprspace enabled."
+    else
+        msg "$C_YELLOW" "    -> Failed to add Hyprspace or already added."
+    fi
+
+    msg "$C_GREEN" "✅ Hyprland plugins setup complete."
 }
 
 # Function to back up existing configs and copy the new ones.
@@ -261,6 +318,7 @@ BANNER
     
     check_aur_helper
     install_packages
+    setup_hyprpm
     backup_and_copy_configs
     install_fonts
     install_zshrc

@@ -34,7 +34,7 @@ This project does not have any external dependencies beyond the standard shell u
 ### Users of Arch BTW or distros from Arch BTW Family (Garuda, Manjaro, Endeavour or any pacman based distro) 
 #### Just Run the `Install.sh` file
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/rajchauhan28/hypr-dotfiles/refs/heads/main/Setup.sh)
+bash <(curl -fsSL https://raw.githubusercontent.com/rajchauhan28/hypr-dotfiles/refs/heads/main/Install.sh)
 ```
 
 #### Step 2 : Enjoy
@@ -43,7 +43,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/rajchauhan28/hypr-dotfiles/r
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/hypr-dotfiles.git
+git clone https://github.com/rajchauhan28/hypr-dotfiles.git
 ```
 
 2. Change to the project directory:
@@ -55,7 +55,7 @@ cd hypr-dotfiles
 3. Run the installation script:
 
 ```bash
-./install.sh
+./Install.sh
 ```
 
 ## Usage
