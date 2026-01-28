@@ -20,6 +20,7 @@ eza
 fastfetch
 fzf
 gdb
+ghostty
 git
 gnome-keyring
 gwenview
@@ -57,6 +58,7 @@ polkit-gnome
 polkit-kde-agent
 poppler
 pulsemixer
+pyprland
 python-dbus
 python-distro
 python-jinja

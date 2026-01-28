@@ -18,6 +18,7 @@ CANDIDATES = [
     ("mpv", "", "mpv"),
     ("spotify", "", "Spotify"),
     ("thunderbird", "", "Thunderbird"),
+    ("waybar", "", "Waybar"),
 ]
 
 def get_running():
@@ -35,7 +36,7 @@ def emit_json():
     running = get_running()
     icons = " ".join([i for _, i, _ in running])
     tooltip = "\n".join([n for _,_,n in running]) if running else "No known background apps running."
-    out = {"icon": "", "text": "", "tooltip": tooltip}
+    out = {"text": icons, "tooltip": tooltip, "class": "custom-background-apps"}
     print(json.dumps(out))
     sys.stdout.flush()
 

@@ -1,0 +1,186 @@
+[
+  {
+    "layer": "top",
+    "position": "top",
+    "height": 40,
+    "name": "top-bar",
+    "modules-left": [
+      "custom/home",
+      "custom/media",
+      "tray",
+      "custom/background-apps",
+      "custom/network",
+      "custom/bluetooth",
+      "hyprland/window"
+    ],
+    "modules-center": [
+      "hyprland/workspaces"
+    ],
+    "modules-right": [
+      "custom/updates",
+      "custom/brightness",
+      "pulseaudio",
+      "battery",
+      "custom/cliphist",
+      "custom/clock",
+      "custom/display",
+      "custom/sys-stats",
+      "custom/theme",
+      "custom/power"
+    ],
+    "hyprland/workspaces": {
+    "all-outputs": true,
+    "disable-scroll": true,
+    "format": "{icon}",
+    "format-icons": {
+        "1": "१",
+        "2": "२",
+        "3": "३",
+        "4": "४",
+        "5": "५",
+        "6": "६",
+        "7": "७",
+        "8": "८",
+        "9": "९",
+        "10": "१०",
+        "default": "•"
+    },
+    "persistent-workspaces": {
+        "1": {},
+        "2": {}, 
+        "3": {},
+        "4": {},
+        "5": {}
+    }
+},
+    "custom/cliphist": {
+      "format": "{}",
+      "tooltip": true,
+      "tooltip-format": "Clipboard History",
+      "exec": "echo ' '",
+      "on-click": "~/.config/waybar/scripts/clip-select.sh",
+      "on-click-middle": "cliphist wipe",
+      "on-click-right": "~/.config/waybar/scripts/clip-delete.sh"
+    },
+    "custom/media": {
+      "exec": "~/.config/waybar/scripts/media_info.py",
+      "return-type": "json",
+      "on-click": "playerctl play-pause",
+      "on-scroll-up": "playerctl next",
+      "on-scroll-down": "playerctl previous",
+      "tooltip": false,
+      "interval": 2
+    },
+    "tray": {
+      "icon-size": 16,
+      "spacing": 10,
+      "show-passive-items": true,
+      "reverse-direction": true
+    },
+    "custom/home": {
+      "format": "",
+      "on-click": "wofi -n",
+      "tooltip": "Launch App Search"
+    },
+    "custom/kdeconnect": {
+      "exec": "/home/reign/.config/waybar/scripts/kdeconnect.sh",
+      "return-type": "json",
+      "on-click": "kdeconnect-sms",
+      "interval": 2
+    },
+    "custom/background-apps": {
+      "exec": "/home/reign/.config/waybar/scripts/background_apps.py",
+      "return-type": "json",
+      "on-click": "/home/reign/.config/waybar/scripts/background_apps.py --popup",
+      "interval": 5
+    },
+    "custom/sys-stats": {
+      "exec": "/home/reign/.config/waybar/scripts/sys_stat.py",
+      "return-type": "json",
+      "on-click": "/home/reign/.config/waybar/scripts/sys_stat.py --popup",
+      "interval": 3
+    },
+    "custom/updates": {
+      "exec": "~/.config/waybar/scripts/system-update.sh",
+      "return-type": "json",
+      "on-click": "ghostty -e ~/.config/waybar/sys_update.sh update",
+      "interval": 1800
+    },
+    "custom/brightness": {
+      "exec": "~/.config/waybar/scripts/brightnesscontrol.sh",
+      "return-type": "json",
+      "on-scroll-up": "~/.config/waybar/scripts/brightnesscontrol.sh -o i",
+      "on-scroll-down": "~/.config/waybar/scripts/brightnesscontrol.sh -o d",
+      "interval": 1
+    },
+    "custom/network": {
+      "exec": "~/.config/waybar/scripts/network.py",
+      "return-type": "json",
+      "format": "{}",
+      "on-click": "~/.config/waybar/scripts/network.py --popup",
+      "on-click-right": "~/.config/waybar/scripts/network.py --toggle",
+      "interval": 5,
+      "tooltip": true
+    },
+    "custom/bluetooth": {
+      "exec": "~/.config/waybar/scripts/bluetooth.py",
+      "return-type": "json",
+      "format": "{}",
+      "on-click": "~/.config/waybar/scripts/bluetooth.py --popup",
+      "on-click-right": "~/.config/waybar/scripts/bluetooth.py --toggle",
+      "interval": 5,
+      "tooltip": true
+    },
+    "custom/clock": {
+      "exec": "~/.config/waybar/scripts/calendar_time.py",
+      "return-type": "json",
+      "on-click": "~/.config/waybar/scripts/calendar_time.py --toggle",
+      "on-click-right": "~/.config/waybar/scripts/calendar_time.py --popup",
+      "interval": 1
+    },
+    "pulseaudio": {
+        "format": "{icon} {volume}%",
+        "format-muted": "󰝟 {volume}%",
+        "format-icons": {
+            "headphone": "󰋋",
+            "hands-free": "󰋎",
+            "headset": "󰋎",
+            "phone": "󰏲",
+            "portable": "󰄜",
+            "car": "󰄋",
+            "default": ["󰕿", "󰖀", "󰕾"]
+        },
+        "on-click": "pavucontrol"
+    },
+    "battery": {
+      "format": "{icon} {capacity}%",
+      "format-charging": " {capacity}%",
+      "format-plugged": " {capacity}%",
+      "format-icons": [
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    },
+    "custom/display": {
+        "exec": "~/.config/waybar/scripts/check_monitors.sh",
+        "return-type": "json",
+        "format": "{}",
+        "on-click": "~/.config/hypr/display_switcher.sh",
+        "tooltip": true,
+        "interval": 5
+    },
+    "custom/theme": {
+        "format": "",
+        "on-click": "~/.config/waybar/scripts/theme_switcher.sh",
+        "tooltip": false
+    },
+    "custom/power": {
+      "format": "󰐥",
+      "on-click": "wlogout",
+      "tooltip": false
+    }
+  }
+]

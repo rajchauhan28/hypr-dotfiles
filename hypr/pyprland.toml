@@ -1,27 +1,25 @@
 [pyprland]
-plugins = [
-  "scratchpads"
-]
+plugins = [ "scratchpads" ]
 
 [scratchpads.term]
 animation = "fromTop"
-command = "kitty --class kitty-dropterm"
-class = "kitty-dropterm"
+# MUST have a dot (.) to be valid
+command = "ghostty --class=com.ghostty.term"
+class = "com.ghostty.term"
 position = "17% 6%"
 size = "65% 60%"
 offset = "200%"
 
 [scratchpads.music]
 animation = "fromBottom"
-command = "kitty --class kitty-pulsemixer -e pulsemixer"
-class = "kitty-pulsemixer"
+command = "ghostty --class=com.ghostty.music -e pulsemixer"
+class = "com.ghostty.music"
 size = "50% 20%"
 offset = "200%"
 
 [scratchpads.taskbar]
 animation = "fromLeft"
-command = "kitty --class kitty-taskbar -e btop"
-class = "kitty-taskbar"
-size = "40% 80%"
+command = "ghostty --class=com.ghostty.taskbar -e btop"
+class = "com.ghostty.taskbar"
+size = "50% 80%"
 offset = "200%"
-

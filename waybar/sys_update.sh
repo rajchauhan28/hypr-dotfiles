@@ -53,6 +53,7 @@ if [ "$1" = "update" ]; then
 
     # Step 3: Show goodbye art
     echo "$EXIT_ART"
+    read -p ""
     exit 0
 else
     updates=$(checkupdates 2>/dev/null | wc -l)

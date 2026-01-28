@@ -53,7 +53,8 @@ tooltip+="\nMoon Phase: ${phase}"
 
 
 # Handle CLI arguments
-while getopts o: opt; do
+icon_only=false
+while getopts o:i opt; do
   case "${opt}" in
     o)
       case $OPTARG in
@@ -70,6 +71,9 @@ while getopts o: opt; do
       esac
       exit 0
       ;;
+    i)
+      icon_only=true
+      ;;
     *)
       print_error
       exit 1
@@ -81,7 +85,12 @@ done
 get_brightness_info
 get_icon
 
-module="${icon} ${brightness}%"
+if [ "$icon_only" = true ]; then
+  module="${icon}"
+else
+  module="${icon} ${brightness}%"
+fi
+
 tooltip="Device Name: ${device}"
 tooltip+="\nBrightness: ${current_brightness} / ${max_brightness}"
 

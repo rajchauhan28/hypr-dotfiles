@@ -1,0 +1,258 @@
+@import url("file:///home/reign/.cache/wal/colors-waybar.css");
+
+/* ===========================
+   Waybar Dark Neumorphism (Pywal)
+   =========================== */
+* {
+  font-family: "JetBrainsMono Nerd Font", monospace;
+  font-size: 13px;
+  min-height: 0px;
+  border: none;
+  box-shadow: none;
+  color: @foreground;
+}
+
+/* --- Waybar Window --- */
+window#waybar {
+  background: transparent;
+  border-radius: 18px;
+  margin: 5px;
+  padding: 4px 10px;
+}
+
+/* --- Modules --- */
+#custom-clock,
+#cpu,
+#memory,
+#temperature,
+#custom-updates,
+#custom-network,
+#custom-bluetooth,
+#custom-media,
+#pulseaudio,
+#backlight,
+#custom-brightness,
+#custom-kdeconnect,
+#tray,
+#battery,
+#custom-background-apps,
+#custom-sys-stats,
+#custom-cliphist {
+  border-radius: 14px;
+  margin: 4px 6px;
+  padding: 5px 10px;
+  background: alpha(@background, 0.75);
+  transition: background 0.2s, color 0.2s, border 0.2s;
+}
+
+/* --- Hover effect --- */
+#custom-clock:hover,
+#cpu:hover,
+#memory:hover,
+#temperature:hover,
+#custom-updates:hover,
+#custom-network:hover,
+#custom-bluetooth:hover,
+#custom-media:hover,
+#custom-kdeconnect:hover,
+#pulseaudio:hover,
+#backlight:hover,
+#custom-brightness:hover,
+#tray:hover,
+#battery:hover,
+#custom-power:hover,
+#custom-sys-stats:hover,
+#custom-home:hover,
+#custom-cliphist:hover,
+#custom-display:hover,
+#custom-theme:hover {
+  background: @color8;
+}
+
+/* --- Unified Workspaces Container --- */ 
+#workspaces {
+  margin: 5px 0;
+  padding: 2px;
+  background: alpha(@background, 0.75);
+  border-radius: 14px;
+  border: none;
+}
+
+/* Workspace buttons */ 
+#workspaces button {
+    padding: 4px 0;
+    margin: 2px 5px;
+    background: transparent;
+    color: @foreground;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    min-width: 36px;
+}
+
+#workspaces button:not(.active):not(.focused) {
+    color: @foreground;
+    opacity: 0.7;
+}
+
+#workspaces button.active,
+#workspaces button.focused {
+    background: @color4;
+    color: @background;
+    font-weight: 800;
+    opacity: 1;
+    min-width: 40px; /* Slight expansion for active */
+}
+
+/* Hover effect for workspaces */ 
+#workspaces button:hover {
+  background: @color8;
+  color: @foreground;
+  opacity: 1;
+}
+
+/* --- Accent colors for modules --- */
+/* Network & Bluetooth States */
+#custom-network {
+  color: @color4;
+}
+#custom-network.connected {
+  color: @color4;
+}
+#custom-network.disconnected {
+  color: @color3; /* Warning color */
+}
+#custom-network.disabled {
+  color: @color8; /* Greyed out */
+}
+
+#custom-bluetooth {
+  color: @color5;
+}
+#custom-bluetooth.connected {
+  color: @color5;
+}
+#custom-bluetooth.on {
+  color: @color5;
+}
+#custom-bluetooth.off {
+  color: @color8; /* Greyed out */
+}
+
+#cpu {
+  color: @color1;
+}
+#memory {
+  color: @color3;
+}
+#temperature {
+  color: @color2;
+}
+#pulseaudio {
+  color: @color6;
+}
+#backlight {
+  color: @color13;
+}
+#custom-brightness {
+  color: @color11;
+}
+#custom-media {
+  color: @color6;
+}
+#custom-clock {
+  color: @color11;
+}
+#custom-updates {
+  color: @color9;
+}
+#custom-power {
+  color: @color8;
+}
+#battery {
+  color: #a6e3a1;
+}
+#custom-home {
+  color: @color7;
+}
+
+#custom-display {
+  color: @color7;
+}
+
+/* --- KDE Connect States --- */
+#custom-kdeconnect {
+  padding: 0 10px;
+}
+
+#custom-kdeconnect.disconnected {
+  color: #666; /* Greyed out when disconnected */
+}
+
+#custom-kdeconnect.connected {
+  color: @foreground;
+}
+
+#custom-kdeconnect.notifications {
+  color: #E8A257; /* Amber/Yellow for notifications */
+}
+
+#custom-kdeconnect.media-playing {
+  color: #83a598; /* A nice green/blue for media */
+}
+
+/* --- System Stats --- */
+#custom-sys-stats.warning {
+  color: @color3;
+}
+
+#custom-sys-stats.critical {
+  color: @color1;
+}
+
+/* --- Module Backgrounds (semi-transparent dark base) --- */
+#custom-clock,
+#cpu,
+#memory,
+#temperature,
+#custom-updates,
+#custom-network,
+#custom-bluetooth,
+#custom-media,
+#pulseaudio,
+#backlight,
+#custom-brightness,
+#custom-kdeconnect,
+#tray,
+#battery,
+#custom-background-apps,
+#custom-sys-stats,
+#custom-cliphist {
+  background: alpha(@background, 0.75);
+}
+
+/* --- Clipboard History --- */
+#custom-cliphist {
+  color: #a6e3a1; /* A nice green */
+}
+
+/* --- Circular Modules (Home, Display, Theme & Power) --- */
+#custom-home,
+#custom-display,
+#custom-theme,
+#custom-power {
+  padding: 0;
+  margin: 4px;
+  min-width: 34px;
+  min-height: 34px;
+  border-radius: 100%;
+  background: alpha(@background, 0.75);
+  font-size: 16px;
+}
+
+#custom-display.hidden {
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+  min-height: 0;
+}

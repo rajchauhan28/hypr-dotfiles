@@ -11,7 +11,7 @@ import json
 import psutil
 import subprocess
 import os
-import os
+import time
 
 def get_cpu_temp():
     """Gets CPU temperature."""
@@ -41,6 +41,14 @@ def emit_json():
     cpu_percent = psutil.cpu_percent(interval=1)
     ram_percent = psutil.virtual_memory().percent
     temp = get_cpu_temp()
+    
+    # Disk
+    disk = psutil.disk_usage('/')
+    disk_percent = disk.percent
+    
+    # Uptime
+    uptime_seconds = time.time() - psutil.boot_time()
+    uptime_string = f"{int(uptime_seconds // 3600)}h {int((uptime_seconds % 3600) // 60)}m"
 
     text = f" {cpu_percent:.0f}% |  {ram_percent:.0f}%"
     tooltip = f"CPU Usage: {cpu_percent:.0f}%\nRAM Usage: {ram_percent:.0f}%"
@@ -56,7 +64,13 @@ def emit_json():
         css_class = "warning"
 
     with open("/tmp/sys_stats.json", "w") as f:
-        json.dump({"cpu": cpu_percent, "ram": ram_percent, "temp": temp}, f)
+        json.dump({
+            "cpu": cpu_percent, 
+            "ram": ram_percent, 
+            "temp": temp,
+            "disk": disk_percent,
+            "uptime": uptime_string
+        }, f)
 
     print(json.dumps({
         'text': text,
@@ -65,21 +79,18 @@ def emit_json():
     }))
 
 def popup():
-    # Try multiple possible QML viewers
-    viewers = [
-        ["qml", "/home/reign/.config/waybar/scripts/sys_stat_popup.qml"],
-        ["qmlscene", "/home/reign/.config/waybar/scripts/sys_stat_popup.qml"],
-        ["qt5-qml", "/home/reign/.config/waybar/scripts/sys_stat_popup.qml"]
-    ]
+    script = "/home/reign/.config/waybar/scripts/sys_stat_popup.py"
     
-    for viewer in viewers:
+    # Check if script exists
+    if os.path.exists(script):
         try:
-            subprocess.Popen(viewer)
+            # Launch the python script detached
+            subprocess.Popen(["python3", script], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             return
-        except FileNotFoundError:
-            continue
-    
-    print("Error: No QML viewer found. Install qtdeclarative5-dev or similar package.", file=sys.stderr)
+        except Exception as e:
+            print(f"Error launching popup: {e}", file=sys.stderr)
+    else:
+        print(f"Error: Popup script not found at {script}", file=sys.stderr)
 
 if __name__ == "__main__":
     # Initialize cpu_percent before the loop

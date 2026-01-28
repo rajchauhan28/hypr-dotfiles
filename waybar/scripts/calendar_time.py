@@ -6,7 +6,7 @@ calendar_time.py
 - On click the Waybar config calls --toggle which will flip between time/date.
 """
 
-import sys, json, time, os
+import sys, json, time, os, subprocess
 from datetime import datetime
 
 TOGGLE_FILE = "/tmp/waybar_calendar_time_mode"
@@ -28,11 +28,11 @@ def emit():
     mode = read_mode()
     now = datetime.now()
     if mode == "time":
-        icon = ""
+        icon = ""
         text = now.strftime("%H:%M")
         tooltip = now.strftime("%H:%M:%S %Z")
     else:
-        icon = ""
+        icon = "󰃭"
         text = now.strftime("%d-%m-%y")
         tooltip = now.strftime("%A, %B %d, %Y")
     
@@ -40,11 +40,19 @@ def emit():
     print(json.dumps({"text": text, "tooltip": tooltip}))
     sys.stdout.flush()
 
+def popup():
+    script = "/home/reign/.config/waybar/scripts/calendar_popup.py"
+    env = os.environ.copy()
+    # env["LD_PRELOAD"] = "/usr/lib/libgtk4-layer-shell.so"
+    subprocess.Popen(["python3", script], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=env)
+
 if __name__ == "__main__":
     if "--toggle" in sys.argv:
         mode = read_mode()
         write_mode("date" if mode == "time" else "time")
         # no output necessary; Waybar will call the module again on interval
+    elif "--popup" in sys.argv:
+        popup()
     else:
         emit()
 

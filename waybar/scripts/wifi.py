@@ -55,6 +55,30 @@ def current_connection():
             return parts[0]
     return None
 
+def sync_time():
+    flag_file = "/tmp/.waybar_time_synced"
+    if not os.path.exists(flag_file):
+        try:
+            # Check if NTP is already enabled
+            ntp_status = subprocess.check_output(
+                ["timedatectl", "show", "-p", "NTP", "--value"], 
+                stderr=subprocess.DEVNULL
+            ).decode().strip()
+            
+            if ntp_status == "no":
+                # Try to enable it without asking for password
+                subprocess.run(
+                    ["timedatectl", "set-ntp", "true", "--no-ask-password"], 
+                    stdout=subprocess.DEVNULL, 
+                    stderr=subprocess.DEVNULL
+                )
+            
+            # Create flag file to avoid repeated checks this session
+            with open(flag_file, 'w') as f:
+                f.write('synced')
+        except Exception:
+            pass
+
 def bluetooth_list():
     """Returns a list of dictionaries for paired Bluetooth devices."""
     output = run_command("bluetoothctl devices Paired")
@@ -69,14 +93,63 @@ def bluetooth_list():
             devices.append({"mac": mac, "name": name, "connected": connected})
     return devices
 
+class PasswordDialog(Gtk.Window):
+    def __init__(self, ssid, parent, callback):
+        super().__init__(transient_for=parent, modal=True)
+        self.ssid = ssid
+        self.callback = callback
+        self.set_title(f"Password for {ssid}")
+        self.set_resizable(False)
+        self.set_default_size(300, -1)
+
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=15)
+        box.set_margin_top(20)
+        box.set_margin_bottom(20)
+        box.set_margin_start(20)
+        box.set_margin_end(20)
+        self.set_child(box)
+
+        lbl = Gtk.Label(label=f"Enter password for <b>{ssid}</b>")
+        lbl.set_use_markup(True)
+        box.append(lbl)
+
+        self.entry = Gtk.PasswordEntry()
+        box.append(self.entry)
+
+        btn_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        btn_box.set_halign(Gtk.Align.CENTER)
+        box.append(btn_box)
+
+        cancel_btn = Gtk.Button(label="Cancel")
+        cancel_btn.connect("clicked", lambda x: self.destroy())
+        btn_box.append(cancel_btn)
+
+        connect_btn = Gtk.Button(label="Connect")
+        connect_btn.add_css_class("suggested-action")
+        connect_btn.connect("clicked", self.on_connect)
+        self.set_default_widget(connect_btn)
+        btn_box.append(connect_btn)
+
+    def on_connect(self, btn):
+        text = self.entry.get_text()
+        self.callback(text)
+        self.destroy()
+
 # --- Waybar JSON emitters ---
 def emit_network_json():
     cur = current_connection()
     icon = ""
     if cur:
+        sync_time()
         text = f"{icon} {cur}"
         css_class = "connected"
     else:
+        flag_file = "/tmp/.waybar_time_synced"
+        if os.path.exists(flag_file):
+            try:
+                os.remove(flag_file)
+            except OSError:
+                pass
         text = f"{icon} Disconnected"
         css_class = "disconnected"
     out = {"text": text, "tooltip": "Click to see networks", "class": css_class}
@@ -153,14 +226,26 @@ class Popup(Gtk.Application):
         
         self.network_list_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
         main_box.append(self.network_list_box)
+        
+        # Keep a reference to prevent garbage collection of the dialog
+        self.active_dialog = None
 
-        def update_list(widget=None):
+        def get_saved_connections():
+            try:
+                output = run_command("nmcli -t -f NAME connection show")
+                return set(line.strip() for line in output.splitlines() if line.strip())
+            except:
+                return set()
+
+        def update_ui():
             child = self.network_list_box.get_first_child()
             while child:
                 self.network_list_box.remove(child)
                 child = self.network_list_box.get_first_child()
 
             nets = sorted(nmcli_list(), key=lambda x: x['signal'], reverse=True)
+            saved_conns = get_saved_connections()
+
             if not nets:
                 self.network_list_box.append(Gtk.Label(label="No networks found."))
 
@@ -171,23 +256,59 @@ class Popup(Gtk.Application):
                 btn_label = "Disconnect" if n["active"] else "Connect"
                 btn = Gtk.Button(label=btn_label)
 
-                def make_cb(ssid, active):
+                def make_cb(ssid, active, security):
                     def cb(widget):
                         if active:
                             subprocess.Popen(["nmcli", "connection", "down", ssid])
+                            self.quit()
                         else:
-                            subprocess.Popen(["nmcli", "device", "wifi", "connect", ssid, "--ask"])
-                        self.quit()
+                            # Heuristic: if security string indicates protection and not saved, ask pass
+                            # SECURITY field usually: "WPA2" or "WPA1 WPA2" or "NONE" or "--"
+                            is_secure = security and security != "--" and security.upper() != "NONE"
+                            is_saved = ssid in saved_conns
+                            
+                            if is_secure and not is_saved:
+                                def on_pass(password):
+                                    if password:
+                                        subprocess.Popen(["nmcli", "device", "wifi", "connect", ssid, "password", password])
+                                    else:
+                                        subprocess.Popen(["nmcli", "device", "wifi", "connect", ssid, "--ask"])
+                                    self.active_dialog = None # Cleanup ref
+                                    self.quit()
+
+                                root = widget.get_root()
+                                self.active_dialog = PasswordDialog(ssid, root, on_pass)
+                                self.active_dialog.present()
+                            else:
+                                # Saved or Open
+                                subprocess.Popen(["nmcli", "device", "wifi", "connect", ssid, "--ask"])
+                                self.quit()
                     return cb
 
-                btn.connect("clicked", make_cb(n["ssid"], n["active"]))
+                btn.connect("clicked", make_cb(n["ssid"], n["active"], n["sec"]))
 
                 row.append(name_label)
                 row.append(btn)
                 self.network_list_box.append(row)
+            
+            refresh_btn.set_label("Refresh")
+            refresh_btn.set_sensitive(True)
+            return False
 
-        refresh_btn.connect("clicked", update_list)
-        update_list()
+        def on_refresh(widget=None):
+            refresh_btn.set_label("Scanning...")
+            refresh_btn.set_sensitive(False)
+            # Force UI update for label change
+            while GLib.MainContext.default().iteration(False):
+                pass
+            
+            # Trigger rescan
+            subprocess.Popen(["nmcli", "device", "wifi", "rescan"], stderr=subprocess.DEVNULL)
+            # Wait for scan results to propagate
+            GLib.timeout_add(2000, update_ui)
+
+        refresh_btn.connect("clicked", on_refresh)
+        update_ui()
 
     def create_bluetooth_list(self, main_box):
         header_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)

@@ -40,7 +40,8 @@ if [ "$1" == "up" ]; then
     printf '\n'
     read -n 1 -p 'Press any key to continue...'
     "
-  kitty --title "  System Update" sh -c "${command}"
+ghostty --title=" System Update" -e sh -c "${command}"
+
 fi
 
 # Check for AUR updates
@@ -83,8 +84,24 @@ elif [ "$aur_helper" == "paru" ]; then
 fi
 
 # Module and tooltip
+icon_only=false
+for arg in "$@"; do
+  if [ "$arg" == "--icon" ]; then
+    icon_only=true
+  fi
+done
+
 if [ $total_updates -eq 0 ]; then
-  echo "{\"text\":\"Up to date\", \"tooltip\":\"Packages are up to date\"}"
+  if [ "$icon_only" = true ]; then
+      echo "{\"text\":\"\", \"tooltip\":\"Packages are up to date\", \"class\":\"updated\"}"
+  else
+      echo "{\"text\":\"Up to date\", \"tooltip\":\"Packages are up to date\", \"class\":\"updated\"}"
+  fi
 else
-  echo "{\"text\":\"$total_updates updates\", \"tooltip\":\"${tooltip//\"/\\\"}\"}"
+  if [ "$icon_only" = true ]; then
+      # Optional: Could include number as subscript or just icon
+      echo "{\"text\":\"\", \"tooltip\":\"${tooltip//\"/\\\"}\", \"class\":\"updates\"}"
+  else
+      echo "{\"text\":\"$total_updates updates\", \"tooltip\":\"${tooltip//\"/\\\"}\", \"class\":\"updates\"}"
+  fi
 fi
