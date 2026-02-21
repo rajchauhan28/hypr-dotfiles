@@ -41,7 +41,7 @@ def emit():
     sys.stdout.flush()
 
 def popup():
-    script = "/home/reign/.config/waybar/scripts/calendar_popup.py"
+    script = os.path.expanduser("~/.config/waybar/scripts/calendar_popup.py")
     env = os.environ.copy()
     # env["LD_PRELOAD"] = "/usr/lib/libgtk4-layer-shell.so"
     subprocess.Popen(["python3", script], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=env)

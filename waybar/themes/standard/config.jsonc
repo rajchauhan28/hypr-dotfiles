@@ -83,21 +83,21 @@
       "tooltip": "Launch App Search"
     },
     "custom/kdeconnect": {
-      "exec": "/home/reign/.config/waybar/scripts/kdeconnect.sh",
+      "exec": "~/.config/waybar/scripts/kdeconnect.sh",
       "return-type": "json",
       "on-click": "kdeconnect-sms",
       "interval": 2
     },
     "custom/background-apps": {
-      "exec": "/home/reign/.config/waybar/scripts/background_apps.py",
+      "exec": "~/.config/waybar/scripts/background_apps.py",
       "return-type": "json",
-      "on-click": "/home/reign/.config/waybar/scripts/background_apps.py --popup",
+      "on-click": "~/.config/waybar/scripts/background_apps.py --popup",
       "interval": 5
     },
     "custom/sys-stats": {
-      "exec": "/home/reign/.config/waybar/scripts/sys_stat.py",
+      "exec": "~/.config/waybar/scripts/sys_stat.py",
       "return-type": "json",
-      "on-click": "/home/reign/.config/waybar/scripts/sys_stat.py --popup",
+      "on-click": "~/.config/waybar/scripts/sys_stat.py --popup",
       "interval": 3
     },
     "custom/updates": {

@@ -79,8 +79,8 @@ def emit_json():
     }))
 
 def popup():
-    script = "/home/reign/.config/waybar/scripts/sys_stat_popup.py"
-    
+    script = os.path.expanduser("~/.config/waybar/scripts/sys_stat_popup.py")
+
     # Check if script exists
     if os.path.exists(script):
         try:

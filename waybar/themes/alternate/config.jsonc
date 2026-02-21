@@ -57,9 +57,9 @@
     },
 
     "custom/background-apps": {
-      "exec": "/home/reign/.config/waybar/scripts/background_apps.py",
+      "exec": "~/.config/waybar/scripts/background_apps.py",
       "return-type": "json",
-      "on-click": "/home/reign/.config/waybar/scripts/background_apps.py --popup",
+      "on-click": "~/.config/waybar/scripts/background_apps.py --popup",
       "interval": 5
     },
 

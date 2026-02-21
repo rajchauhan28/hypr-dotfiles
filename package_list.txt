@@ -48,7 +48,6 @@ networkmanager
 ntfs-3g
 octopi
 os-prober
-p7zip-gui
 pacman
 partitionmanager
 paru
