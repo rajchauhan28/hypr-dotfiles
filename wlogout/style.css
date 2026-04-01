@@ -25,26 +25,26 @@ button:hover {
 }
 
 #lock {
-    background-image: image(url("/home/reign/.config/wlogout/icons/lock.png"));
+    background-image: image(url("icons/lock.png"));
     background-size: 25%;
 }
 
 #logout {
-    background-image: image(url("/home/reign/.config/wlogout/icons/logout.png"));
+    background-image: image(url("icons/logout.png"));
 }
 
 #suspend {
-    background-image: image(url("/home/reign/.config/wlogout/icons/sleep.png"));
+    background-image: image(url("icons/sleep.png"));
 } 
 
 #shutdown {
-    background-image: image(url("/home/reign/.config/wlogout/icons/power.png"));
+    background-image: image(url("icons/power.png"));
 }
 
 #reboot {
-    background-image: image(url("/home/reign/.config/wlogout/icons/restart.png"));
+    background-image: image(url("icons/restart.png"));
 }
 
 #hibernate {
-    background-image: image(url("/home/reign/.config/wlogout/icons/hibernate.png"));
+    background-image: image(url("icons/hibernate.png"));
 }

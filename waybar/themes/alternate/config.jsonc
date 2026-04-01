@@ -184,7 +184,7 @@
       "exec": "~/.config/waybar/scripts/network.py --icon",
       "return-type": "json",
       "format": "{}",
-      "on-click": "~/.config/waybar/scripts/network.py --popup",
+      "on-click": "auralink",
       "on-click-right": "~/.config/waybar/scripts/network.py --toggle",
       "interval": 5,
       "tooltip": true

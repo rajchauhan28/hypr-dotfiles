@@ -21,7 +21,7 @@
       "custom/brightness",
       "pulseaudio",
       "battery",
-      "custom/cliphist",
+      "custom/clipse",
       "custom/clock",
       "custom/display",
       "custom/sys-stats",
@@ -53,14 +53,14 @@
         "5": {}
     }
 },
-    "custom/cliphist": {
+    "custom/clipse": {
       "format": "{}",
       "tooltip": true,
       "tooltip-format": "Clipboard History",
       "exec": "echo ' '",
-      "on-click": "~/.config/waybar/scripts/clip-select.sh",
-      "on-click-middle": "cliphist wipe",
-      "on-click-right": "~/.config/waybar/scripts/clip-delete.sh"
+      "on-click": "~/.config/waybar/scripts/clipse-select.sh",
+      "on-click-middle": "clipse -clear-all",
+      "on-click-right": "~/.config/waybar/scripts/clipse-delete.sh"
     },
     "custom/media": {
       "exec": "~/.config/waybar/scripts/media_info.py",
@@ -117,17 +117,17 @@
       "exec": "~/.config/waybar/scripts/network.py",
       "return-type": "json",
       "format": "{}",
-      "on-click": "~/.config/waybar/scripts/network.py --popup",
+      "on-click": "auralink",
       "on-click-right": "~/.config/waybar/scripts/network.py --toggle",
       "interval": 5,
       "tooltip": true
     },
     "custom/bluetooth": {
-      "exec": "~/.config/waybar/scripts/bluetooth.py",
+      "exec": "auralink-bt status",
       "return-type": "json",
       "format": "{}",
-      "on-click": "~/.config/waybar/scripts/bluetooth.py --popup",
-      "on-click-right": "~/.config/waybar/scripts/bluetooth.py --toggle",
+      "on-click": "auralink-bt popup",
+      "on-click-right": "auralink-bt toggle",
       "interval": 5,
       "tooltip": true
     },

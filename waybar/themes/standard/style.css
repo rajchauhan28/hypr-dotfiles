@@ -1,4 +1,4 @@
-@import url("file:///home/reign/.cache/wal/colors-waybar.css");
+@import url("../../../../.cache/wal/colors-waybar.css");
 
 /* ===========================
    Waybar Dark Neumorphism (Pywal)
@@ -37,7 +37,7 @@ window#waybar {
 #battery,
 #custom-background-apps,
 #custom-sys-stats,
-#custom-cliphist {
+#custom-clipse {
   border-radius: 14px;
   margin: 4px 6px;
   padding: 5px 10px;
@@ -63,7 +63,7 @@ window#waybar {
 #custom-power:hover,
 #custom-sys-stats:hover,
 #custom-home:hover,
-#custom-cliphist:hover,
+#custom-clipse:hover,
 #custom-display:hover,
 #custom-theme:hover {
   background: @color8;
@@ -227,12 +227,12 @@ window#waybar {
 #battery,
 #custom-background-apps,
 #custom-sys-stats,
-#custom-cliphist {
+#custom-clipse {
   background: alpha(@background, 0.75);
 }
 
 /* --- Clipboard History --- */
-#custom-cliphist {
+#custom-clipse {
   color: #a6e3a1; /* A nice green */
 }
 
