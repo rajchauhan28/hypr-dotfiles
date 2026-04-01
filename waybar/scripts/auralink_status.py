@@ -6,7 +6,11 @@ import os
 
 def get_network_status():
     try:
-        res = subprocess.check_output(["auralink", "status"], stderr=subprocess.DEVNULL).decode()
+        # Force headless mode by clearing display env vars
+        env = os.environ.copy()
+        env["DISPLAY"] = ""
+        env["WAYLAND_DISPLAY"] = ""
+        res = subprocess.check_output(["auralink", "status"], env=env, stderr=subprocess.DEVNULL, timeout=2).decode()
         data = json.loads(res)
     except:
         return {"text": "󰖪 Error", "class": "disconnected", "tooltip": "Auralink not running or error"}
@@ -38,7 +42,11 @@ def get_network_status():
 
 def get_bluetooth_status():
     try:
-        res = subprocess.check_output(["auralink-bt", "status"], stderr=subprocess.DEVNULL).decode()
+        # Force headless mode by clearing display env vars
+        env = os.environ.copy()
+        env["DISPLAY"] = ""
+        env["WAYLAND_DISPLAY"] = ""
+        res = subprocess.check_output(["auralink-bt", "status"], env=env, stderr=subprocess.DEVNULL, timeout=2).decode()
         data = json.loads(res)
     except:
         return {"text": "󰂲 Error", "class": "off", "tooltip": "Auralink-BT error"}
