@@ -114,22 +114,16 @@
       "interval": 1
     },
     "custom/network": {
-      "exec": "~/.config/waybar/scripts/network.py",
+      "exec": "python3 ~/.config/waybar/scripts/auralink_status.py --mode network",
       "return-type": "json",
-      "format": "{}",
-      "on-click": "python3 ~/.config/waybar/scripts/network.py --popup",
-      "on-click-right": "~/.config/waybar/scripts/network.py --toggle",
-      "interval": 5,
-      "tooltip": true
+      "on-click": "auralink",
+      "interval": 5
     },
     "custom/bluetooth": {
-      "exec": "python3 ~/.config/waybar/scripts/bluetooth.py",
+      "exec": "python3 ~/.config/waybar/scripts/auralink_status.py --mode bluetooth",
       "return-type": "json",
-      "format": "{}",
-      "on-click": "python3 ~/.config/waybar/scripts/bluetooth.py --popup",
-      "on-click-right": "python3 ~/.config/waybar/scripts/bluetooth.py --toggle",
-      "interval": 5,
-      "tooltip": true
+      "on-click": "auralink-bt",
+      "interval": 5
     },
     "custom/clock": {
       "exec": "~/.config/waybar/scripts/calendar_time.py",
