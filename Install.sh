@@ -318,7 +318,6 @@ BANNER
     
     check_aur_helper
     install_packages
-    setup_hyprpm
     backup_and_copy_configs
     install_fonts
     install_zshrc

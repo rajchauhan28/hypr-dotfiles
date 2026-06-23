@@ -35,7 +35,6 @@ kdeconnect
 kdialog
 libc++
 libreoffice-fresh
-libsoup
 linux
 linux-firmware
 linux-headers
@@ -91,7 +90,6 @@ vi
 visual-studio-code-bin
 vlc
 waybar
-webkit2gtk
 wget
 wireguard-tools
 wireplumber
@@ -108,4 +106,3 @@ zoxide
 zsh
 zsh-autosuggestions
 zsh-syntax-highlighting
-zsh-theme-powerlevel10k-git

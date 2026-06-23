@@ -11,7 +11,7 @@ def run(cmd):
     except:
         return ""
 
-def get_network_status():
+def get_network_status(icon_only=False):
     # Prioritize Ethernet
     active_out = run(["nmcli", "-t", "-f", "NAME,TYPE,DEVICE,STATE", "connection", "show", "--active"])
     
@@ -26,13 +26,13 @@ def get_network_status():
                 conn = parts
     
     if not conn:
-        return {"text": "󰖪 Disconnected", "class": "disconnected", "tooltip": "No active connection"}
+        return {"text": "󰖪" if icon_only else "󰖪 Disconnected", "class": "disconnected", "tooltip": "No active connection"}
 
     name, ctype, dev, state = conn[0], conn[1], conn[2], conn[3]
     
     if ctype == '802-3-ethernet':
         icon = "󰈀"
-        text = f"{icon} {name}"
+        text = icon if icon_only else f"{icon} {name}"
     else:
         # WiFi Signal
         sig_out = run(["nmcli", "-t", "-f", "SIGNAL", "device", "wifi", "list", "ifname", dev])
@@ -46,7 +46,7 @@ def get_network_status():
         elif sig >= 40: icon = "󰤢"
         elif sig >= 20: icon = "󰤟"
         else: icon = "󰤯"
-        text = f"{icon} {name}"
+        text = icon if icon_only else f"{icon} {name}"
 
     # IP
     ip = run(["ip", "-4", "-o", "addr", "show", dev])
@@ -59,12 +59,12 @@ def get_network_status():
         "tooltip": f"SSID: {name}\nIP: {ip_addr}\nType: {ctype}\nDevice: {dev}"
     }
 
-def get_bluetooth_status():
+def get_bluetooth_status(icon_only=False):
     power_out = run(["bluetoothctl", "show"])
     powered = "Powered: yes" in power_out
     
     if not powered:
-        return {"text": "󰂲 Off", "class": "off", "tooltip": "Bluetooth is powered off"}
+        return {"text": "󰂲" if icon_only else "󰂲 Off", "class": "off", "tooltip": "Bluetooth is powered off"}
 
     # Get connected devices
     devs_out = run(["bluetoothctl", "devices", "Paired"])
@@ -80,12 +80,12 @@ def get_bluetooth_status():
                 connected.append(f"{name}{batt}")
 
     if not connected:
-        return {"text": "󰂯 On", "class": "on", "tooltip": "Bluetooth on, no devices connected"}
+        return {"text": "󰂯" if icon_only else "󰂯 On", "class": "on", "tooltip": "Bluetooth on, no devices connected"}
 
     # Use first device for text
     primary = connected[0]
     return {
-        "text": f"󰂯 {primary}",
+        "text": "󰂯" if icon_only else f"󰂯 {primary}",
         "class": "connected",
         "tooltip": "Connected Devices:\n" + "\n".join([f"• {d}" for d in connected])
     }
@@ -93,9 +93,10 @@ def get_bluetooth_status():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", choices=["network", "bluetooth"], required=True)
+    parser.add_argument("--icon", action="store_true")
     args = parser.parse_args()
 
     if args.mode == "network":
-        print(json.dumps(get_network_status()))
+        print(json.dumps(get_network_status(icon_only=args.icon)))
     else:
-        print(json.dumps(get_bluetooth_status()))
+        print(json.dumps(get_bluetooth_status(icon_only=args.icon)))
