@@ -123,7 +123,7 @@
       "tooltip": true
     },
     "custom/bluetooth": {
-      "exec": "auralink-bt status",
+      "exec": "~/.config/waybar/scripts/bluetooth.py",
       "return-type": "json",
       "format": "{}",
       "on-click": "auralink-bt popup",
