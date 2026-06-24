@@ -67,7 +67,7 @@ hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
 -------------------
 hl.on("hyprland.start", function()
     hl.exec_cmd("systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP && systemctl --user start walllust-daemon.service")
-    hl.exec_cmd("clipse -listen")
+    -- hl.exec_cmd("clipse -listen")  -- Replaced by walker clipboard
     hl.exec_cmd("wl-paste --type text --watch cliphist store")
     hl.exec_cmd("wl-paste --type image --watch cliphist store")
     hl.exec_cmd("hypridle")
@@ -100,14 +100,6 @@ hl.window_rule({
     size  = "80% 30%",
     workspace = "special silent",
     no_anim = true,
-})
-
-hl.window_rule({
-    name  = "clipse-float",
-    match = { title = "^(clipse)$" },
-    float = true,
-    center = true,
-    size  = "800 650",
 })
 
 hl.window_rule({
@@ -233,6 +225,8 @@ hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd(wallpaperSwitcher))
 hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("pkill waybar"))
 hl.bind(mainMod .. " + O", hl.dsp.exec_cmd("waybar &"))
 hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
+hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("walker -m clipboard"))
+hl.bind(mainMod .. " + SHIFT + E", hl.dsp.exec_cmd("walker -m files"))
 hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))
