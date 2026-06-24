@@ -79,7 +79,7 @@
     },
     "custom/home": {
       "format": "",
-      "on-click": "wofi -n",
+      "on-click": "rofi -show drun",
       "tooltip": "Launch App Search"
     },
     "custom/kdeconnect": {

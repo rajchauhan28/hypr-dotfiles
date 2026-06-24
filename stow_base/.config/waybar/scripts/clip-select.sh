@@ -1,2 +1,2 @@
 #!/bin/sh
-cliphist list | wofi -n --dmenu | cliphist decode | wl-copy
+cliphist list | rofi -dmenu | cliphist decode | wl-copy

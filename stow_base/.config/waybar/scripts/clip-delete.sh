@@ -1,2 +1,2 @@
 #!/bin/sh
-cliphist list | wofi --dmenu | cliphist delete
+cliphist list | rofi -dmenu | cliphist delete
