@@ -187,3 +187,7 @@ function pcheck() {
         echo "✅ Proxy is ON ($http_proxy)"
     fi
 }
+
+
+# Added by Antigravity CLI installer
+export PATH="/home/reign/.local/bin:$PATH"
