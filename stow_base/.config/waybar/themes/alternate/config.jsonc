@@ -181,12 +181,11 @@
     },
 
     "custom/network": {
-      "exec": "~/.config/waybar/scripts/network.py --icon",
+      "exec": "auralink waybar-stream --icon",
       "return-type": "json",
       "format": "{}",
       "on-click": "auralink",
       "on-click-right": "~/.config/waybar/scripts/network.py --toggle",
-      "interval": 5,
       "tooltip": true
     },
     
@@ -199,12 +198,11 @@
     },
 
     "custom/bluetooth": {
-      "exec": "~/.config/waybar/scripts/bluetooth.py --icon",
+      "exec": "auralink-bt waybar-stream --icon",
       "return-type": "json",
       "format": "{}",
       "on-click": "auralink-bt popup",
       "on-click-right": "auralink-bt toggle",
-      "interval": 5,
       "tooltip": true
     },
     
