@@ -1,4 +1,5 @@
 {
+  "actions_as_menu": true,
   "keybinds": {
     "show_actions": ["shift right", "tab"]
   }
