@@ -12,7 +12,7 @@ OPT_EXT_ONLY="TV Only"
 OPT_INT_ONLY="Laptop Only"
 
 # Show menu
-CHOICE=$(echo -e "$OPT_EXTEND_R\n$OPT_EXTEND_L\n$OPT_MIRROR\n$OPT_EXT_ONLY\n$OPT_INT_ONLY" | rofi -dmenu -p "Display Mode")
+CHOICE=$(echo -e "$OPT_EXTEND_R\n$OPT_EXTEND_L\n$OPT_MIRROR\n$OPT_EXT_ONLY\n$OPT_INT_ONLY" | walker --dmenu -p "Display Mode")
 
 case "$CHOICE" in
     "$OPT_EXTEND_R")

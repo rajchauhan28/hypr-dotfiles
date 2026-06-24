@@ -42,7 +42,7 @@ hl.monitor({
 ---------------------
 local terminal           = "ghostty"
 local fileManager        = "dolphin"
-local menu               = "rofi -show drun"
+local menu               = "walker"
 local browser            = "brave"
 local waybarHider        = "/home/reign/.config/hypr/waybar_hider.sh"
 local wallpaperSwitcher  = "/home/reign/.config/hypr/wallpaper_switcher.sh"

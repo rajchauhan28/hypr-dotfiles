@@ -7,7 +7,7 @@ OPT_NVIDIA="NVIDIA (Max Performance - Gaming)"
 OPT_OPT_BATTERY="Tweak: Optimize for Battery (60Hz + Eco)"
 OPT_OPT_GAMING="Tweak: Optimize for Gaming (165Hz + Performance)"
 
-CHOICE=$(echo -e "$OPT_INTEGRATED\n$OPT_HYBRID\n$OPT_NVIDIA\n$OPT_OPT_BATTERY\n$OPT_OPT_GAMING" | rofi -dmenu -p "GPU Mode & Optimizations")
+CHOICE=$(echo -e "$OPT_INTEGRATED\n$OPT_HYBRID\n$OPT_NVIDIA\n$OPT_OPT_BATTERY\n$OPT_OPT_GAMING" | walker --dmenu -p "GPU Mode & Optimizations")
 
 case "$CHOICE" in
     "$OPT_INTEGRATED")
