@@ -80,6 +80,8 @@ strace
 sudo
 swaync
 thunar
+timeshift
+timeshift-autosnap
 tigervnc
 tree
 ttf-firacode-nerd
@@ -95,7 +97,8 @@ wireguard-tools
 wireplumber
 wl-clipboard
 wlogout
-wofi
+stow
+walker
 xclip
 xdg-desktop-portal-gtk
 xdg-desktop-portal-wlr

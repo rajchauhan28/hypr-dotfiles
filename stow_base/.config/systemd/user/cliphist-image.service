@@ -1,0 +1,12 @@
+[Unit]
+Description=Cliphist Image Service
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+ExecStart=/usr/bin/wl-paste --type image --watch cliphist store
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=graphical-session.target

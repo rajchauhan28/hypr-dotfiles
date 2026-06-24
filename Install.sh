@@ -57,7 +57,7 @@ readonly ALL_CONFIG_DIRS=(
     nvim
     waybar
     wlogout
-    wofi
+    walker
     yazi
     ReignShell
 )
@@ -162,39 +162,32 @@ setup_hyprpm() {
     msg "$C_GREEN" "✅ Hyprland plugins setup complete."
 }
 
-# Function to back up existing configs and copy the new ones.
-backup_and_copy_configs() {
-    local dotfiles_dir
-    dotfiles_dir=$(pwd)
+# Function to backup existing configs and use stow to link the new ones.
+stow_configs() {
     local backup_dir="$HOME/.dotfiles_backup_$(date +%Y%m%d_%H%M%S)"
+    msg "$C_CYAN" "📂 Backing up existing configs to $backup_dir and applying Stow..."
     
-    msg "$C_CYAN" "📂 Backing up existing configs to $backup_dir and copying new ones..."
     mkdir -p "$backup_dir/.config"
     
+    # Backup existing configs that are about to be stowed
     for dir in "${ALL_CONFIG_DIRS[@]}"; do
-        local src="$dotfiles_dir/$dir"
         local dest="$HOME/.config/$dir"
-        
-        if [ -d "$src" ]; then
-            if [ -e "$dest" ]; then
-                msg "$C_YELLOW" "  -> Backing up '$dir'..."
-                mv "$dest" "$backup_dir/.config/"
-            fi
-            msg "$C_BLUE" "  -> Installing '$dir'..."
-            cp -r "$src" "$HOME/.config/"
-        else
-            msg "$C_YELLOW" "⚠️ Source directory '$src' not found in repo. Skipping."
+        if [ -e "$dest" ] && [ ! -L "$dest" ]; then
+            msg "$C_YELLOW" "  -> Backing up '$dir'..."
+            mv "$dest" "$backup_dir/.config/"
         fi
     done
     
-    # Handle wallpapers separately
-    if [ -d "$dotfiles_dir/wallpapers" ]; then
-        msg "$C_BLUE" "  -> Installing wallpapers..."
-        mkdir -p "$HOME/Pictures/wallpapers"
-        cp -r "$dotfiles_dir/wallpapers/." "$HOME/Pictures/wallpapers/"
+    if [ -e "$HOME/.zshrc" ] && [ ! -L "$HOME/.zshrc" ]; then
+        mv "$HOME/.zshrc" "$backup_dir/"
     fi
     
-    msg "$C_GREEN" "✅ Config files and wallpapers installed."
+    msg "$C_BLUE" "  -> Applying GNU Stow from stow_base..."
+    cd stow_base
+    stow -t "$HOME" .
+    cd ..
+    
+    msg "$C_GREEN" "✅ Config files successfully stowed."
 }
 
 # Function to install fonts
@@ -217,27 +210,7 @@ install_fonts() {
     fi
 }
 
-# Function to install zshrc
-install_zshrc() {
-    msg "$C_CYAN" "🐚 Installing .zshrc..."
-    local dotfiles_dir
-    dotfiles_dir=$(pwd)
-    local src="$dotfiles_dir/.zshrc"
-    local dest="$HOME/.zshrc"
-    
-    if [ -f "$src" ]; then
-        if [ -f "$dest" ]; then
-             local backup_path="$HOME/.zshrc.backup_$(date +%Y%m%d_%H%M%S)"
-             msg "$C_YELLOW" "  -> Backing up existing .zshrc to $backup_path"
-             mv "$dest" "$backup_path"
-        fi
-        msg "$C_BLUE" "  -> Copying .zshrc..."
-        cp "$src" "$dest"
-        msg "$C_GREEN" "✅ .zshrc installed."
-    else
-        msg "$C_YELLOW" "⚠️ .zshrc not found in repo. Skipping."
-    fi
-}
+
 
 # Function to set executable permissions for scripts.
 set_script_permissions() {
@@ -318,9 +291,8 @@ BANNER
     
     check_aur_helper
     install_packages
-    backup_and_copy_configs
+    stow_configs
     install_fonts
-    install_zshrc
     set_script_permissions
     build_fastfetch_from_source
     
