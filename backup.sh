@@ -17,6 +17,7 @@ CONFIG_DIRS=(
     "$HOME/.config/ReignShell"
     "$HOME/.config/nvim"
     "$HOME/.config/mpv"
+    "$HOME/.config/walllust"
 )
 
 # Create the backup directory if it does not already exist.

@@ -19,7 +19,7 @@ offset = "200%"
 
 [scratchpads.taskbar]
 animation = "fromLeft"
-command = "ghostty --class=com.ghostty.taskbar -e btop"
+command = "ghostty --class=com.ghostty.taskbar -e btop --utf-force"
 class = "com.ghostty.taskbar"
 size = "50% 80%"
 offset = "200%"
