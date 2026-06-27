@@ -109,3 +109,5 @@ zoxide
 zsh
 zsh-autosuggestions
 zsh-syntax-highlighting
+rofi
+wallust

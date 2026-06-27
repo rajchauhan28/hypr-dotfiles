@@ -60,6 +60,9 @@ readonly ALL_CONFIG_DIRS=(
     walker
     yazi
     ReignShell
+    walllust
+    rofi
+    systemd
 )
 
 # Directories containing scripts that need executable permissions
@@ -128,10 +131,19 @@ install_packages() {
     
     msg "$C_BLUE" "Installing ${#PACKAGES[@]} packages. This may take a while..."
     if ! "$AUR_HELPER" -Syu --noconfirm --needed "${PACKAGES[@]}"; then
-        msg "$C_RED" "❌ Package installation failed. Please check the output for errors."
-        exit 1
+        msg "$C_YELLOW" "⚠️ Bulk package installation failed, possibly due to conflicts."
+        msg "$C_CYAN" "🔄 Attempting fallback method: installing packages individually to exclude conflicting ones..."
+        for pkg in "${PACKAGES[@]}"; do
+            msg "$C_BLUE" "  -> Installing $pkg..."
+            if ! "$AUR_HELPER" -S --noconfirm --needed "$pkg"; then
+                msg "$C_RED" "    ❌ Failed to install $pkg. It might be conflicting or unavailable. Skipping."
+            else
+                msg "$C_GREEN" "    ✅ Installed $pkg."
+            fi
+        done
+    else
+        msg "$C_GREEN" "✅ All packages installed successfully."
     fi
-    msg "$C_GREEN" "✅ All packages installed successfully."
 }
 
 # Function to setup Hyprland plugins using hyprpm
@@ -175,6 +187,22 @@ stow_configs() {
         if [ -e "$dest" ] && [ ! -L "$dest" ]; then
             msg "$C_YELLOW" "  -> Backing up '$dir'..."
             mv "$dest" "$backup_dir/.config/"
+        fi
+    done
+    
+    # Backup potential conflicting loose files before stow
+    local loose_files=(
+        ".local/bin/auralink"
+        ".local/bin/auralink-bt"
+        ".local/share/applications/auralink.desktop"
+        ".local/share/applications/auralink-bt.desktop"
+    )
+    for lfile in "${loose_files[@]}"; do
+        local dest="$HOME/$lfile"
+        if [ -e "$dest" ] && [ ! -L "$dest" ]; then
+            msg "$C_YELLOW" "  -> Backing up '$lfile'..."
+            mkdir -p "$backup_dir/$(dirname "$lfile")"
+            mv "$dest" "$backup_dir/$lfile"
         fi
     done
     

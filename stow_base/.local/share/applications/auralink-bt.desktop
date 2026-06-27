@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=AuraLink Bluetooth
+Comment=Modern Bluetooth Manager built with Rust
+Exec=auralink-bt
+Icon=bluetooth
+Terminal=false
+Type=Application
+Categories=Settings;HardwareSettings;
+StartupNotify=true
+StartupWMClass=auralink-bt

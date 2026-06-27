@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=AuraLink
+Comment=Modern Wi-Fi, VPN, and Network Manager built with Rust
+Exec=auralink
+Icon=auralink
+Terminal=false
+Type=Application
+Categories=Network;Settings;
+StartupNotify=true
+StartupWMClass=auralink
