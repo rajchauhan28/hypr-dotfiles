@@ -7,7 +7,34 @@ import Quickshell.Io
 Singleton {
     id: theme
 
-    readonly property color panelBg: "#f2101014"
+    property var cfg: ({})
+
+    FileView {
+        path: "/home/reign/.config/quickshell/settings.json"
+        watchChanges: true
+        onFileChanged: reload()
+        onLoaded: {
+            try {
+                theme.cfg = JSON.parse(text()) || ({});
+            } catch (e) {}
+        }
+    }
+
+    function num(section, key, def) {
+        var s = theme.cfg[section];
+        if (!s) return def;
+        var v = s[key];
+        return (typeof v === "number" && isFinite(v)) ? v : def;
+    }
+
+    function col(key, def) {
+        var p = theme.cfg.palette;
+        if (!p) return def;
+        var v = p[key];
+        return (typeof v === "string" && v !== "") ? v : def;
+    }
+
+    readonly property color panelBg: theme.col("panelBg", "#f2101014")
     readonly property color panelBorder: "#1cffffff"
     readonly property color card: "#1a1a22"
     readonly property color cardHover: "#282836"
@@ -18,14 +45,15 @@ Singleton {
     readonly property color textSecondary: "#a1a1aa"
     readonly property color textMuted: "#71717a"
 
-    readonly property color accent: "#e4e4e7"
-    readonly property color good: "#86d9a3"
-    readonly property color danger: "#ef4444"
+    readonly property color accent: theme.col("accent", "#e4e4e7")
+    readonly property color good: theme.col("good", "#86d9a3")
+    readonly property color danger: theme.col("danger", "#ef4444")
 
-    readonly property int barWidth: 54
-    readonly property int iconSlot: 44
-    readonly property int radiusPanel: 16
-    readonly property int radiusSmall: 10
+    readonly property int barWidth: theme.num("leftbar", "barWidth", 54)
+    readonly property int iconSlot: theme.num("leftbar", "iconSlot", 38)
+    readonly property int barPadding: theme.num("leftbar", "barPadding", 10)
+    readonly property int radiusPanel: theme.num("leftbar", "radiusPanel", 16)
+    readonly property int radiusSmall: theme.num("leftbar", "radiusSmall", 10)
 
     readonly property int animFast: 120
     readonly property int animNormal: 220
