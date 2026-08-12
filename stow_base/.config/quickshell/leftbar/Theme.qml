@@ -9,15 +9,19 @@ Singleton {
 
     property var cfg: ({})
 
+    function parseCfg(txt) {
+        if (!txt) return;
+        try {
+            theme.cfg = JSON.parse(txt) || ({});
+        } catch (e) {}
+    }
+
     FileView {
         path: "/home/reign/.config/quickshell/settings.json"
         watchChanges: true
         onFileChanged: reload()
-        onLoaded: {
-            try {
-                theme.cfg = JSON.parse(text()) || ({});
-            } catch (e) {}
-        }
+        onLoaded: theme.parseCfg(text())
+        onTextChanged: theme.parseCfg(text())
     }
 
     function num(section, key, def) {

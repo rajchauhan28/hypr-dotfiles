@@ -124,16 +124,16 @@ ShellRoot {
 
             ColumnLayout {
                 anchors.fill: parent
-                anchors.topMargin: 12
-                anchors.bottomMargin: 12
+                anchors.topMargin: Theme.barPadding
+                anchors.bottomMargin: Theme.barPadding
                 spacing: 16
 
                 // ---- 1. Dynamic Clock Island (Stacked HH / MM) ----
                 Rectangle {
                     Layout.alignment: Qt.AlignHCenter
-                    implicitWidth: 42
+                    implicitWidth: Math.max(34, Theme.barWidth - 12)
                     implicitHeight: 52
-                    radius: 12
+                    radius: Theme.radiusSmall
                     color: clockMouse.containsMouse ? Theme.cardHover : Theme.card
                     border.color: clockMouse.containsMouse ? Theme.borderStrong : Theme.border
                     border.width: 1
@@ -184,14 +184,14 @@ ShellRoot {
                 // ---- 2. Vertical Workspaces Switcher ----
                 Item {
                     Layout.alignment: Qt.AlignHCenter
-                    implicitWidth: 38
+                    implicitWidth: Theme.iconSlot
                     implicitHeight: 5 * 34
 
                     // Sliding active workspace highlight capsule
                     Rectangle {
-                        width: 34
+                        width: Theme.iconSlot - 4
                         height: 30
-                        radius: 8
+                        radius: Theme.radiusSmall
                         color: Theme.accent
                         opacity: 0.25
                         border.color: Theme.accent
@@ -212,15 +212,15 @@ ShellRoot {
                             model: 5
                             delegate: Item {
                                 readonly property int wsNum: index + 1
-                                width: 38
+                                width: Theme.iconSlot
                                 height: 30
 
                                 Rectangle {
                                     id: wsItemBg
                                     anchors.centerIn: parent
-                                    width: 32
+                                    width: Theme.iconSlot - 6
                                     height: 28
-                                    radius: 7
+                                    radius: Theme.radiusSmall - 2
                                     color: wsMouse.containsMouse ? Theme.cardHover : "transparent"
                                     Behavior on color { ColorAnimation { duration: Theme.animFast } }
 
@@ -263,7 +263,7 @@ ShellRoot {
                 // Divider line
                 Rectangle {
                     Layout.alignment: Qt.AlignHCenter
-                    implicitWidth: 28
+                    implicitWidth: Math.max(20, Theme.iconSlot - 10)
                     implicitHeight: 1
                     color: Theme.border
                 }
@@ -282,14 +282,14 @@ ShellRoot {
                         ]
 
                         delegate: Item {
-                            implicitWidth: 38
-                            implicitHeight: 38
+                            implicitWidth: Theme.iconSlot
+                            implicitHeight: Theme.iconSlot
                             Layout.alignment: Qt.AlignHCenter
 
                             Rectangle {
                                 id: appBtn
                                 anchors.fill: parent
-                                radius: 10
+                                radius: Theme.radiusSmall
                                 color: appMouse.containsMouse ? Theme.cardHover : Theme.card
                                 border.color: appMouse.containsMouse ? Theme.borderStrong : Theme.border
                                 border.width: 1
@@ -331,9 +331,9 @@ ShellRoot {
                     // Overview Toggle Pill (Tiles Button -> Super+Tab Overview)
                     Rectangle {
                         Layout.alignment: Qt.AlignHCenter
-                        implicitWidth: 38
-                        implicitHeight: 38
-                        radius: 10
+                        implicitWidth: Theme.iconSlot
+                        implicitHeight: Theme.iconSlot
+                        radius: Theme.radiusSmall
                         color: ovMouse.containsMouse ? Theme.cardHover : Theme.card
                         border.color: ovMouse.containsMouse ? Theme.accent : Theme.border
                         border.width: 1
@@ -391,9 +391,9 @@ ShellRoot {
                             // 1. Lock Screen
                             Rectangle {
                                 Layout.alignment: Qt.AlignHCenter
-                                implicitWidth: 38
-                                implicitHeight: 38
-                                radius: 10
+                                implicitWidth: Theme.iconSlot
+                                implicitHeight: Theme.iconSlot
+                                radius: Theme.radiusSmall
                                 opacity: root.powerExpanded ? 1 : 0
                                 visible: opacity > 0
                                 color: lockMouse.containsMouse ? Theme.cardHover : Theme.card
@@ -428,9 +428,9 @@ ShellRoot {
                             // 2. Sleep / Suspend
                             Rectangle {
                                 Layout.alignment: Qt.AlignHCenter
-                                implicitWidth: 38
-                                implicitHeight: 38
-                                radius: 10
+                                implicitWidth: Theme.iconSlot
+                                implicitHeight: Theme.iconSlot
+                                radius: Theme.radiusSmall
                                 opacity: root.powerExpanded ? 1 : 0
                                 visible: opacity > 0
                                 color: sleepMouse.containsMouse ? Theme.cardHover : Theme.card
@@ -465,9 +465,9 @@ ShellRoot {
                             // 3. Reboot
                             Rectangle {
                                 Layout.alignment: Qt.AlignHCenter
-                                implicitWidth: 38
-                                implicitHeight: 38
-                                radius: 10
+                                implicitWidth: Theme.iconSlot
+                                implicitHeight: Theme.iconSlot
+                                radius: Theme.radiusSmall
                                 opacity: root.powerExpanded ? 1 : 0
                                 visible: opacity > 0
                                 color: rebMouse.containsMouse ? Theme.cardHover : Theme.card
@@ -502,9 +502,9 @@ ShellRoot {
                             // Main Power Button (stays at bottom in exact same position)
                             Rectangle {
                                 Layout.alignment: Qt.AlignHCenter
-                                implicitWidth: 38
-                                implicitHeight: 38
-                                radius: 10
+                                implicitWidth: Theme.iconSlot
+                                implicitHeight: Theme.iconSlot
+                                radius: Theme.radiusSmall
                                 color: (root.armedPower === "shutdown" || pwrMouse.containsMouse) 
                                        ? Qt.rgba(0.93, 0.26, 0.26, 0.25) : Theme.card
                                 border.color: (root.armedPower === "shutdown" || pwrMouse.containsMouse) 
