@@ -63,6 +63,13 @@ Singleton {
             "cornerFillet": 20,
             "edgeLine": 5,
             "osdWidth": 130
+        },
+        "leftbar": {
+            "barWidth": 54,
+            "iconSlot": 38,
+            "barPadding": 10,
+            "radiusPanel": 16,
+            "radiusSmall": 10
         }
     })
 
