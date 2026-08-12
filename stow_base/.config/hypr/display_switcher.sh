@@ -43,7 +43,7 @@ case "$CHOICE" in
         ;;
 esac
 
-# Restart Waybar to fix workspace freezing
-pkill waybar
-sleep 0.5
-waybar &
+# Restart Waybar to fix workspace freezing (disabled)
+# pkill waybar
+# sleep 0.5
+# waybar &

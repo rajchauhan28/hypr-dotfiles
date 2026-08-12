@@ -1,0 +1,10 @@
+{
+  "name": "pro_editor_scene",
+  "bg_color": "#11111b",
+  "elem_type": "Cursor Follower",
+  "elem_color": "#8b5cf6",
+  "size": 100,
+  "audio_reactive": false,
+  "has_media": true,
+  "media_filename": "goku-ultra-instinct_2.3840x2160.mp4"
+}

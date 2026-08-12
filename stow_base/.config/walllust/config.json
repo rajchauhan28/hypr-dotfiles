@@ -1,8 +1,8 @@
 {
-  "current_wallpaper": "/home/reign/Pictures/wallpapers/luffys-resolve-under-the-night-sky.1920x1080.mp4",
+  "current_wallpaper": "/home/reign/Pictures/wallpapers/astronomy.jpg",
   "pywal_enabled": true,
   "preview_enabled": true,
   "wallpapers_dir": "/home/reign/Pictures/wallpapers",
-  "default_transition": "fade",
-  "default_duration": 1000
+  "default_transition": "zoom-in",
+  "default_duration": 500
 }

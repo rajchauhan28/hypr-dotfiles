@@ -56,22 +56,24 @@ hl.env("XCURSOR_THEME", "Bibata-Modern-Classic")
 hl.env("XCURSOR_SIZE", "20")
 hl.env("QT_QPA_PLATFORMTHEME", "qt6ct")
 hl.env("QT_STYLE_OVERRIDE", "kvantum")
+hl.env("XDG_CURRENT_DESKTOP", "Hyprland")
 hl.env("XDG_MENU_PREFIX", "arch-")
-hl.env("LIBVA_DRIVER_NAME", "nvidia")
+-- hl.env("LIBVA_DRIVER_NAME", "nvidia")
 hl.env("XDG_SESSION_TYPE", "wayland")
-hl.env("GBM_BACKEND", "nvidia-drm")
-hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
+-- hl.env("GBM_BACKEND", "nvidia-drm")
+-- hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
 
 -------------------
 ---- AUTOSTART ----
 -------------------
 hl.on("hyprland.start", function()
-    hl.exec_cmd("systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP && systemctl --user start walllust-daemon.service")
+    hl.exec_cmd("dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP && systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP && systemctl --user start hyprland-session.target && systemctl --user restart walllust-daemon.service walker.service elephant.service")
     -- hl.exec_cmd("clipse -listen")  -- Replaced by walker clipboard
-    hl.exec_cmd("wl-paste --type text --watch cliphist store")
-    hl.exec_cmd("wl-paste --type image --watch cliphist store")
     hl.exec_cmd("hypridle")
-    hl.exec_cmd("sleep 1 && waybar")
+    hl.exec_cmd("qs -d -c topbar &")
+    hl.exec_cmd("qs -d -c leftbar &")
+    hl.exec_cmd("qs -d -c sidepanel &")
+    hl.exec_cmd("qs -d -c dock &")
     hl.exec_cmd("swaync")
     hl.exec_cmd("pypr")
     hl.exec_cmd("swaync-client -df")
@@ -83,10 +85,16 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("hyprpm update")
     hl.exec_cmd("kbuildsycoca6")
     hl.exec_cmd("systemctl --user start hyprpolkitagent")
-    hl.exec_cmd("libinput-gestures-setup start")
-    hl.exec_cmd("export XDG_CURRENT_DESKTOP=Hyprland")
-    hl.exec_cmd("/usr/lib/pam_kwallet_init")
+    hl.exec_cmd("command -v libinput-gestures-setup >/dev/null && libinput-gestures-setup start")
+    hl.exec_cmd("test -x /usr/lib/pam_kwallet_init && /usr/lib/pam_kwallet_init")
     hl.exec_cmd("/home/reign/.config/hypr/smart_gpu.py")
+    -- Hover-reveal top panel: no reserved space, opens from the 15px strip
+    -- in the middle 10% of the screen edge.
+    hl.exec_cmd("qs -d -c topbar")
+    -- Same idea on the right edge: brightness, volume, Wi-Fi and Bluetooth.
+    hl.exec_cmd("qs -d -c sidepanel")
+    -- And along the bottom: pinned + running apps.
+    hl.exec_cmd("qs -d -c dock")
 end)
 
 ----------------------
@@ -124,6 +132,16 @@ hl.window_rule({
     move  = "750 100",
 })
 
+-- Float the shell settings rather than tiling it: it is a dialog you open,
+-- change one thing in, and close.
+hl.window_rule({
+    name  = "shell-settings",
+    match = { title = "^(Shell Settings)$" },
+    float = true,
+    center = true,
+    size  = "900 660",
+})
+
 hl.window_rule({
     name  = "font-manager",
     match = { class = "^(font-manager)$" },
@@ -131,13 +149,27 @@ hl.window_rule({
     size  = "900 600",
 })
 
+-------------------------------
+---- FOCUS NEW WINDOWS --------
+-------------------------------
+-- Single-instance apps (e.g. ghostty with gtk-single-instance) open new
+-- windows from their already-running process without a valid activation
+-- token, so Hyprland marks them urgent instead of focusing them. Focus
+-- any window that opens on the active workspace.
+hl.on("window.open", function(w)
+    local aws = hl.get_active_workspace()
+    if aws and w.workspace and w.workspace.id == aws.id then
+        hl.dispatch(hl.dsp.focus({ window = "address:" .. w.address }))
+    end
+end)
+
 -----------------------
 ---- LOOK AND FEEL ----
 -----------------------
 hl.config({
     general = {
         gaps_in  = 2,
-        gaps_out = 5,
+        gaps_out = 10,
         border_size = 0,
         col = {
             active_border   = colors.color9 or "rgba(33ccffee)",
@@ -194,9 +226,6 @@ hl.animation({ leaf = "layers",          enabled = true, speed = 2,   bezier = "
 ---- INPUT & GESTURES -----
 ---------------------------
 hl.config({
-    cursor = {
-        no_warps = true,
-    },
     input = {
         follow_mouse = 1,
         touchpad = {
@@ -222,8 +251,14 @@ hl.bind(mainMod .. " + Q", hl.dsp.window.close())
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd(browser))
 hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd(wallpaperSwitcher))
-hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("pkill waybar"))
-hl.bind(mainMod .. " + O", hl.dsp.exec_cmd("waybar &"))
+hl.bind(mainMod .. " + TAB", hl.dsp.exec_cmd("/home/reign/.config/hypr/toggle_overview.sh"))
+-- Quick settings, for when reaching the right-edge hotspot is inconvenient.
+hl.bind(mainMod .. " + I", hl.dsp.exec_cmd("qs -c sidepanel ipc call sidepanel toggle"))
+hl.bind(mainMod .. " + D", hl.dsp.exec_cmd("qs -c dock ipc call dock toggle"))
+-- Settings for the shell itself: dock apps, panel geometry, palette.
+hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd("/home/reign/.config/quickshell/settings/launch.sh"))
+hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("pkill -f \"qs.*\" || true"))
+hl.bind(mainMod .. " + O", hl.dsp.exec_cmd("qs -d -c topbar & qs -d -c leftbar & qs -d -c dock & qs -d -c sidepanel &"))
 hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("walker -m clipboard"))
 hl.bind(mainMod .. " + SHIFT + E", hl.dsp.exec_cmd("walker -m files"))

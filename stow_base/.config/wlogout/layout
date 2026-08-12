@@ -1,35 +1,35 @@
 {
     "label" : "lock",
-    "action" : "~/.config/wlogout/scripts/anction lock",
+    "action" : "/home/reign/.config/wlogout/scripts/anction lock",
     "keybind" : "l"
 }
 
 {
     "label" : "logout",
-    "action" : "~/.config/wlogout/scripts/anction logout",
+    "action" : "/home/reign/.config/wlogout/scripts/anction logout",
     "keybind" : "m"
 }
 
 {
     "label" : "shutdown",
-    "action" : "~/.config/wlogout/scripts/anction shutdown",
+    "action" : "/home/reign/.config/wlogout/scripts/anction shutdown",
     "keybind" : "d"
 }
 
 {
     "label" : "reboot",
-    "action" : "~/.config/wlogout/scripts/anction reboot",
+    "action" : "/home/reign/.config/wlogout/scripts/anction reboot",
     "keybind" : "r"
 }
 
 {
     "label" : "suspend",
-    "action" : "~/.config/wlogout/scripts/anction suspend",
+    "action" : "/home/reign/.config/wlogout/scripts/anction suspend",
     "keybind" : "s"
 }
 
 {
     "label" : "hibernate",
-    "action" : "~/.config/wlogout/scripts/anction hibernate",
+    "action" : "/home/reign/.config/wlogout/scripts/anction hibernate",
     "keybind" : "h"
 }

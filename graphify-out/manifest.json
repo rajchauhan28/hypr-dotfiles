@@ -1,0 +1,677 @@
+{
+  "Install.sh": {
+    "mtime": 1782552804.3881712,
+    "ast_hash": "ce28a247c89ba858b2e308e21e20d492",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/ReignShell/intro.py": {
+    "mtime": 1782192745.2647738,
+    "ast_hash": "c981e693bd5defef89370d76382f03c9",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/ReignShell/readonlyFSfix.sh": {
+    "mtime": 1782192745.2648115,
+    "ast_hash": "4bd771c962862f59ad5acc5009ed9a19",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/hypr/display_switcher.sh": {
+    "mtime": 1786424110.7208002,
+    "ast_hash": "716d76aa6ef5d5e697e576b48a52a0ed",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/hypr/gamemode.sh": {
+    "mtime": 1782192745.2552881,
+    "ast_hash": "7636b350130fee31094b7ab833e93249",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/hypr/gpu_switcher.sh": {
+    "mtime": 1782294879.3564196,
+    "ast_hash": "c45319687e0e32c6187ac9f35487b44a",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/hypr/hyprland.lua": {
+    "mtime": 1786512058.6099625,
+    "ast_hash": "40ecc6b284f3d952eeaf08d90134a064",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/hypr/menu_fix.sh": {
+    "mtime": 1782192745.2553868,
+    "ast_hash": "da5f0fd8667f930d845c8bd8242187bf",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/hypr/mpvpaper-stop.sh": {
+    "mtime": 1782192745.2553988,
+    "ast_hash": "8a476534757a584e6e0af2d78b2c95b5",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/hypr/screenshot.sh": {
+    "mtime": 1782192745.255423,
+    "ast_hash": "bf79d2ed42487e3561d89cc98d759506",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/hypr/smart_gpu.py": {
+    "mtime": 1785840994.8746161,
+    "ast_hash": "23f4b408d5ac71657146a9c1402e99d7",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/hypr/toggle_overview.sh": {
+    "mtime": 1785911368.039867,
+    "ast_hash": "3cb261d5f63b2553567ac140daf7255a",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/hypr/wallpaper_switcher.sh": {
+    "mtime": 1786424101.8998954,
+    "ast_hash": "9f73e389b712ac3dafb5d2af7a9c453c",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/hypr/wallpaper_switcher_backup.sh": {
+    "mtime": 1782192745.2554598,
+    "ast_hash": "ffbcb1971c4d55d03672630d3dcccf93",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/hypr/waybar_hider.sh": {
+    "mtime": 1782192745.2554727,
+    "ast_hash": "dcf044a549826ad2fa256b68fac83c76",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/nvim/init.lua": {
+    "mtime": 1782192745.2582135,
+    "ast_hash": "2a9ff976f935f75cd0ca499c76814a8d",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/nvim/lazy-lock.json": {
+    "mtime": 1783333518.2885332,
+    "ast_hash": "1aef82b88280124c26392272b16f79f4",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/nvim/lua/config/keymaps.lua": {
+    "mtime": 1782192745.258496,
+    "ast_hash": "590877e29f38f1d375738703570ca80b",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/nvim/lua/config/lazy.lua": {
+    "mtime": 1782192745.258507,
+    "ast_hash": "40cfb2456fb403b6e629444442762da7",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/nvim/lua/config/options.lua": {
+    "mtime": 1782192745.258514,
+    "ast_hash": "8a3c5513d75ff133c3d998b0364b6b61",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/nvim/lua/plugins/editor.lua": {
+    "mtime": 1782192745.258588,
+    "ast_hash": "6fcf9328c533ddec439740b992ba29bb",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/nvim/lua/plugins/lsp.lua": {
+    "mtime": 1782192745.2585962,
+    "ast_hash": "d65bdcbf9c6bc32b355a7ebcc5dc3c1c",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/nvim/lua/plugins/ui.lua": {
+    "mtime": 1782192745.2586026,
+    "ast_hash": "f8cfb0004e5376f4109d64aa4b6820f2",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/quickshell/dock/pinned.json": {
+    "mtime": 1786082082.8888278,
+    "ast_hash": "c464d301c12a30c38772a3c64c1814db",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/quickshell/overview/hyprctl-compat.sh": {
+    "mtime": 1785916688.3360534,
+    "ast_hash": "5e28b21ec6226516dd0926dba56e9a88",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/quickshell/settings.json": {
+    "mtime": 1786019336.8843884,
+    "ast_hash": "0251ffa5fdb32ebaa7f38da1e2cd8080",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/quickshell/settings/apps.py": {
+    "mtime": 1786018357.391187,
+    "ast_hash": "82a9c9b1664c35d71daf61fb8508f952",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/quickshell/settings/launch.sh": {
+    "mtime": 1786019386.61675,
+    "ast_hash": "798644f2cda86bec5169cdc651c0b623",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/quickshell/settings/store.py": {
+    "mtime": 1786018336.892941,
+    "ast_hash": "8a73ec3a902426d9a0c2f22c28a6c6c4",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/quickshell/sidepanel/syspanel.py": {
+    "mtime": 1785933329.4807067,
+    "ast_hash": "68e78a01d0e54a29049b46131ef7bd5d",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/quickshell/topbar/artcolor.py": {
+    "mtime": 1786003240.2230263,
+    "ast_hash": "0924bb1cbdca7a62ca59b35af553426c",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/quickshell/topbar/calendar_store.py": {
+    "mtime": 1785926780.296907,
+    "ast_hash": "9816c68866e9f3d42f9a086048dd82f9",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/quickshell/topbar/holidays_in.py": {
+    "mtime": 1785927480.4710705,
+    "ast_hash": "55288f838310d3241d5ef701c2f8d568",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/quickshell/topbar/spectrum.py": {
+    "mtime": 1786003185.5248382,
+    "ast_hash": "31ddae8411961e6a3d3becf2c6179ac1",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/quickshell/topbar/sysinfo.py": {
+    "mtime": 1786512867.62112,
+    "ast_hash": "c339ae22e2143a46ed2fb73dcfc6e858",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/quickshell/topbar/updates.sh": {
+    "mtime": 1785923464.7623744,
+    "ast_hash": "00882dd58c09aea67751ea902737f834",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/quickshell/topbar/wallpapers.py": {
+    "mtime": 1785926282.2973638,
+    "ast_hash": "da97156c2d4d9d23e7394f8d4b34b730",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/quickshell/widgets/clock/events.json": {
+    "mtime": 1785926798.099676,
+    "ast_hash": "d249a6d794eef97d1819c8796913f70c",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/quickshell/widgets/clock/events.py": {
+    "mtime": 1784986376.8271923,
+    "ast_hash": "e2437609e0fec481cb694c36612e5877",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/quickshell/widgets/launch.sh": {
+    "mtime": 1784986659.3779945,
+    "ast_hash": "8dfe1bebf2d1518e78cc530b340ea33a",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/quickshell/widgets/volume/audio_info.py": {
+    "mtime": 1784985787.3471205,
+    "ast_hash": "522bb15d0ac47a3f8433bc9405c24d8c",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/walllust/config.json": {
+    "mtime": 1786262649.9967103,
+    "ast_hash": "defa3c3dbe9fddce71d435b2961ccc5d",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/walllust/live_scenes/pro_editor_scene/scene.json": {
+    "mtime": 1783932615.2009633,
+    "ast_hash": "ce71faab53c7e7f5dfa8836718979030",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/waybar/scripts/auralink_status.py": {
+    "mtime": 1784967649.000001,
+    "ast_hash": "bbee4a6f7f868cf87fd605c24f76e3b1",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/waybar/scripts/background_apps.py": {
+    "mtime": 1784967702.2733297,
+    "ast_hash": "14219c23814c4b77cf50c24d17a7deb5",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/waybar/scripts/bluetooth.py": {
+    "mtime": 1785907867.1248364,
+    "ast_hash": "44175f5c54d42e4f2ce45859c8195b0a",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/waybar/scripts/brightnesscontrol.sh": {
+    "mtime": 1782192745.2600532,
+    "ast_hash": "7259966be5192fc45c3446fef32ffb59",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/waybar/scripts/calendar_popup.py": {
+    "mtime": 1782192745.26006,
+    "ast_hash": "a77a43ffb669bead4769e69fa6969fab",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/waybar/scripts/calendar_time.py": {
+    "mtime": 1784986492.320936,
+    "ast_hash": "524230796c4f5f76fb6b8a05f0f7210d",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/waybar/scripts/check_monitors.sh": {
+    "mtime": 1782192745.2600734,
+    "ast_hash": "6b9e600b2499dc94c9837b3ff8e2f6f2",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/waybar/scripts/clip-delete.sh": {
+    "mtime": 1782294881.3274503,
+    "ast_hash": "ad4f83ae9cc6e332bf76a808ea9ed6d7",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/waybar/scripts/clip-select.sh": {
+    "mtime": 1782294881.2054484,
+    "ast_hash": "5b7bcf7219e7864d84f60f08fed24bb4",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/waybar/scripts/clipse-delete.sh": {
+    "mtime": 1782192745.2600932,
+    "ast_hash": "fb525406095ddf93070aa92a7a4e20a5",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/waybar/scripts/clipse-select.sh": {
+    "mtime": 1782192745.2600994,
+    "ast_hash": "833b4aa2a1bfa82b7c74ef04d42b185c",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/waybar/scripts/fileio.js": {
+    "mtime": 1782192745.2601056,
+    "ast_hash": "91e4656a694c68f939c1a902bb0c2c3e",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/waybar/scripts/kdeconnect.sh": {
+    "mtime": 1782192745.2601118,
+    "ast_hash": "ca6ec02580559751934444ace8b2ade2",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/waybar/scripts/media_info.py": {
+    "mtime": 1782192745.260118,
+    "ast_hash": "0d711ff74da64d5e729476f1b007b750",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/waybar/scripts/network.py": {
+    "mtime": 1785907863.409835,
+    "ast_hash": "e1c23772215c5170be911f5a88ab5e2c",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/waybar/scripts/notifications.py": {
+    "mtime": 1782192745.2601244,
+    "ast_hash": "13153c8fd87c3551460974a904c68874",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/waybar/scripts/sys_stat.py": {
+    "mtime": 1782192745.2601304,
+    "ast_hash": "4633b3e6296102c3c29b3275164f7c8c",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/waybar/scripts/sys_stat_popup.py": {
+    "mtime": 1782192745.2601373,
+    "ast_hash": "09def54d5d7ce4ddc9c26f2bb6204072",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/waybar/scripts/system-update.sh": {
+    "mtime": 1786424951.7388506,
+    "ast_hash": "947ad00c59b3ef0ae35ee2503a0cb0d0",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/waybar/scripts/theme_switcher.sh": {
+    "mtime": 1785906548.2618303,
+    "ast_hash": "336defabde7cbcf2a6a3856e2250a10f",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/waybar/sys_update.sh": {
+    "mtime": 1784534917.3086326,
+    "ast_hash": "46bc709e29ebf997849e701f16d70e8d",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/wlogout/scripts/anction": {
+    "mtime": 1782192745.261684,
+    "ast_hash": "e080d68cb3107f35659b246da045889e",
+    "semantic_hash": ""
+  },
+  ".github/workflows/lint.yml": {
+    "mtime": 1782302411.4497764,
+    "ast_hash": "71df127e2b8defc108423c4185feaf35",
+    "semantic_hash": ""
+  },
+  "README.md": {
+    "mtime": 1782191310.4885483,
+    "ast_hash": "b6368e1bb44eb4cb1aa5b1da4bc8ea7a",
+    "semantic_hash": ""
+  },
+  "package_list.txt": {
+    "mtime": 1782552786.5519218,
+    "ast_hash": "589ca62578c9abc3c601f016ea3fd145",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/wlogout/README.md": {
+    "mtime": 1782192745.261347,
+    "ast_hash": "62cd71eae32d2261c30e0313459e3ff4",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/wlogout/icons/hibernate.png": {
+    "mtime": 1782548029.6276581,
+    "ast_hash": "5b039da768344b426cd3cf4ff2c6bd39",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/wlogout/icons/lock.png": {
+    "mtime": 1782548029.6259933,
+    "ast_hash": "4e6fa6040cab8000d61fc90654e36d14",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/wlogout/icons/logout.png": {
+    "mtime": 1782548029.6269703,
+    "ast_hash": "7f26e7b29cfc13673fc83d1c76d033cc",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/wlogout/icons/power.png": {
+    "mtime": 1782548029.6301525,
+    "ast_hash": "37456e871264f114bff17ac8fd9408cf",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/wlogout/icons/restart.png": {
+    "mtime": 1782548029.6311517,
+    "ast_hash": "d1facdbf54a13f58fc5c276b3b0cf733",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/wlogout/icons/sleep.png": {
+    "mtime": 1782548029.629321,
+    "ast_hash": "db56619630373395dc4b04eb1b22cb98",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/wlogout/lock.png": {
+    "mtime": 1782548036.8023446,
+    "ast_hash": "4e6fa6040cab8000d61fc90654e36d14",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/wlogout/logout.png": {
+    "mtime": 1782548036.8032105,
+    "ast_hash": "7f26e7b29cfc13673fc83d1c76d033cc",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/wlogout/pause.png": {
+    "mtime": 1782548036.80613,
+    "ast_hash": "db56619630373395dc4b04eb1b22cb98",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/wlogout/power.png": {
+    "mtime": 1782548036.8046966,
+    "ast_hash": "37456e871264f114bff17ac8fd9408cf",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/wlogout/restart.png": {
+    "mtime": 1782548036.8053892,
+    "ast_hash": "d1facdbf54a13f58fc5c276b3b0cf733",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/wlogout/sleep.png": {
+    "mtime": 1782548036.8039732,
+    "ast_hash": "db56619630373395dc4b04eb1b22cb98",
+    "semantic_hash": ""
+  },
+  "stow_base/.local/share/icons/hicolor/scalable/apps/auralink.svg": {
+    "mtime": 1782552786.4659207,
+    "ast_hash": "302ea3394f86af0a39cfda4f0df585bc",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/44a4ad8f-1e21-46c0-875c-c9f72987e3b3.jpg": {
+    "mtime": 1771662052.197302,
+    "ast_hash": "4c0e9b482a3f7c3e5fd51e4a5c85fb80",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/9369e703-b8c8-4650-9a7f-484baa5328ff.jpg": {
+    "mtime": 1771662052.655302,
+    "ast_hash": "f69fcabb1b4dda90cdde1316dd929ec7",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/GENERAL-black-boat-sea.jpg": {
+    "mtime": 1771662052.2553022,
+    "ast_hash": "a3185769c5f2a28449ec9d468b9c5126",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/NOUNS-saturn.jpg": {
+    "mtime": 1771662052.6233022,
+    "ast_hash": "1ca2a7c01505d75318c2609fc0d62bf5",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/a_black_sand_beach_with_waves_and_clouds_above.jpg": {
+    "mtime": 1782194557.2975316,
+    "ast_hash": "015fb72c8af943f546552d8875c3fb7d",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/a_chair_on_a_platform_with_a_halo_above_it.jpg": {
+    "mtime": 1782194557.2980633,
+    "ast_hash": "30c16a9729f990c0d47e4697381156a3",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/a_crane_with_a_light_on_top.png": {
+    "mtime": 1782194557.2982807,
+    "ast_hash": "74287e944829a8fc0ec20b603e1ffea0",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/a_dark_room_with_a_large_window.jpg": {
+    "mtime": 1783921314.5469818,
+    "ast_hash": "d6cdf54f0cb9b68715223bde67fefe16",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/a_gas_station_with_lights_on_the_front_and_a_car_parked_in_the_front.jpg": {
+    "mtime": 1783921395.9737904,
+    "ast_hash": "750fd44d481c7bcfa15ea9fcbf088b4e",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/a_planet_in_space_with_clouds.jpg": {
+    "mtime": 1782194557.2992315,
+    "ast_hash": "54eac34afab725692294c03988f14297",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/a_planet_in_the_sky.jpg": {
+    "mtime": 1782194557.2995536,
+    "ast_hash": "d7837834e8e5000decd636c7cc321183",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/a_road_with_trees_on_either_side_of_it.jpg": {
+    "mtime": 1783921336.8633306,
+    "ast_hash": "304a66a00a3942f40a881a6d2acce18b",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/alex-rose-ccWJHxUeM7c-unsplash.jpg": {
+    "mtime": 1771662052.175302,
+    "ast_hash": "16e83342f755c939291b943ca0095aee",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/aperture-vintage-Z6EpCdMcoUU-unsplash.jpg": {
+    "mtime": 1771662052.1963022,
+    "ast_hash": "fa129392cc18125c32006ac7edff630a",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/astronomy.jpg": {
+    "mtime": 1771662052.2293022,
+    "ast_hash": "44237f75b98ae7e9e7fd918460be4965",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/bring-it-home.jpg": {
+    "mtime": 1771662052.2453022,
+    "ast_hash": "20e6058d049e0a13e4e8c2393cb583fa",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/cameron-venti-big-fish.jpg": {
+    "mtime": 1771662052.4533021,
+    "ast_hash": "ba792e474a80603fca86302eead2566d",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/core.jpg": {
+    "mtime": 1771662052.523302,
+    "ast_hash": "5a25f7f06685bd54d85325f32fa826bb",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/denys-nevozhai-QQagA-79ddg-unsplash.jpg": {
+    "mtime": 1782194557.3002808,
+    "ast_hash": "48da006807c9b24b93c975c757dbd6aa",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/e29f908a-3088-45ee-b683-82b2b9c7aebe.jpg": {
+    "mtime": 1771662052.256302,
+    "ast_hash": "eab8ede5a96c707c5f4ff127d94841d8",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/fabrizio-conti-c3wsMnxQZDw-unsplash.jpg": {
+    "mtime": 1771662052.5613022,
+    "ast_hash": "6ca278ca6c2b8b047f0a022260736620",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/gloom.jpg": {
+    "mtime": 1771662052.2033021,
+    "ast_hash": "b04b7062559549944e36471efc9dae91",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/joao-silveira-ships-docking-in-portugal.jpg": {
+    "mtime": 1771662052.447302,
+    "ast_hash": "27124f300512d3e00f93d9148244e252",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/marek-okon-tWWCqIMiUmg-unsplash.jpg": {
+    "mtime": 1771662052.5783021,
+    "ast_hash": "4c7d3a3d8f14654e229e9c33a3fde607",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/minecraft-10th-3840x2160-23769.jpg": {
+    "mtime": 1782475066.06344,
+    "ast_hash": "a393e5bf196347ef0c8a2a9d159b7a62",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/nasa-CpHNKNRwXps-unsplash.jpg": {
+    "mtime": 1771662052.1718554,
+    "ast_hash": "36b98a78eadb4dbae22dfd4fd1e32ec4",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/nighthawk.png": {
+    "mtime": 1771662052.5153022,
+    "ast_hash": "bff69fc9358cc7a7569d2bf801144b72",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/niketh-vellanki-QkSN_8XcXwQ-unsplash.jpg": {
+    "mtime": 1771662052.6213021,
+    "ast_hash": "6f3f1cf5783b7c92cd15fa8871ad3611",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/pump.jpg": {
+    "mtime": 1771662052.517302,
+    "ast_hash": "44b216b3a6681b3731d0411a099966ee",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/rishi-ragunathan-fs6NPHYMN7o-unsplash.jpg": {
+    "mtime": 1771662052.2003021,
+    "ast_hash": "66413b53626c18d6a46c2e2a97d6546e",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/seedream-image.jpeg": {
+    "mtime": 1771662052.1903021,
+    "ast_hash": "1e839242ab134eaae4cbc1d0afd6c0f8",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/spacex--p-KCm6xB9I-unsplash.jpg": {
+    "mtime": 1771662052.5733023,
+    "ast_hash": "b81de65e3244a5b9265c3e83143a5a93",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/spacex-yJv97tE7GDM-unsplash.jpg": {
+    "mtime": 1771662052.2468674,
+    "ast_hash": "f110e8d4154e7adec702bd36fc78c81c",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/test1_00005_.png": {
+    "mtime": 1785862740.4819028,
+    "ast_hash": "ce62e34264773fd65d71e16f8f0b131a",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/test1_00007_.png": {
+    "mtime": 1785862988.7019584,
+    "ast_hash": "cf0443ead8335777d60ef9ec231c9ae5",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/tianshu-liu-aqZ3UAjs_M4-unsplash.jpg": {
+    "mtime": 1782194557.3555515,
+    "ast_hash": "3c05846df85e8704ab85d1161c0da193",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/vo9lyx14s41a1.webp": {
+    "mtime": 1782194557.364486,
+    "ast_hash": "3c70f59256c14e5077f4d4183d27d71e",
+    "semantic_hash": ""
+  },
+  "stow_base/.config/walllust/live_scenes/pro_editor_scene/goku-ultra-instinct_2.3840x2160.mp4": {
+    "mtime": 1783932615.2119634,
+    "ast_hash": "7c01802db20356a72c2ac3eaa51f72eb",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/KRISHNA  Divine Gaze Live Wallpaper[4K] - The Sensei BG (1080p, h264, youtube).mp4": {
+    "mtime": 1772999088.657305,
+    "ast_hash": "b3c0ac1e37da5c3f2f45579dd30de985",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/Samurai_Rose.mp4": {
+    "mtime": 1771662052.526302,
+    "ast_hash": "92417dfc040bc577d8a64ee4da091521",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/Samurai_Standing.mp4": {
+    "mtime": 1771662052.4403021,
+    "ast_hash": "8392521d7cbcf9fb412f3d55e91cf08d",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/Samurai_mountain.mp4": {
+    "mtime": 1771662052.2323022,
+    "ast_hash": "46839763c1c71489c3d9d88b095904b3",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/Video_Generation_Wind_Birds_Grass.mp4": {
+    "mtime": 1771662052.451302,
+    "ast_hash": "ab0c1e02b2e51c37a4415914f4d377b1",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/goku-ultra-instinct_2.3840x2160.mp4": {
+    "mtime": 1782194557.302281,
+    "ast_hash": "7c01802db20356a72c2ac3eaa51f72eb",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/itachi-uchiha.3840x2160.mp4": {
+    "mtime": 1782194557.309281,
+    "ast_hash": "76b0caeeae6c0b9e5be82871332aab35",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/just-a-chill-guy.3840x2160.mp4": {
+    "mtime": 1782194557.3182814,
+    "ast_hash": "440712974bada0469a21c910afad79c3",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/luffy-in-the-clouds.3840x2160.mp4": {
+    "mtime": 1782194557.3222816,
+    "ast_hash": "e7a0153faadf2cad09cf125ab72a1531",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/luffys-resolve-under-the-night-sky.1920x1080.mp4": {
+    "mtime": 1782194557.327695,
+    "ast_hash": "2f70fef3adde84ca26dec22b1a319b4f",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/rainy-day-with-pikachu.3840x2160.mp4": {
+    "mtime": 1782194557.332282,
+    "ast_hash": "334ac2b83b68afe8f6512e14d21e2574",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/silence-of-the-ronin.3840x2160.mp4": {
+    "mtime": 1782194557.3452826,
+    "ast_hash": "ceacdc4fe32a14f4e44c9473447ade02",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/vegeta-ultra-ego.3840x2160.mp4": {
+    "mtime": 1782194557.359283,
+    "ast_hash": "92f300aa1de1fa41d9e26b65235d432f",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/windmill-in-the-storm-minecraft-moewalls-com.mp4": {
+    "mtime": 1782194557.3782837,
+    "ast_hash": "c61ff96112a1425a1ddfa0c20d274f9a",
+    "semantic_hash": ""
+  },
+  "stow_base/Pictures/wallpapers/zoro-king-of-hell2.3840x2160.mp4": {
+    "mtime": 1782194557.3942842,
+    "ast_hash": "a27c3ac225365f2e2a807fe86330ed7c",
+    "semantic_hash": ""
+  }
+}

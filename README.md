@@ -1,83 +1,72 @@
-## Rajchauhan28's Dotfiles
+# 🚀 Rajchauhan28's Hyprland Dotfiles & QuickShell Suite
 
-![2025-06-16-182247_hyprshot](https://github.com/user-attachments/assets/fbf54940-ba28-4f2b-a895-60b0acaba6e8)
+A modern, fluid, and futuristic Hyprland desktop environment powered by a custom **QuickShell** UI suite (completely replacing Waybar with hardware-accelerated QML panels, side bars, dynamic islands, docks, and workspace overviews).
 
+---
 
-Just a minimalist hyprland setup easy to use with no too much over ricing. With a bit of Hindi.
-<img width="1920" height="1200" alt="image" src="https://github.com/user-attachments/assets/2cd20118-d2ca-4c75-a6dc-3885976a4912" />
-<img width="1920" height="1200" alt="image" src="https://github.com/user-attachments/assets/977acf08-edf9-4063-9209-3faada79cdc2" />
-![2025-05-17-164541_hyprshot](https://github.com/user-attachments/assets/c9b2643d-8dac-4d75-abfa-fe057e691cca)
+## ✨ Features & Highlights
 
+- **⚡ Complete QuickShell Suite (Waybar Replaced)**:
+  - **Top Panel (`topbar`)**: Expandable diagonal top-center curtain panel with Dashboard, Media Tab, Performance Metrics, and Workspaces view.
+  - **Left Side Bar (`leftbar`)**: Always-visible 54px Waybar replacement with 12-hour IST clock, floating draggable always-on-top clock widget, workspace switcher with sliding active capsule, app quick launchers, overview trigger (`Super+Tab`), and an expanding power slider.
+  - **Bottom Dock (`dock`)**: Modern glassmorphic dock with app launcher, window previews, running dots, spring-pop micro-animations, and pinned app management.
+  - **Side Panel (`sidepanel`)**: Quick settings strip with volume, brightness, bluetooth, wifi, and system controls.
+  - **Super + Tab Overview (`overview`)**: Interactive workspace and window manager with smooth card physics.
+- **🎵 Real-Time Audio Visualizer**: Liquid dual-ring circumference waves surrounding rotating album art with real-time PulseAudio/PipeWire spectrum analysis (`spectrum.py`).
+- **🛡️ Automated Installer & Safety Rollback**:
+  - `Install.sh`: One-line automated Arch Linux installer that sets up QuickShell, Qt6 dependencies, fonts, systemd services, and replaces Waybar.
+  - `rollback.sh`: One-click script to safely restore previous dotfiles backup (`hypr-dotfiles-old`).
 
+---
 
-# hypr-dotfiles
+## 📦 Quick Installation (Arch Linux / Hyprland)
 
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![GitHub stars](https://img.shields.io/github/stars/yourusername/hypr-dotfiles.svg)](https://github.com/yourusername/hypr-dotfiles/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/yourusername/hypr-dotfiles.svg)](https://github.com/yourusername/hypr-dotfiles/network)
-[![GitHub issues](https://img.shields.io/github/issues/yourusername/hypr-dotfiles.svg)](https://github.com/yourusername/hypr-dotfiles/issues)
+Run the one-line installer directly in your terminal:
 
-A cool and futuristic looking hyprland dotfiles and overhauls for modern developers. This repository contains configurations and customizations for various tools like fastfetch, rofi, sway, wal, waybar, wlogout, and wofi, inspired by the hyprland aesthetic.
-
-## Key Features and Highlights
-
-- Customized dotfiles for a futuristic look
-- Integration with popular tools like rofi, sway, and wal
-- Designed for modern developers in mind
-- Easy to install and configure
-
-## Dependencies
-
-This project does not have any external dependencies beyond the standard shell utilities.
-
-## Installation
-### Users of Arch BTW or distros from Arch BTW Family (Garuda, Manjaro, Endeavour or any pacman based distro) 
-#### Just Run the `Install.sh` file
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/rajchauhan28/hypr-dotfiles/refs/heads/main/Install.sh)
 ```
 
-#### Step 2 : Enjoy
+### Manual Installation Method
 
-### The 'Manual' method
 1. Clone the repository:
+   ```bash
+   git clone https://github.com/rajchauhan28/hypr-dotfiles.git
+   cd hypr-dotfiles
+   ```
+2. Run the installer:
+   ```bash
+   chmod +x Install.sh
+   ./Install.sh
+   ```
+
+---
+
+## 🔄 Rollback Option
+
+If you ever need to restore your previous configuration, simply run:
 
 ```bash
-git clone https://github.com/rajchauhan28/hypr-dotfiles.git
+./rollback.sh
 ```
 
-2. Change to the project directory:
+---
 
-```bash
-cd hypr-dotfiles
-```
+## ⌨️ Keybindings Quick Reference
 
-3. Run the installation script:
+| Keybinding | Action |
+| :--- | :--- |
+| `Super + TAB` | Toggle Super+Tab Workspace & Window Overview |
+| `Super + O` | Reload QuickShell Daemons (Topbar, Leftbar, Dock, Sidepanel) |
+| `Super + Shift + R` | Stop QuickShell Daemons |
+| `Super + I` | Toggle Quick Settings Side Panel |
+| `Super + D` | Toggle Bottom Dock |
+| `Super + Enter` | Launch Terminal |
+| `Super + R` | Application Launcher |
+| `Super + Q` | Close Focused Window |
 
-```bash
-./Install.sh
-```
+---
 
-## Usage
+## 📄 License
 
-Use various quality of life shortcuts like `Super + R` for the app search
-`Super + PrintSc` for full screenshot or `Ctrl + PrintSc` for selection based screenshot etc.
-There much more i'll be adding a shortcut mapping utility shortly.
-Meanwhile go to `~/.config/hypr/hyprland.conf` there scroll down in the file all the key mappings are present.
-
-
-
-## Contributing
-
-If you would like to contribute to this project, please follow these steps:
-
-1. Fork the repository
-2. Create a new branch (`git checkout -b feature`)
-3. Make your changes
-4. Commit your changes (`git commit -am 'Add new feature'`)
-5. Push to the branch (`git push origin feature`)
-6. Create a new Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Licensed under the [MIT License](LICENSE).

@@ -1,0 +1,46 @@
+{
+  "pinned": [
+    {
+      "name": "Terminal",
+      "exec": "ghostty",
+      "class": "com.mitchellh.ghostty",
+      "icon": "com.mitchellh.ghostty"
+    },
+    {
+      "name": "Files",
+      "exec": "dolphin",
+      "class": "org.kde.dolphin",
+      "icon": "org.kde.dolphin"
+    },
+    {
+      "name": "Brave",
+      "exec": "brave",
+      "class": "brave-browser",
+      "icon": "brave-desktop"
+    },
+    {
+      "name": "VS Code",
+      "exec": "code",
+      "class": "code",
+      "icon": "vscode"
+    },
+    {
+      "name": "Obsidian",
+      "exec": "obsidian",
+      "class": "obsidian",
+      "icon": "obsidian"
+    },
+    {
+      "name": "Spotify",
+      "exec": "spotify",
+      "class": "spotify",
+      "icon": "spotify"
+    },
+    {
+      "name": "Disk Usage Analyzer",
+      "exec": "baobab",
+      "class": "org.gnome.baobab",
+      "icon": "org.gnome.baobab"
+    }
+  ]
+}
