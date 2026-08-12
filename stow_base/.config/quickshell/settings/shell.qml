@@ -21,7 +21,8 @@ ShellRoot {
 
     readonly property var pages: [
         { key: "dock", glyph: "󰇘", label: "Dock", hint: "Pinned apps and dock size" },
-        { key: "panels", glyph: "󰕰", label: "Panels", hint: "Top and side panel geometry" },
+        { key: "sidebar", glyph: "󰕮", label: "Sidebar", hint: "Left sidebar width & buttons" },
+        { key: "panels", glyph: "󰕰", label: "Panels", hint: "Top and right panel geometry" },
         { key: "appearance", glyph: "󰸌", label: "Appearance", hint: "Shared palette" }
     ]
 
@@ -213,7 +214,8 @@ ShellRoot {
                         // told to take it, or the Flickable never scrolls.
                         height: item ? item.implicitHeight : 0
                         source: root.pageIndex === 0 ? "DockPage.qml"
-                              : root.pageIndex === 1 ? "PanelsPage.qml"
+                              : root.pageIndex === 1 ? "SidebarPage.qml"
+                              : root.pageIndex === 2 ? "PanelsPage.qml"
                                                      : "AppearancePage.qml"
                     }
                 }
