@@ -23,7 +23,7 @@ ShellRoot {
 
     Process {
         id: statProc
-        command: ["bash", "-c", "python3 /home/reign/.config/waybar/scripts/sys_stat.py 2>/dev/null || echo '{}'"]
+        command: ["python3", "/home/reign/.config/quickshell/topbar/sysinfo.py"]
         stdout: SplitParser {
             onRead: data => {
                 try {
