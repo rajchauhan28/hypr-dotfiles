@@ -16,9 +16,6 @@ change_swww(){
   # Reload Alacritty config to apply new colors using alacritty-msg
   alacritty-msg reload
 
-  # Optionally, restart Waybar to reflect theme changes
-  pkill waybar
-  waybar &
 }
 
 # Function to change the current wallpaper based on whether swaybg is running

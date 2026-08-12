@@ -7,13 +7,18 @@
 # ██║██║ ╚████║   ██║   ╚██████╔╝██║  ██║██║     ╚██████╗
 # ╚═╝╚═╝  ╚═══╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚═╝      ╚═════╝
 #
-# Installer for Reign's Hyprland Dotfiles
+# Installer for Rajchauhan28's Hyprland Dotfiles
 
-set -e # Exit immediately if a command exits with a non-zero status.
+set -Eeuo pipefail
+
+readonly REPO_URL="https://github.com/rajchauhan28/hypr-dotfiles.git"
+readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
 # --- BOOTSTRAP LOGIC ---
-# If package_list.txt is not found in the current directory, assume we need to clone the repo.
-if [ ! -f "package_list.txt" ]; then
+# A process-substitution launch (bash <(curl ...)) has no repository beside the
+# script, so clone/update it first. A checked-out script always uses its own
+# directory and therefore works from any caller's current working directory.
+if [ ! -f "$SCRIPT_DIR/package_list.txt" ]; then
     echo -e "\033[0;34mRunning in bootstrap mode...\033[0m"
     
     # Check for git
@@ -22,7 +27,6 @@ if [ ! -f "package_list.txt" ]; then
         exit 1
     fi
 
-    REPO_URL="https://github.com/rajchauhan28/hypr-dotfiles.git"
     INSTALL_DIR="$HOME/hypr-dotfiles"
 
     if [ -d "$INSTALL_DIR" ]; then
@@ -40,6 +44,11 @@ if [ ! -f "package_list.txt" ]; then
     exec ./Install.sh "$@"
 fi
 
+# Run every relative-path operation from the repository root, regardless of
+# the directory from which the user invoked this script.
+readonly REPO_DIR="$SCRIPT_DIR"
+cd "$REPO_DIR"
+
 # --- GLOBAL VARIABLES ---
 # Define colors for output messages
 readonly C_RESET='\033[0m'
@@ -55,6 +64,7 @@ readonly ALL_CONFIG_DIRS=(
     hypr
     mpv
     nvim
+    pypr
     quickshell
     wlogout
     walker
@@ -320,7 +330,7 @@ ______ |  ▓▓▓▓▓▓\  ▓▓▓▓▓▓\ ▓▓ _______       ____| �
                                                                                    
 BANNER
     
-    msg "$C_GREEN" "🚀 Starting installation of Reign's Hyprland Dotfiles..."
+    msg "$C_GREEN" "🚀 Starting installation of Rajchauhan28's Hyprland Dotfiles..."
     
     check_aur_helper
     install_packages

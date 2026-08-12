@@ -31,8 +31,4 @@ walllust-cli set "$RANDOMWALL"
 
 # Wait for walllust-daemon to finish generating colors
 sleep 0.5
-# pkill waybar 2>/dev/null
-# sleep 0.2
-# nohup waybar >/dev/null 2>&1 & disown
-
 echo "Wallpaper applied successfully via walllust!"

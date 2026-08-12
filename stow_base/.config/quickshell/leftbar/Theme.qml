@@ -58,9 +58,13 @@ Singleton {
     readonly property int barPadding: theme.num("leftbar", "barPadding", 10)
     readonly property int radiusPanel: theme.num("leftbar", "radiusPanel", 16)
     readonly property int radiusSmall: theme.num("leftbar", "radiusSmall", 10)
+    readonly property int edgeLine: theme.num("leftbar", "edgeLine", 5)
+    readonly property int cornerFillet: theme.num("leftbar", "cornerFillet", 20)
 
     readonly property int animFast: 120
     readonly property int animNormal: 220
+    readonly property int animPanel: 380
     readonly property var easeOutBack: Easing.OutBack
+    readonly property var easeOutExpo: Easing.OutExpo
     readonly property var easeOutQuint: Easing.OutQuint
 }

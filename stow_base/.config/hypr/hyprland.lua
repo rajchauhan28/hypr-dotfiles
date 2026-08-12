@@ -44,7 +44,6 @@ local terminal           = "ghostty"
 local fileManager        = "dolphin"
 local menu               = "walker"
 local browser            = "brave"
-local waybarHider        = "/home/reign/.config/hypr/waybar_hider.sh"
 local wallpaperSwitcher  = "/home/reign/.config/hypr/wallpaper_switcher.sh"
 local mainMod            = "SUPER"
 
@@ -117,14 +116,6 @@ hl.window_rule({
     float = true,
     center = true,
     move  = "1490 50",
-})
-
-hl.window_rule({
-    name  = "waybar-clock-popup",
-    match = { class = "^(org.waybar.clock_popup)$" },
-    float = true,
-    move  = "1500 50",
-    size  = "250 250",
 })
 
 hl.window_rule({
