@@ -1,8 +1,9 @@
 [pyprland]
-plugins = ["scratchpads"]
+plugins = [ "scratchpads" ]
 
 [scratchpads.term]
 animation = "fromTop"
+# MUST have a dot (.) to be valid
 command = "ghostty --class=com.ghostty.term"
 class = "com.ghostty.term"
 position = "17% 6%"

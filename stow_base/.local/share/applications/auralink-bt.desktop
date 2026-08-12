@@ -1,10 +1,13 @@
 [Desktop Entry]
 Name=AuraLink Bluetooth
+GenericName=Bluetooth Manager
 Comment=Modern Bluetooth Manager built with Rust
-Exec=auralink-bt
-Icon=bluetooth
+# Absolute path on purpose: ~/.local/bin is NOT in the PATH Hyprland inherits
+# (it only has /usr/local/bin), so a bare `auralink-bt` fails from any launcher.
+Exec=/home/reign/.local/bin/auralink-bt
+Icon=auralink-bt
 Terminal=false
 Type=Application
-Categories=Settings;HardwareSettings;
+Categories=Settings;
+Keywords=bluetooth;bt;pairing;headset;
 StartupNotify=true
-StartupWMClass=auralink-bt
