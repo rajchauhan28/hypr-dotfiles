@@ -47,6 +47,15 @@ local browser            = "brave"
 local wallpaperSwitcher  = "/home/reign/.config/hypr/wallpaper_switcher.sh"
 local mainMod            = "SUPER"
 
+-- The leftbar changes its layer-surface width when a horizontal drawer opens.
+-- Keep Hyprland's layer animation from leaving that persistent surface at
+-- zero alpha after launch or resize.
+hl.layer_rule({
+    name = "leftbar-no-animation",
+    match = { namespace = "^leftbar$" },
+    no_anim = true,
+})
+
 -------------------------------
 ---- ENVIRONMENT VARIABLES ----
 -------------------------------
