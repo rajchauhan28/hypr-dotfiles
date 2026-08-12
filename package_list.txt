@@ -90,8 +90,13 @@ ttf-noto-nerd
 unzip
 vi
 visual-studio-code-bin
-vlc
-waybar
+quickshell-git
+qt6-declarative
+qt6-svg
+qt6-wayland
+qt6-shadertools
+playerctl
+pamixer
 wget
 wireguard-tools
 wireplumber

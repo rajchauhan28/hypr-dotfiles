@@ -1,3 +1,6 @@
 custom-shader = /home/reign/.config/ghostty/shaders/cursor_blaze.wgsl
 background-opacity = 0.9
-
+gtk-single-instance = true
+gtk-titlebar = false
+window-vsync = true
+custom-shader-animation = true

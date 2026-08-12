@@ -1,0 +1,27 @@
+actions_as_menu = true
+
+[keybinds]
+show_actions = ["shift Right", "Tab"]
+
+[providers.actions]
+clipboard = [
+  { action = "copy", default = true, bind = "Return" },
+  { action = "remove", bind = "Delete", after = "AsyncClearReload" },
+  { action = "remove_all", label = "clear", bind = "shift Delete", after = "AsyncClearReload" },
+  { action = "show_images_only", label = "only images", bind = "alt i", after = "AsyncClearReload" },
+  { action = "show_text_only", label = "only text", bind = "alt i", after = "AsyncClearReload" },
+  { action = "show_combined", label = "show all", bind = "alt i", after = "AsyncClearReload" },
+  { action = "edit", bind = "alt e" },
+]
+
+files = [
+  { action = "open", default = true, bind = "Return" },
+  { action = "opendir", label = "open dir", bind = "alt Return" },
+  { action = "copypath", label = "copy path", bind = "shift Return" },
+  { action = "copyfile", label = "copy file", bind = "ctrl c" },
+]
+
+archlinuxpkgs = [
+  { action = "install", default = true, bind = "Return" },
+  { action = "remove", bind = "shift Return" },
+]

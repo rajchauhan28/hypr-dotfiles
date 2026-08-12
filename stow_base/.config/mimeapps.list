@@ -1,0 +1,15 @@
+[Added Associations]
+image/jpeg=org.kde.gwenview.desktop;brave-browser.desktop;firefox.desktop;
+image/png=org.kde.gwenview.desktop;brave-browser.desktop;firefox.desktop;
+inode/directory=org.kde.dolphin.desktop;kitty-open.desktop;
+
+[Default Applications]
+inode/directory=org.kde.dolphin.desktop
+image/jpeg=org.kde.gwenview.desktop;
+image/png=org.kde.gwenview.desktop;
+x-scheme-handler/claude-cli=claude-code-url-handler.desktop
+x-scheme-handler/mailto=brave-browser.desktop
+x-scheme-handler/fdm=freedownloadmanager_fdm_up.desktop
+x-scheme-handler/magnet=freedownloadmanager_magnet_up.desktop
+application/x-bittorrent=freedownloadmanager_torrent.desktop
+x-scheme-handler/postman=Postman.desktop

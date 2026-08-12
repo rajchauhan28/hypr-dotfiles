@@ -43,7 +43,7 @@ def set_perf_mode(mode):
             pass
 
 def set_refresh_rate(rate):
-    run_cmd(f"hyprctl keyword monitor {MONITOR}, preferred, auto, 1, @{rate}")
+    run_cmd(f"hyprctl keyword monitor {MONITOR}, 1920x1200@{rate}, auto, 1")
 
 def set_visual_optimizations(is_battery):
     if is_battery:
@@ -53,7 +53,6 @@ def set_visual_optimizations(is_battery):
     else:
         run_cmd("hyprctl keyword decoration:blur:enabled true")
         run_cmd("hyprctl keyword decoration:shadow:enabled true")
-        run_cmd("brightnessctl set 80%")
 
 def get_envy_mode():
     try:

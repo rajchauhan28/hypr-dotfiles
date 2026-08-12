@@ -1,0 +1,1 @@
+{"nodes": [{"id": "$graphify-root$_stow_base_config_nvim_lua_config_lazy_lua", "label": "lazy.lua", "file_type": "code", "source_file": "stow_base/.config/nvim/lua/config/lazy.lua", "source_location": "L1"}], "edges": [], "raw_calls": []}

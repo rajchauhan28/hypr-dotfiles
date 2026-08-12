@@ -6,6 +6,9 @@
 # - Video wallpaper fallback (mpvpaper)
 # - Pywal color generation
 
+# Wait for walllust-daemon to fully initialize on startup
+sleep 2
+
 WALLPAPER_DIR="$HOME/Pictures/wallpapers/"
 
 if [ ! -d "$WALLPAPER_DIR" ]; then
@@ -24,10 +27,12 @@ fi
 echo "Selected: $RANDOMWALL"
 
 # Apply via walllust-cli
-# We use the default transition configured in the daemon
 walllust-cli set "$RANDOMWALL"
 
-# Signal waybar to refresh (since daemon doesn't do this yet)
-pkill -SIGUSR2 waybar 2>/dev/null
+# Wait for walllust-daemon to finish generating colors
+sleep 0.5
+# pkill waybar 2>/dev/null
+# sleep 0.2
+# nohup waybar >/dev/null 2>&1 & disown
 
 echo "Wallpaper applied successfully via walllust!"

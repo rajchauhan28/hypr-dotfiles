@@ -55,7 +55,7 @@ readonly ALL_CONFIG_DIRS=(
     hypr
     mpv
     nvim
-    waybar
+    quickshell
     wlogout
     walker
     yazi
@@ -68,7 +68,12 @@ readonly ALL_CONFIG_DIRS=(
 # Directories containing scripts that need executable permissions
 readonly SCRIPT_DIRS=(
     "hypr"
-    "waybar/scripts"
+    "quickshell/topbar"
+    "quickshell/leftbar"
+    "quickshell/sidepanel"
+    "quickshell/dock"
+    "quickshell/overview"
+    "quickshell/settings"
 )
 
 # --- UTILITY FUNCTIONS ---

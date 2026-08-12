@@ -1,0 +1,44 @@
+{
+  "palette": {
+    "accent": "#e4e4e7",
+    "good": "#86d9a3",
+    "warn": "#e0c26b",
+    "danger": "#e06b6b",
+    "panelBg": "#f2101014"
+  },
+  "dock": {
+    "iconSlot": 52,
+    "iconSize": 34,
+    "dockPadding": 10,
+    "hotspotHeight": 15,
+    "hotspotWidthFraction": 0.25,
+    "radiusPanel": 16,
+    "cornerFillet": 20,
+    "edgeLine": 5,
+    "previewTileW": 176,
+    "previewTileH": 110,
+    "previewMaxTiles": 5
+  },
+  "topbar": {
+    "panelWidth": 1280,
+    "panelHeight": 720,
+    "hotspotHeight": 15,
+    "hotspotWidthFraction": 0.1,
+    "radiusPanel": 20,
+    "cornerFillet": 30,
+    "edgeLine": 5,
+    "gap": 16,
+    "cardPadding": 18
+  },
+  "sidepanel": {
+    "iconSlot": 48,
+    "stripPadding": 8,
+    "panelWidth": 50,
+    "hotspotWidth": 15,
+    "hotspotHeightFraction": 0.1,
+    "radiusPanel": 16,
+    "cornerFillet": 20,
+    "edgeLine": 5,
+    "osdWidth": 130
+  }
+}

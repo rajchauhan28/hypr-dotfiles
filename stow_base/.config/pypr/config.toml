@@ -1,0 +1,24 @@
+[pyprland]
+plugins = ["scratchpads"]
+
+[scratchpads.term]
+animation = "fromTop"
+command = "ghostty --class=com.ghostty.term"
+class = "com.ghostty.term"
+position = "17% 6%"
+size = "65% 60%"
+offset = "200%"
+
+[scratchpads.music]
+animation = "fromBottom"
+command = "ghostty --class=com.ghostty.music -e pulsemixer"
+class = "com.ghostty.music"
+size = "50% 20%"
+offset = "200%"
+
+[scratchpads.taskbar]
+animation = "fromLeft"
+command = "ghostty --class=com.ghostty.taskbar -e btop --force-utf"
+class = "com.ghostty.taskbar"
+size = "50% 80%"
+offset = "200%"
