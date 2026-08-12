@@ -40,5 +40,9 @@
     "cornerFillet": 20,
     "edgeLine": 5,
     "osdWidth": 130
+  },
+  "leftbar": {
+    "barWidth": 64,
+    "iconSlot": 49
   }
 }
