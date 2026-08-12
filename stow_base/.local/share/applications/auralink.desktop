@@ -1,10 +1,14 @@
 [Desktop Entry]
 Name=AuraLink
+GenericName=Network Manager
 Comment=Modern Wi-Fi, VPN, and Network Manager built with Rust
-Exec=auralink
+# Absolute path on purpose: ~/.local/bin is NOT in the PATH Hyprland inherits
+# (it only has /usr/local/bin), so a bare `auralink` fails from any launcher.
+Exec=/home/reign/.local/bin/auralink
 Icon=auralink
 Terminal=false
 Type=Application
-Categories=Network;Settings;
+# One main category only -- two made the entry show up twice in menus.
+Categories=Network;
+Keywords=wifi;wireless;network;vpn;
 StartupNotify=true
-StartupWMClass=auralink
