@@ -2,7 +2,7 @@
 
 set -u
 
-configs=(topbar leftbar dock sidepanel widgets/desktop_clock)
+configs=(topbar leftbar dock sidepanel widgets/desktop_clock lock notifications)
 
 # Ask Quickshell to stop the exact configurations instead of matching process
 # command lines. This avoids killing unrelated shells and works regardless of

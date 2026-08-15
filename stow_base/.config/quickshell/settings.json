@@ -41,6 +41,19 @@
     "edgeLine": 5,
     "osdWidth": 130
   },
+  "notifications": {
+    "panelWidth": 380,
+    "topMargin": 30,
+    "cardPadding": 14,
+    "iconSize": 34,
+    "radiusPanel": 18,
+    "radiusSmall": 10,
+    "cornerFillet": 22,
+    "maxVisible": 5,
+    "bodyMaxLines": 4,
+    "timeoutLow": 4,
+    "timeoutNormal": 6
+  },
   "leftbar": {
     "barWidth": 54,
     "iconSlot": 38

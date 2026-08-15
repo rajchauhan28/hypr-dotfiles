@@ -83,9 +83,9 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("qs -d -c sidepanel &")
     hl.exec_cmd("qs -d -c dock &")
     hl.exec_cmd("qs -d -c widgets/desktop_clock &")
-    hl.exec_cmd("swaync")
+    hl.exec_cmd("qs -d -c lock &")
+    hl.exec_cmd("qs -d -c notifications &")
     hl.exec_cmd("pypr")
-    hl.exec_cmd("swaync-client -df")
     hl.exec_cmd("pactl set-sink-mute @DEFAULT_SINK@ 0")
     hl.exec_cmd("hyprpm reload -n")
     hl.exec_cmd(wallpaperSwitcher)
@@ -282,7 +282,7 @@ hl.bind(mainMod .. " + SHIFT + bracketright", hl.dsp.window.move({ monitor = "ri
 hl.bind(mainMod .. " + bracketleft",  hl.dsp.focus({ monitor = "left" }))
 hl.bind(mainMod .. " + bracketright", hl.dsp.focus({ monitor = "right" }))
 
-hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("swaync-client -t"))
+hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("qs -c notifications ipc call notifications dismissAll"))
 
 -- Workspaces
 for i = 1, 10 do
@@ -312,7 +312,7 @@ hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd("/home/reign/.config/hypr/screens
 
 -- Pyprland & Special Workspaces
 hl.bind(mainMod .. " + slash",     hl.dsp.exec_cmd("/home/reign/.config/keybinds_gui.py"))
-hl.bind(mainMod .. " + l",         hl.dsp.exec_cmd("qs -c lock"))
+hl.bind(mainMod .. " + l",         hl.dsp.exec_cmd("/home/reign/.config/quickshell/lock/lock.sh"))
 hl.bind(mainMod .. " + S",         hl.dsp.workspace.toggle_special("magic"))
 hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:magic" }))
 hl.bind(mainMod .. " + SPACE",     hl.dsp.exec_cmd("pypr toggle term"))
@@ -328,5 +328,4 @@ hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 -- Session Binds
 hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd("wlogout -b 2"))
 hl.bind("ALT + Escape",        hl.dsp.exec_cmd("wlogout -b 2"))
-hl.bind("ALT + R",             hl.dsp.exec_cmd("/home/reign/.config/swaync/refresh.sh"))
 hl.bind(mainMod .. " + M",       hl.dsp.exit())
