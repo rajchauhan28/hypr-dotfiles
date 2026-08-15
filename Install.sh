@@ -14,6 +14,27 @@ set -Eeuo pipefail
 readonly REPO_URL="https://github.com/rajchauhan28/hypr-dotfiles.git"
 readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
+# Components superseded by the Quickshell suite.  Keep this list explicit so
+# detection is predictable and never mistakes an unrelated process for a
+# locker merely because its name contains "lock".
+readonly -a LEGACY_LOCKERS=(
+    hyprlock
+    swaylock
+    swaylock-effects
+    gtklock
+    waylock
+    i3lock
+    i3lock-color
+    xsecurelock
+    betterlockscreen
+    physlock
+)
+
+declare -a LEGACY_COMPONENTS_FOUND=()
+declare -a LEGACY_SERVICE_UNITS=()
+declare -a LEGACY_AUTOSTART_FILES=()
+BACKUP_DIR=""
+
 # --- BOOTSTRAP LOGIC ---
 # A process-substitution launch (bash <(curl ...)) has no repository beside the
 # script, so clone/update it first. A checked-out script always uses its own
@@ -84,6 +105,7 @@ readonly SCRIPT_DIRS=(
     "quickshell/dock"
     "quickshell/overview"
     "quickshell/settings"
+    "quickshell/lock"
 )
 
 # --- UTILITY FUNCTIONS ---
@@ -94,7 +116,104 @@ msg() {
     echo -e "${1}${2}${C_RESET}"
 }
 
+# append_unique <array-name> <value>
+append_unique() {
+    local -n target_array="$1"
+    local value="$2"
+    local existing
+
+    for existing in "${target_array[@]}"; do
+        [ "$existing" = "$value" ] && return
+    done
+    target_array+=("$value")
+}
+
 # --- CORE FUNCTIONS ---
+
+# Find panel/locker components which can continue running independently of the
+# Hyprland config.  The old Hyprland files are backed up by stow_configs(), but
+# user services and XDG autostart entries also need to be disabled explicitly.
+detect_legacy_shell_components() {
+    msg "$C_CYAN" "🔎 Checking for Waybar and existing lockscreen components..."
+
+    local component
+    for component in waybar swayidle "${LEGACY_LOCKERS[@]}"; do
+        if command -v "$component" &>/dev/null \
+                || pgrep -x "$component" &>/dev/null \
+                || [ -e "$HOME/.config/$component" ] \
+                || [ -L "$HOME/.config/$component" ]; then
+            append_unique LEGACY_COMPONENTS_FOUND "$component"
+        fi
+    done
+
+    # Even an unknown/custom locker is covered when it is wired through the
+    # Hyprland or hypridle configuration: stow_configs() replaces that config
+    # with this repository's `qs -c lock` command.
+    local lock_config
+    for lock_config in "$HOME/.config/hypr/hypridle.conf" \
+                       "$HOME/.config/hypr/hyprland.conf" \
+                       "$HOME/.config/hypridle.conf"; do
+        if [ -f "$lock_config" ] \
+                && grep -Eqi '(^[[:space:]]*lock_cmd[[:space:]]*=|bind.*exec,.*lock)' "$lock_config" \
+                && ! grep -Eqi '(^[[:space:]]*lock_cmd[[:space:]]*=|bind.*exec,).*qs[[:space:]]+-c[[:space:]]+lock' "$lock_config"; then
+            append_unique LEGACY_COMPONENTS_FOUND "custom-lock-command"
+        fi
+    done
+
+    # Discover both standard unit names and custom unit files whose Exec line
+    # launches a known bar, idle daemon, or locker.
+    if command -v systemctl &>/dev/null; then
+        local unit _state
+        while read -r unit _state; do
+            case "$unit" in
+                waybar*.service|swayidle*.service|hyprlock*.service|\
+                swaylock*.service|gtklock*.service|waylock*.service|\
+                i3lock*.service|xsecurelock*.service|betterlockscreen*.service|\
+                physlock*.service)
+                    append_unique LEGACY_SERVICE_UNITS "$unit"
+                    ;;
+            esac
+        done < <(systemctl --user list-unit-files --type=service --no-legend 2>/dev/null || true)
+    fi
+
+    local user_unit_dir="$HOME/.config/systemd/user"
+    if [ -d "$user_unit_dir" ]; then
+        local unit_file
+        while IFS= read -r -d '' unit_file; do
+            if grep -Eqi '^[[:space:]]*Exec(Start|StartPre)=.*(waybar|swayidle|hyprlock|swaylock|gtklock|waylock|i3lock|xsecurelock|betterlockscreen|physlock)' "$unit_file"; then
+                append_unique LEGACY_SERVICE_UNITS "$(basename "$unit_file")"
+            fi
+        done < <(find "$user_unit_dir" -maxdepth 1 -type f -name '*.service' -print0 2>/dev/null)
+    fi
+
+    local autostart_dir="$HOME/.config/autostart"
+    if [ -d "$autostart_dir" ]; then
+        local desktop_file
+        while IFS= read -r -d '' desktop_file; do
+            if grep -Eqi '^[[:space:]]*Exec=.*(waybar|swayidle|hyprlock|swaylock|gtklock|waylock|i3lock|xsecurelock|betterlockscreen|physlock)' "$desktop_file"; then
+                append_unique LEGACY_AUTOSTART_FILES "$desktop_file"
+            fi
+        done < <(find "$autostart_dir" -maxdepth 1 -type f -name '*.desktop' -print0 2>/dev/null)
+    fi
+
+    if [ ${#LEGACY_COMPONENTS_FOUND[@]} -eq 0 ] \
+            && [ ${#LEGACY_SERVICE_UNITS[@]} -eq 0 ] \
+            && [ ${#LEGACY_AUTOSTART_FILES[@]} -eq 0 ]; then
+        msg "$C_GREEN" "✅ No conflicting panel or lockscreen setup detected."
+        return
+    fi
+
+    if [ ${#LEGACY_COMPONENTS_FOUND[@]} -gt 0 ]; then
+        msg "$C_YELLOW" "  -> Detected components: ${LEGACY_COMPONENTS_FOUND[*]}"
+    fi
+    if [ ${#LEGACY_SERVICE_UNITS[@]} -gt 0 ]; then
+        msg "$C_YELLOW" "  -> Detected user services: ${LEGACY_SERVICE_UNITS[*]}"
+    fi
+    if [ ${#LEGACY_AUTOSTART_FILES[@]} -gt 0 ]; then
+        msg "$C_YELLOW" "  -> Detected conflicting XDG autostart entries."
+    fi
+    msg "$C_BLUE" "  -> They will be backed up and replaced by the Quickshell suite."
+}
 
 # Function to check for an AUR helper (yay or paru) and install yay if neither is found.
 check_aur_helper() {
@@ -191,17 +310,39 @@ setup_hyprpm() {
 
 # Function to backup existing configs and use stow to link the new ones.
 stow_configs() {
-    local backup_dir="$HOME/.dotfiles_backup_$(date +%Y%m%d_%H%M%S)"
-    msg "$C_CYAN" "📂 Backing up existing configs to $backup_dir and applying Stow..."
+    BACKUP_DIR="$HOME/.dotfiles_backup_$(date +%Y%m%d_%H%M%S)"
+    msg "$C_CYAN" "📂 Backing up existing configs to $BACKUP_DIR and applying Stow..."
     
-    mkdir -p "$backup_dir/.config"
+    mkdir -p "$BACKUP_DIR/.config"
     
     # Backup existing configs that are about to be stowed
     for dir in "${ALL_CONFIG_DIRS[@]}"; do
         local dest="$HOME/.config/$dir"
         if [ -e "$dest" ] && [ ! -L "$dest" ]; then
             msg "$C_YELLOW" "  -> Backing up '$dir'..."
-            mv "$dest" "$backup_dir/.config/"
+            mv "$dest" "$BACKUP_DIR/.config/"
+        fi
+    done
+
+    # These configurations are not supplied by this repository, but leaving
+    # them in place makes it easy for a user service or autostart file to bring
+    # the old UI back. Preserve them beside the normal dotfile backup.
+    local legacy_config
+    for legacy_config in waybar swayidle "${LEGACY_LOCKERS[@]}"; do
+        local legacy_path="$HOME/.config/$legacy_config"
+        if [ -e "$legacy_path" ] || [ -L "$legacy_path" ]; then
+            msg "$C_YELLOW" "  -> Backing up legacy '$legacy_config' config..."
+            mkdir -p "$BACKUP_DIR/.config"
+            mv "$legacy_path" "$BACKUP_DIR/.config/"
+        fi
+    done
+
+    local autostart_file
+    for autostart_file in "${LEGACY_AUTOSTART_FILES[@]}"; do
+        if [ -e "$autostart_file" ] || [ -L "$autostart_file" ]; then
+            msg "$C_YELLOW" "  -> Disabling autostart '$(basename "$autostart_file")'..."
+            mkdir -p "$BACKUP_DIR/.config/autostart-disabled"
+            mv "$autostart_file" "$BACKUP_DIR/.config/autostart-disabled/"
         fi
     done
     
@@ -216,13 +357,13 @@ stow_configs() {
         local dest="$HOME/$lfile"
         if [ -e "$dest" ] && [ ! -L "$dest" ]; then
             msg "$C_YELLOW" "  -> Backing up '$lfile'..."
-            mkdir -p "$backup_dir/$(dirname "$lfile")"
-            mv "$dest" "$backup_dir/$lfile"
+            mkdir -p "$BACKUP_DIR/$(dirname "$lfile")"
+            mv "$dest" "$BACKUP_DIR/$lfile"
         fi
     done
     
     if [ -e "$HOME/.zshrc" ] && [ ! -L "$HOME/.zshrc" ]; then
-        mv "$HOME/.zshrc" "$backup_dir/"
+        mv "$HOME/.zshrc" "$BACKUP_DIR/"
     fi
     
     msg "$C_BLUE" "  -> Applying GNU Stow from stow_base..."
@@ -231,6 +372,50 @@ stow_configs() {
     cd ..
     
     msg "$C_GREEN" "✅ Config files successfully stowed."
+}
+
+# Disable independently launched legacy components and activate the replacements
+# after the new files and executable permissions are in place.
+activate_quickshell_replacements() {
+    msg "$C_CYAN" "🔄 Activating Quickshell panel and lockscreen replacements..."
+
+    if command -v systemctl &>/dev/null; then
+        local unit
+        for unit in "${LEGACY_SERVICE_UNITS[@]}"; do
+            if ! systemctl --user disable --now "$unit" &>/dev/null; then
+                msg "$C_YELLOW" "  -> Could not disable '$unit'; it may already be inactive."
+            else
+                msg "$C_GREEN" "  -> Disabled legacy service '$unit'."
+            fi
+        done
+
+        systemctl --user daemon-reload 2>/dev/null || true
+        if systemctl --user enable --now hypridle.service &>/dev/null; then
+            msg "$C_GREEN" "  -> Enabled hypridle with the Quickshell lock command."
+        else
+            msg "$C_YELLOW" "  -> Could not start hypridle now; it will start after login/reboot."
+        fi
+    fi
+
+    # Waybar and swayidle are session daemons, unlike lockers which only exist
+    # while the screen is locked. Never kill an active locker during install.
+    pkill -TERM -x waybar 2>/dev/null || true
+    pkill -TERM -x swayidle 2>/dev/null || true
+
+    if command -v qs &>/dev/null \
+            && [ -n "${WAYLAND_DISPLAY:-}" ] \
+            && [ -x "$HOME/.config/quickshell/reload.sh" ]; then
+        if "$HOME/.config/quickshell/reload.sh"; then
+            msg "$C_GREEN" "  -> Quickshell panels started for the current session."
+        else
+            msg "$C_YELLOW" "  -> Panels will start automatically after login/reboot."
+        fi
+    else
+        msg "$C_BLUE" "  -> Quickshell panels will start after login/reboot."
+    fi
+
+    msg "$C_GREEN" "✅ Waybar and legacy lockscreen migration complete."
+    msg "$C_BLUE" "  -> Previous files are recoverable from $BACKUP_DIR"
 }
 
 # Function to install fonts
@@ -332,11 +517,13 @@ BANNER
     
     msg "$C_GREEN" "🚀 Starting installation of Rajchauhan28's Hyprland Dotfiles..."
     
+    detect_legacy_shell_components
     check_aur_helper
     install_packages
     stow_configs
     install_fonts
     set_script_permissions
+    activate_quickshell_replacements
     build_fastfetch_from_source
     
     msg "$C_GREEN" "🎉 All tasks completed!"
