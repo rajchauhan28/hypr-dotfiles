@@ -44,5 +44,8 @@
   "leftbar": {
     "barWidth": 54,
     "iconSlot": 38
+  },
+  "lockscreen": {
+    "icon": ""
   }
 }

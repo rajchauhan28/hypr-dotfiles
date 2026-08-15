@@ -35,8 +35,15 @@ Item {
         // Checked lookup: unknown names yield "" (fallback glyph below) rather
         // than the icon provider's magenta missing-image placeholder, which
         // would count as Ready and paint a checkerboard.
-        source: (slot.entry && slot.entry.iconName)
-                ? Quickshell.iconPath(slot.entry.iconName, true) : ""
+        source: {
+            if (!slot.entry || !slot.entry.iconName) return "";
+            var direct = Quickshell.iconPath(slot.entry.iconName, true);
+            if (direct !== "") return direct;
+            if (typeof Config !== "undefined" && Config.getAvailableIcon) {
+                return Quickshell.iconPath(Config.getAvailableIcon(slot.entry.iconName, slot.entry.name, slot.entry.class), true);
+            }
+            return "";
+        }
         sourceSize.width: 64
         sourceSize.height: 64
         asynchronous: true

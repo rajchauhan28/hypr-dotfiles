@@ -11,6 +11,8 @@ Singleton {
     // below keeps its literal default as the fallback, so a missing, empty or
     // half-written settings.json leaves the panel looking exactly as shipped.
     property var cfg: ({})
+    property string osIcon: ""
+    readonly property string username: Quickshell.env("USER") || "user"
 
     FileView {
         path: "/home/reign/.config/quickshell/settings.json"
@@ -61,6 +63,15 @@ Singleton {
     readonly property color warn: theme.col("warn", "#e0c26b")
     readonly property color danger: theme.col("danger", "#e06b6b")
 
+    // The dashboard identity card mirrors the lockscreen profile image.  An
+    // empty setting means to use the detected distribution logo instead.
+    readonly property string lockIcon: {
+        var section = theme.cfg.lockscreen;
+        return section && section.icon ? section.icon : "";
+    }
+    readonly property string profileIcon: lockIcon !== "" ? lockIcon : osIcon
+    readonly property bool hasCustomProfileIcon: lockIcon !== ""
+
     readonly property int radiusPanel: theme.num("topbar", "radiusPanel", 20)
     readonly property int radiusCard: 16
     readonly property int radiusSmall: 10
@@ -92,6 +103,20 @@ Singleton {
     readonly property int easeOutBack: Easing.OutBack
     readonly property int easeInOutCubic: Easing.InOutCubic
 
+    Process {
+        running: true
+        command: ["python3", "/home/reign/.config/quickshell/settings/system_info.py"]
+        stdout: SplitParser {
+            onRead: output => {
+                try {
+                    var info = JSON.parse(output.trim());
+                    theme.osIcon = info.icon
+                                   || Quickshell.iconPath(info.logoName || info.id, true);
+                } catch (e) {}
+            }
+        }
+    }
+
     // Colour ramp for load-style meters.
     function meterColor(pct) {
         if (pct >= 85)
@@ -101,4 +126,3 @@ Singleton {
         return theme.accent;
     }
 }
-

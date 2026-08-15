@@ -1,16 +1,16 @@
 {
   "pinned": [
     {
-      "name": "Terminal",
-      "exec": "ghostty",
-      "class": "com.mitchellh.ghostty",
-      "icon": "com.mitchellh.ghostty"
-    },
-    {
       "name": "Files",
       "exec": "dolphin",
       "class": "org.kde.dolphin",
       "icon": "org.kde.dolphin"
+    },
+    {
+      "name": "Terminal",
+      "exec": "ghostty",
+      "class": "com.mitchellh.ghostty",
+      "icon": "com.mitchellh.ghostty"
     },
     {
       "name": "Brave",
@@ -35,6 +35,12 @@
       "exec": "spotify",
       "class": "spotify",
       "icon": "spotify"
+    },
+    {
+      "name": "Antigravity IDE",
+      "exec": "/usr/bin/antigravity-ide",
+      "class": "antigravity-ide",
+      "icon": "antigravity-ide"
     },
     {
       "name": "Disk Usage Analyzer",

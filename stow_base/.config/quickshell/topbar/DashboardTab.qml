@@ -597,12 +597,28 @@ Item {
                         color: Theme.cardAlt
                         border.color: Theme.borderStrong
                         border.width: 1
+                        clip: true
+
+                        Image {
+                            id: dashboardProfileImage
+                            anchors.fill: parent
+                            anchors.margins: Theme.hasCustomProfileIcon ? 0 : 10
+                            source: Theme.profileIcon
+                            fillMode: Theme.hasCustomProfileIcon
+                                      ? Image.PreserveAspectCrop
+                                      : Image.PreserveAspectFit
+                            asynchronous: true
+                            sourceSize: Qt.size(128, 128)
+                            visible: source.toString() !== "" && status !== Image.Error
+                        }
 
                         Text {
                             anchors.centerIn: parent
-                            text: "󰣇"
-                            font.pixelSize: 32
-                            color: Theme.textPrimary
+                            text: "󰌾"
+                            font.pixelSize: 30
+                            color: Theme.textMuted
+                            visible: Theme.profileIcon === ""
+                                     || dashboardProfileImage.status === Image.Error
                         }
                     }
 
@@ -611,7 +627,7 @@ Item {
                         spacing: 3
 
                         Text {
-                            text: dash.stats.distro || "Linux"
+                            text: Theme.username
                             font.pixelSize: 17
                             font.bold: true
                             color: Theme.textPrimary
@@ -737,10 +753,9 @@ Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
 
-                MediaPane {
+                DashboardMediaCard {
                     anchors.fill: parent
                     anchors.margins: Theme.cardPadding
-                    compact: true
                 }
             }
 

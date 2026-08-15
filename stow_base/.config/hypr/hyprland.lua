@@ -97,13 +97,6 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("command -v libinput-gestures-setup >/dev/null && libinput-gestures-setup start")
     hl.exec_cmd("test -x /usr/lib/pam_kwallet_init && /usr/lib/pam_kwallet_init")
     hl.exec_cmd("/home/reign/.config/hypr/smart_gpu.py")
-    -- Hover-reveal top panel: no reserved space, opens from the 15px strip
-    -- in the middle 10% of the screen edge.
-    hl.exec_cmd("qs -d -c topbar")
-    -- Same idea on the right edge: brightness, volume, Wi-Fi and Bluetooth.
-    hl.exec_cmd("qs -d -c sidepanel")
-    -- And along the bottom: pinned + running apps.
-    hl.exec_cmd("qs -d -c dock")
 end)
 
 ----------------------
@@ -258,7 +251,7 @@ hl.bind(mainMod .. " + I", hl.dsp.exec_cmd("qs -c sidepanel ipc call sidepanel t
 hl.bind(mainMod .. " + D", hl.dsp.exec_cmd("qs -c dock ipc call dock toggle"))
 -- Settings for the shell itself: dock apps, panel geometry, palette.
 hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd("/home/reign/.config/quickshell/settings/launch.sh"))
-hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("pkill -f \"qs.*\" || true"))
+hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("/home/reign/.config/quickshell/reload.sh"))
 hl.bind(mainMod .. " + O", hl.dsp.exec_cmd("qs -d -c topbar & qs -d -c leftbar & qs -d -c dock & qs -d -c sidepanel &"))
 hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("walker -m clipboard"))
@@ -319,7 +312,7 @@ hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd("/home/reign/.config/hypr/screens
 
 -- Pyprland & Special Workspaces
 hl.bind(mainMod .. " + slash",     hl.dsp.exec_cmd("/home/reign/.config/keybinds_gui.py"))
-hl.bind(mainMod .. " + l",         hl.dsp.exec_cmd("hyprlock"))
+hl.bind(mainMod .. " + l",         hl.dsp.exec_cmd("qs -c lock"))
 hl.bind(mainMod .. " + S",         hl.dsp.workspace.toggle_special("magic"))
 hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:magic" }))
 hl.bind(mainMod .. " + SPACE",     hl.dsp.exec_cmd("pypr toggle term"))
