@@ -314,6 +314,7 @@ ShellRoot {
         readonly property real bodyWTarget:
             (root.pinnedModel.length + root.extraModel.length) * Theme.iconSlot
             + (root.extraModel.length > 0 ? Theme.separatorWidth : 0)
+            + Theme.separatorWidth
             + Theme.dockPadding * 2
         property real bodyW: bodyWTarget
         Behavior on bodyW {
@@ -648,6 +649,18 @@ ShellRoot {
                             root.hoverEnter(modelData, cx);
                         }
                         onHoverLeft: root.hoverLeave()
+                    }
+                }
+
+                Item {
+                    width: Theme.separatorWidth
+                    height: Theme.iconSlot
+
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: 1
+                        height: Theme.iconSlot - 20
+                        color: Theme.textFaint
                     }
                 }
             }

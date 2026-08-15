@@ -1,3 +1,5 @@
+//@ pragma UseQApplication
+
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -234,6 +236,11 @@ ShellRoot {
                         implicitWidth: Theme.iconSlot
                         implicitHeight: Theme.iconSlot
 
+                        QsMenuAnchor {
+                            id: menuAnchor
+                            menu: modelData.menu
+                        }
+
                         Rectangle {
                             id: bgAppBtn
                             anchors.fill: parent
@@ -282,7 +289,14 @@ ShellRoot {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: modelData.activate()
+                            acceptedButtons: Qt.LeftButton | Qt.RightButton
+                            onClicked: (mouse) => {
+                                if (mouse.button === Qt.RightButton && modelData.hasMenu) {
+                                    menuAnchor.open();
+                                } else {
+                                    modelData.activate();
+                                }
+                            }
                             onContainsMouseChanged: {
                                 if (containsMouse) bgDrawerHideTimer.stop();
                                 root.setTooltip(containsMouse ? (modelData.title || "Tray Item") : "", bgMouse);

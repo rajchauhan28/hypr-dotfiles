@@ -44,18 +44,25 @@ Rectangle {
 
     function getAppIconName(appClass) {
         var cls = (appClass || "").toLowerCase();
-        if (cls.indexOf("brave") !== -1) return "brave-desktop";
-        if (cls.indexOf("ghostty") !== -1) return "com.mitchellh.ghostty";
-        if (cls.indexOf("code") !== -1 || cls.indexOf("vsc") !== -1) return "code";
-        if (cls.indexOf("discord") !== -1 || cls.indexOf("webcord") !== -1) return "discord";
-        if (cls.indexOf("alacritty") !== -1) return "alacritty";
-        if (cls.indexOf("kitty") !== -1) return "kitty";
-        if (cls.indexOf("firefox") !== -1) return "firefox";
-        if (cls.indexOf("spotify") !== -1) return "spotify";
-        if (cls.indexOf("thunar") !== -1) return "org.xfce.thunar";
-        if (cls.indexOf("dolphin") !== -1) return "org.kde.dolphin";
-        if (cls.indexOf("rdp") !== -1) return "org.remmina.Remmina";
-        return cls; // fallback to hyprland window class
+        var name = "";
+        if (cls.indexOf("brave") !== -1) name = "brave-desktop";
+        else if (cls.indexOf("ghostty") !== -1) name = "com.mitchellh.ghostty";
+        else if (cls.indexOf("code") !== -1 || cls.indexOf("vsc") !== -1) name = "code";
+        else if (cls.indexOf("discord") !== -1 || cls.indexOf("webcord") !== -1) name = "discord";
+        else if (cls.indexOf("alacritty") !== -1) name = "alacritty";
+        else if (cls.indexOf("kitty") !== -1) name = "kitty";
+        else if (cls.indexOf("firefox") !== -1) name = "firefox";
+        else if (cls.indexOf("spotify") !== -1) name = "spotify";
+        else if (cls.indexOf("thunar") !== -1) name = "org.xfce.thunar";
+        else if (cls.indexOf("dolphin") !== -1) name = "org.kde.dolphin";
+        else if (cls.indexOf("rdp") !== -1) name = "org.remmina.Remmina";
+        else name = cls;
+
+        if (name && Quickshell.iconPath(name, true) !== "") return name;
+        if (typeof Config !== "undefined" && Config.getAvailableIcon) {
+            return Config.getAvailableIcon(name, appClass, appClass);
+        }
+        return name;
     }
 
     function getAppIconFallback(appClass) {

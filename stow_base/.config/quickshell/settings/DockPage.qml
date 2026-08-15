@@ -26,6 +26,7 @@ ColumnLayout {
                     required property int index
 
                     app: modelData
+                    itemIndex: index
                     isFirst: index === 0
                     isLast: index === Config.pinned.length - 1
 

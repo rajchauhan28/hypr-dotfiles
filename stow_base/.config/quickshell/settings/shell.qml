@@ -23,7 +23,8 @@ ShellRoot {
         { key: "dock", glyph: "󰇘", label: "Dock", hint: "Pinned apps and dock size" },
         { key: "sidebar", glyph: "󰕮", label: "Sidebar", hint: "Left sidebar width & buttons" },
         { key: "panels", glyph: "󰕰", label: "Panels", hint: "Top and right panel geometry" },
-        { key: "appearance", glyph: "󰸌", label: "Appearance", hint: "Shared palette" }
+        { key: "appearance", glyph: "󰸌", label: "Appearance", hint: "Shared palette" },
+        { key: "lockscreen", glyph: "󰌾", label: "Lockscreen", hint: "User icon and assets" }
     ]
 
     FloatingWindow {
@@ -216,7 +217,8 @@ ShellRoot {
                         source: root.pageIndex === 0 ? "DockPage.qml"
                               : root.pageIndex === 1 ? "SidebarPage.qml"
                               : root.pageIndex === 2 ? "PanelsPage.qml"
-                                                     : "AppearancePage.qml"
+                              : root.pageIndex === 3 ? "AppearancePage.qml"
+                                                     : "LockscreenPage.qml"
                     }
                 }
 
