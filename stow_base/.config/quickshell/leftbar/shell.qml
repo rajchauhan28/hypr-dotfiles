@@ -40,6 +40,9 @@ ShellRoot {
 
     property bool bgDrawerOpen: false
     property real bgDrawerY: 300
+    // Number of tray menus currently on screen. While any is open the drawer
+    // must stay put: the menu is anchored to an icon inside it.
+    property int trayMenusOpen: 0
     readonly property int trayItemCount: SystemTray.items.values.length
     readonly property int powerItemCount: 3
     readonly property real trayDrawerWidth: trayItemCount > 0
@@ -53,7 +56,13 @@ ShellRoot {
         id: bgDrawerHideTimer
         interval: 1200
         repeat: false
-        onTriggered: root.bgDrawerOpen = false
+        onTriggered: {
+            if (root.trayMenusOpen > 0) {
+                restart();
+                return;
+            }
+            root.bgDrawerOpen = false;
+        }
     }
 
 
@@ -239,6 +248,28 @@ ShellRoot {
                         QsMenuAnchor {
                             id: menuAnchor
                             menu: modelData.menu
+
+                            // Without an anchor item the popup has no surface
+                            // to parent to and open() silently does nothing —
+                            // which is why right-click menus never appeared.
+                            // The bar sits on the left edge, so hang the menu
+                            // off the icon's right side.
+                            anchor.item: bgAppBtn
+                            anchor.edges: Edges.Right | Edges.Top
+                            anchor.gravity: Edges.Right | Edges.Bottom
+
+                            // The menu is its own surface, so opening it takes
+                            // the pointer off the icon and the drawer's hide
+                            // timer would collapse the anchor out from under
+                            // the popup. Hold the drawer open while it lives.
+                            onOpened: {
+                                bgDrawerHideTimer.stop();
+                                root.trayMenusOpen++;
+                            }
+                            onClosed: {
+                                root.trayMenusOpen = Math.max(0, root.trayMenusOpen - 1);
+                                bgDrawerHideTimer.restart();
+                            }
                         }
 
                         Rectangle {
@@ -289,13 +320,27 @@ ShellRoot {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            acceptedButtons: Qt.LeftButton | Qt.RightButton
+                            acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
                             onClicked: (mouse) => {
-                                if (mouse.button === Qt.RightButton && modelData.hasMenu) {
+                                // onlyMenu items (nm-applet, blueman, …) expose
+                                // no activate action at all, so a left click has
+                                // to fall through to the menu or it does nothing.
+                                var wantsMenu = mouse.button === Qt.RightButton
+                                                || modelData.onlyMenu;
+
+                                if (wantsMenu && modelData.hasMenu) {
                                     menuAnchor.open();
-                                } else {
+                                } else if (mouse.button === Qt.MiddleButton) {
+                                    modelData.secondaryActivate();
+                                } else if (mouse.button === Qt.LeftButton) {
                                     modelData.activate();
                                 }
+                            }
+                            onWheel: (wheel) => {
+                                if (wheel.angleDelta.y !== 0)
+                                    modelData.scroll(wheel.angleDelta.y, false);
+                                if (wheel.angleDelta.x !== 0)
+                                    modelData.scroll(wheel.angleDelta.x, true);
                             }
                             onContainsMouseChanged: {
                                 if (containsMouse) bgDrawerHideTimer.stop();
