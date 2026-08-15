@@ -117,7 +117,6 @@ ShellRoot {
             if (result === PamResult.Success) {
                 root.currentPassword = "";
                 sessionLock.locked = false;
-                Qt.quit();
             } else {
                 root.currentPassword = "";
                 root.authFailed = true;
@@ -142,9 +141,26 @@ ShellRoot {
         }
     }
 
+    // Runs as a persistent daemon (qs -d -c lock) so the QML engine, Qt
+    // modules and Theme's helper scripts are already warm by the time a
+    // lock is requested. Spawning a fresh `qs -c lock` process per lock was
+    // the source of the multi-second delay before the compositor actually
+    // locked.
+    IpcHandler {
+        target: "session"
+
+        function lock(): void {
+            root.currentPassword = "";
+            root.authFailed = false;
+            root.authInProgress = false;
+            root.selectedProfileIndex = 0;
+            sessionLock.locked = true;
+        }
+    }
+
     WlSessionLock {
         id: sessionLock
-        locked: true
+        locked: false
 
         WlSessionLockSurface {
             color: "#101014"
