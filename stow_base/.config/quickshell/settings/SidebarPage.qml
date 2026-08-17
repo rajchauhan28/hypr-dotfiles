@@ -175,6 +175,14 @@ ColumnLayout {
                         }
                     }
                 }
+
+                Text {
+                    anchors.centerIn: parent
+                    visible: appList.count === 0
+                    text: Config.apps.length === 0 ? "Reading desktop entries…" : "No matches"
+                    font.pixelSize: 11
+                    color: Theme.textFaint
+                }
             }
         }
     }
