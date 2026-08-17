@@ -120,6 +120,36 @@ ShellRoot {
         p.running = true;
     }
 
+    // The sidebar's pinned apps. The settings app writes this same file, so a
+    // change there reaches the running bar without a restart. There is no
+    // Config singleton in this config directory -- the bar owns the read.
+    readonly property var sidebarPinnedDefaults: [
+        { name: "Terminal", exec: "ghostty", "class": "com.mitchellh.ghostty", icon: "com.mitchellh.ghostty" },
+        { name: "Brave", exec: "brave", "class": "brave-browser", icon: "brave-desktop" },
+        { name: "Files", exec: "dolphin", "class": "org.kde.dolphin", icon: "org.kde.dolphin" },
+        { name: "VS Code", exec: "code", "class": "code", icon: "vscode" }
+    ]
+    property var sidebarPinned: sidebarPinnedDefaults
+
+    FileView {
+        path: "/home/reign/.config/quickshell/leftbar/pinned.json"
+        watchChanges: true
+        onFileChanged: reload()
+        // onLoaded only fires when the file exists; onLoadFailed is what covers
+        // a deleted or unreadable file, and without it the bar would keep the
+        // last list forever instead of falling back.
+        onLoaded: {
+            try {
+                var d = JSON.parse(text());
+                root.sidebarPinned = (d.pinned && d.pinned.length > 0)
+                                       ? d.pinned : root.sidebarPinnedDefaults;
+            } catch (e) {
+                root.sidebarPinned = root.sidebarPinnedDefaults;
+            }
+        }
+        onLoadFailed: root.sidebarPinned = root.sidebarPinnedDefaults
+    }
+
     PanelWindow {
         id: barWindow
         anchors {
@@ -675,12 +705,7 @@ ShellRoot {
 
                     // Pinned Sidebar Apps
                     Repeater {
-                        model: (typeof Config !== "undefined" && Config.sidebarPinned) ? Config.sidebarPinned : [
-                            { name: "Terminal", exec: "kitty", "class": "kitty", icon: "kitty" },
-                            { name: "Browser", exec: "firefox", "class": "firefox", icon: "firefox" },
-                            { name: "Files", exec: "thunar", "class": "org.xfce.thunar", icon: "org.xfce.thunar" },
-                            { name: "Code", exec: "code", "class": "Code", icon: "vscode" }
-                        ]
+                        model: root.sidebarPinned
 
                         delegate: Item {
                             implicitWidth: Theme.iconSlot
@@ -705,13 +730,13 @@ ShellRoot {
                                     anchors.centerIn: parent
                                     width: Math.round(Theme.iconSlot * 0.6)
                                     height: width
+                                    // There is no Config singleton here, so the
+                                    // fallback is the class name and then the
+                                    // glyph below -- not a theme-wide search.
                                     source: {
-                                        var rawIcon = modelData.icon || modelData["class"] || "";
-                                        var direct = Quickshell.iconPath(rawIcon, true);
+                                        var direct = Quickshell.iconPath(modelData.icon || "", true);
                                         if (direct !== "") return direct;
-                                        if (typeof Config !== "undefined" && Config.getAvailableIcon)
-                                            return Quickshell.iconPath(Config.getAvailableIcon(rawIcon, modelData.name, modelData["class"]), true);
-                                        return "";
+                                        return Quickshell.iconPath(modelData["class"] || "", true);
                                     }
                                     sourceSize: Qt.size(64, 64)
                                     smooth: true
