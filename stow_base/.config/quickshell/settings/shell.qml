@@ -19,12 +19,15 @@ ShellRoot {
         Quickshell.execDetached(["kill", String(Quickshell.processId)]);
     }
 
+    // The source lives with the entry: a parallel if/else chain in the Loader
+    // silently fell through to the last page whenever this list grew.
     readonly property var pages: [
-        { key: "dock", glyph: "󰇘", label: "Dock", hint: "Pinned apps and dock size" },
-        { key: "sidebar", glyph: "󰕮", label: "Sidebar", hint: "Left sidebar width & buttons" },
-        { key: "panels", glyph: "󰕰", label: "Panels", hint: "Top and right panel geometry" },
-        { key: "appearance", glyph: "󰸌", label: "Appearance", hint: "Shared palette" },
-        { key: "lockscreen", glyph: "󰌾", label: "Lockscreen", hint: "User icon and assets" }
+        { key: "dock", glyph: "󰇘", label: "Dock", hint: "Pinned apps and dock size", source: "DockPage.qml" },
+        { key: "sidebar", glyph: "󰕮", label: "Sidebar", hint: "Left sidebar apps & size", source: "SidebarPage.qml" },
+        { key: "panels", glyph: "󰕰", label: "Panels", hint: "Top and right panel geometry", source: "PanelsPage.qml" },
+        { key: "notifications", glyph: "󰂚", label: "Notifications", hint: "Popup shape and timeouts", source: "NotificationsPage.qml" },
+        { key: "appearance", glyph: "󰸌", label: "Appearance", hint: "Shared palette", source: "AppearancePage.qml" },
+        { key: "lockscreen", glyph: "󰌾", label: "Lockscreen", hint: "User icon and assets", source: "LockscreenPage.qml" }
     ]
 
     FloatingWindow {
@@ -214,11 +217,11 @@ ShellRoot {
                         // height through implicitHeight; the Loader has to be
                         // told to take it, or the Flickable never scrolls.
                         height: item ? item.implicitHeight : 0
-                        source: root.pageIndex === 0 ? "DockPage.qml"
-                              : root.pageIndex === 1 ? "SidebarPage.qml"
-                              : root.pageIndex === 2 ? "PanelsPage.qml"
-                              : root.pageIndex === 3 ? "AppearancePage.qml"
-                                                     : "LockscreenPage.qml"
+                        source: root.pages[root.pageIndex].source
+                        // Switching to a shorter page while scrolled down left
+                        // the view parked past the end, showing empty space
+                        // until you flicked it back.
+                        onSourceChanged: flick.contentY = 0
                     }
                 }
 
