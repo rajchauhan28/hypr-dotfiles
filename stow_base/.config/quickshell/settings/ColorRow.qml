@@ -87,12 +87,24 @@ Item {
                     selectByMouse: true
 
                     // Only follow the store while the field is idle, or typing
-                    // would fight the binding on every keystroke.
-                    text: row.value
+                    // would fight the binding on every keystroke. Written to
+                    // rather than bound: the first assignment below would break
+                    // a declarative `text: row.value` for good, and after that
+                    // the field would sit on a stale hex while the swatch and
+                    // the panels moved on (a preset click, or a card reset).
+                    Component.onCompleted: text = row.value
                     onActiveFocusChanged: if (!activeFocus) text = row.value
 
+                    Connections {
+                        target: row
+                        function onValueChanged() {
+                            if (!hexField.activeFocus)
+                                hexField.text = row.value;
+                        }
+                    }
+
                     onAccepted: {
-                        if (!apply(text))
+                        if (!row.apply(text))
                             text = row.value;
                         focus = false;
                     }
