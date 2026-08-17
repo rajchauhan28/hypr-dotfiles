@@ -16,7 +16,11 @@ Singleton {
 
     readonly property string settingsPath: "/home/reign/.config/quickshell/settings.json"
     readonly property string pinnedPath: "/home/reign/.config/quickshell/dock/pinned.json"
-    readonly property string sidebarPinnedPath: "/home/reign/.config/quickshell/sidebar_pinned.json"
+    // Lives next to the bar that reads it, the same way dock/pinned.json does.
+    // It used to point at ~/.config/quickshell/sidebar_pinned.json, a file
+    // nothing created and the leftbar never read -- which is why this page came
+    // up empty while the bar showed a hardcoded list.
+    readonly property string sidebarPinnedPath: "/home/reign/.config/quickshell/leftbar/pinned.json"
 
     // The single source of truth for what a knob means: its default, range and
     // label all come from here, so adding a knob is one entry plus one row in a
@@ -72,6 +76,21 @@ Singleton {
             "radiusPanel": 16,
             "radiusSmall": 10
         },
+        // Must mirror notifications/Theme.qml's own defaults: Card.reset() and
+        // SliderRow both read this table, and a missing section throws.
+        "notifications": {
+            "panelWidth": 380,
+            "topMargin": 30,
+            "cardPadding": 14,
+            "iconSize": 34,
+            "radiusPanel": 18,
+            "radiusSmall": 10,
+            "cornerFillet": 22,
+            "maxVisible": 5,
+            "bodyMaxLines": 4,
+            "timeoutLow": 4,
+            "timeoutNormal": 6
+        },
         "lockscreen": {
             "icon": ""
         }
@@ -94,7 +113,10 @@ Singleton {
         var s = cfg.data[section];
         if (s && s[key] !== undefined && s[key] !== null)
             return s[key];
-        return cfg.defaults[section][key];
+        // A page naming a section that is not in defaults is a bug, but it must
+        // not take the whole window down: SliderRow calls .toFixed() on this.
+        var d = cfg.defaults[section];
+        return (d && d[key] !== undefined) ? d[key] : 0;
     }
 
     function isDefault(section, key) {
@@ -311,6 +333,10 @@ Singleton {
                 cfg.pinned = d.pinned || [];
             } catch (e) {}
         }
+        // The list is written back from cfg.pinned, so a failed read must leave
+        // it empty rather than stale -- otherwise the next edit would rewrite a
+        // list this process never actually loaded.
+        onLoadFailed: cfg.pinned = []
     }
 
     FileView {
@@ -322,14 +348,10 @@ Singleton {
                 var d = JSON.parse(text());
                 cfg.sidebarPinned = d.pinned || [];
             } catch (e) {
-                cfg.sidebarPinned = [
-                    { name: "Terminal", exec: "kitty", "class": "kitty", icon: "kitty" },
-                    { name: "Browser", exec: "firefox", "class": "firefox", icon: "firefox" },
-                    { name: "Files", exec: "thunar", "class": "org.xfce.thunar", icon: "org.xfce.thunar" },
-                    { name: "Code", exec: "code", "class": "Code", icon: "vscode" }
-                ];
+                cfg.sidebarPinned = [];
             }
         }
+        onLoadFailed: cfg.sidebarPinned = []
     }
 
     Process {

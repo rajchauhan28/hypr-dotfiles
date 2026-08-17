@@ -1,0 +1,28 @@
+{
+  "pinned": [
+    {
+      "name": "Terminal",
+      "exec": "ghostty",
+      "class": "com.mitchellh.ghostty",
+      "icon": "com.mitchellh.ghostty"
+    },
+    {
+      "name": "Brave",
+      "exec": "brave",
+      "class": "brave-browser",
+      "icon": "brave-desktop"
+    },
+    {
+      "name": "Files",
+      "exec": "dolphin",
+      "class": "org.kde.dolphin",
+      "icon": "org.kde.dolphin"
+    },
+    {
+      "name": "VS Code",
+      "exec": "code",
+      "class": "code",
+      "icon": "vscode"
+    }
+  ]
+}
