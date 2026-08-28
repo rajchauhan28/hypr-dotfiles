@@ -23,11 +23,9 @@ stow_base/.config/quickshell/assets/avatar-*.png
 # fontconfig writes these per-directory cache markers; they are machine state.
 .uuid
 
-# Third-party GPL-3 Acer kernel module (PXDiv/Div-Acer-Manager-Max). Not
-# vendored: Install.sh offers to run the upstream installer on Acer gaming
-# hardware, which also keeps the driver current instead of frozen at a snapshot.
-stow_base/.local/share/damx-driver/
-stow_base/.local/bin/damx-driver-manager
+# Upstream's own DAMX suite installer -- it just downloads a release tarball,
+# so there is nothing here worth pinning to a snapshot.
+stow_base/.local/share/damx-driver/damx-suite-installer
 
 # Written per machine by Install.sh. ~/.config/hypr is a stow-folded symlink
 # into this repository, so these land inside the working tree.

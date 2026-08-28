@@ -767,119 +767,55 @@ write_hardware_profile() {
     msg "$C_GREEN" "✅ Hardware profile written to $hypr_dir/hardware.{conf,lua}"
 }
 
-# The Acer turbo key needs the DAMX suite (PXDiv/Div-Acer-Manager-Max), a GPL-3
-# kernel module that is deliberately NOT vendored here: it would freeze at a
-# snapshot and mix GPL-3 into an MIT repository. Offer the upstream installer
-# instead, and only on hardware it supports.
+# Acer Predator/Nitro only: get the linuwu_sense driver built and the kernel
+# upgrade hook in place.
 #
-# It is never run unattended. It builds and loads a kernel module and needs
-# root, so it stays an explicit opt-in even inside an installer the user
-# already trusted.
+# This drives our own stow_base/.local/bin/damx-driver-manager rather than
+# upstream's remote installer, because the vendored source is not upstream:
+# it is the DAMX-Sense fork plus a local patch for the three strncpy calls
+# kernel 7.2 removed, and stock Linuwu-Sense will not compile here. See
+# .local/share/damx-driver/README.md for the lineage and licensing.
+#
+# The hook matters more than it looks: there is no DKMS, so without it the
+# module is silently left behind by the next kernel upgrade while the loaded
+# one keeps working until reboot.
 offer_acer_driver() {
     if [ "$HW_ACER_GAMING" != 1 ]; then
         return
     fi
-    if command -v DAMX &>/dev/null; then
-        msg "$C_GREEN" "✅ DAMX is already installed; the turbo key will work."
+
+    local manager="$HOME/.local/bin/damx-driver-manager"
+    if [ ! -x "$manager" ]; then
+        msg "$C_YELLOW" "  -> damx-driver-manager is missing; skipping Acer driver setup."
         return
     fi
 
     msg "$C_CYAN" "🔧 Acer Predator/Nitro detected."
-    msg "$C_BLUE" "  -> The XF86Launch1 turbo key needs the DAMX suite, which builds and"
-    msg "$C_BLUE" "     loads an acer-wmi kernel module and requires root."
-    msg "$C_BLUE" "     Upstream: https://github.com/PXDiv/Div-Acer-Manager-Max"
+    msg "$C_BLUE" "  -> Current state:"
+    "$manager" status 2>&1 | sed 's/^/       /' || true
 
     if [ ! -t 0 ]; then
-        msg "$C_YELLOW" "  -> Not an interactive terminal; skipping. Install it later with:"
-        msg "$C_BLUE"   "     curl -sSL https://raw.githubusercontent.com/PXDiv/Div-Acer-Manager-Max/main/remote-setup.sh | bash"
+        msg "$C_YELLOW" "  -> Not an interactive terminal; skipping. Run this later:"
+        msg "$C_BLUE"   "     $manager install $USER"
         return
     fi
 
+    msg "$C_BLUE" "  -> 'install' builds and loads the module and installs the pacman hook"
+    msg "$C_BLUE" "     that rebuilds it on every kernel upgrade. It needs root."
     local answer
-    read -rp "  Install the DAMX suite now? [y/N] " answer
+    read -rp "  Install/refresh the Acer driver and its kernel hook now? [y/N] " answer
     if [[ ! "$answer" =~ ^[Yy]$ ]]; then
-        msg "$C_BLUE" "  -> Skipped. The turbo key binding stays inert until DAMX is installed."
+        msg "$C_BLUE" "  -> Skipped. The Settings app's Maintenance page can do this later."
         return
     fi
 
-    if curl -sSL https://raw.githubusercontent.com/PXDiv/Div-Acer-Manager-Max/main/remote-setup.sh | bash; then
-        msg "$C_GREEN" "✅ DAMX suite installed."
+    if sudo "$manager" install "$USER"; then
+        msg "$C_GREEN" "✅ Acer driver and kernel-upgrade hook installed."
+        msg "$C_BLUE"  "  -> For the DAMX daemon and GUI too (which is what the XF86Launch1"
+        msg "$C_BLUE"  "     turbo key launches), run: sudo $manager suite $USER"
     else
-        msg "$C_YELLOW" "⚠️  DAMX install failed; the turbo key will not work until it succeeds."
+        msg "$C_YELLOW" "⚠️  Driver install failed; the rest of the shell is unaffected."
     fi
-}
-
-# --- TEMPLATES AND PER-USER STATE ---
-
-# Render the *.in templates that no config format can expand for itself.
-# .desktop Exec= lines in particular are NOT shell-expanded, so "$HOME/..."
-# there would simply not launch.
-render_templates() {
-    msg "$C_CYAN" "📝 Rendering templates for this user..."
-    local template target rendered=0
-    while IFS= read -r -d '' template; do
-        target="$HOME/${template#"$REPO_DIR/stow_base/"}"
-        target="${target%.in}"
-        mkdir -p "$(dirname "$target")"
-        # Remove any symlink first. An earlier version of this repository
-        # stowed these files directly, so upgrading leaves a symlink pointing
-        # at the now-renamed .in -- and `>` follows a symlink, which would
-        # write the rendered output back INTO the repository instead of $HOME.
-        if [ -L "$target" ]; then
-            rm -f "$target"
-        fi
-        sed -e "s|@HOME@|$HOME|g" -e "s|@USER@|$USER|g" "$template" > "$target"
-        rendered=$((rendered + 1))
-    done < <(find "$REPO_DIR/stow_base" -type f -name '*.in' -print0)
-    msg "$C_GREEN" "✅ Rendered $rendered template(s)."
-
-    if command -v update-desktop-database &>/dev/null; then
-        update-desktop-database "$HOME/.local/share/applications" &>/dev/null || true
-    fi
-}
-
-# Seed the per-user state files. These are gitignored on purpose: they are
-# rewritten by the Settings app at runtime, so shipping them tracked would mean
-# every `git pull` fighting the user's own choices.
-seed_user_state() {
-    msg "$C_CYAN" "🌱 Seeding per-user configuration..."
-    local default target seeded=0 kept=0
-    while IFS= read -r -d '' default; do
-        target="$HOME/${default#"$REPO_DIR/stow_base/"}"
-        target="${target%.default}"
-        if [ -e "$target" ] && [ ! -L "$target" ]; then
-            kept=$((kept + 1))
-            continue
-        fi
-        mkdir -p "$(dirname "$target")"
-        rm -f "$target"
-        sed -e "s|@HOME@|$HOME|g" -e "s|@USER@|$USER|g" "$default" > "$target"
-        seeded=$((seeded + 1))
-    done < <(find "$REPO_DIR/stow_base" -type f -name '*.default' -print0)
-    msg "$C_GREEN" "✅ Seeded $seeded file(s); kept $kept existing user file(s)."
-}
-
-# The wallpaper palette (wallust/pywal) is generated at runtime, but
-# hyprland.conf `source`s it at parse time and hypridle reads it in its
-# notification commands. On a fresh install the directory does not exist yet,
-# so Hyprland logs a config error on every startup until the first wallpaper
-# is applied. Seed empty files: whatever generates the palette later simply
-# overwrites them.
-seed_optional_caches() {
-    msg "$C_CYAN" "🎨 Seeding placeholder colour cache..."
-    local wal_dir="$HOME/.cache/wal"
-    mkdir -p "$wal_dir"
-
-    local stub
-    for stub in colors-hyprland.conf colors.sh; do
-        if [ ! -e "$wal_dir/$stub" ]; then
-            printf '# Placeholder written by Install.sh. Replaced the first time\n# a wallpaper is applied.\n' > "$wal_dir/$stub"
-        fi
-    done
-    if [ ! -e "$wal_dir/colors.json" ]; then
-        printf '{}\n' > "$wal_dir/colors.json"
-    fi
-    msg "$C_GREEN" "✅ Colour cache placeholders in place."
 }
 
 # Clear symlinks left pointing at files this repository no longer ships.

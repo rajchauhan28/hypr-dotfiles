@@ -1,0 +1,300 @@
+#!/usr/bin/env bash
+
+set -Eeuo pipefail
+
+readonly PROGRAM_NAME="damx-driver-manager"
+readonly SYSTEM_HELPER="/usr/local/libexec/damx-driver-manager"
+readonly SYSTEM_ASSET_ROOT="/usr/local/share/damx-driver"
+readonly SYSTEM_SOURCE="${SYSTEM_ASSET_ROOT}/source"
+readonly SYSTEM_HOOK="/etc/pacman.d/hooks/95-damx-driver.hook"
+readonly MODULE_NAME="linuwu_sense"
+
+SELF_PATH="$(readlink -f -- "${BASH_SOURCE[0]}")"
+SELF_DIR="$(dirname -- "$SELF_PATH")"
+if [[ "$SELF_DIR" == "/usr/local/libexec" ]]; then
+    ASSET_ROOT="$SYSTEM_ASSET_ROOT"
+else
+    ASSET_ROOT="$(realpath -m -- "$SELF_DIR/../share/damx-driver")"
+fi
+
+log() {
+    printf '%s\n' "$*"
+}
+
+fail() {
+    printf 'Error: %s\n' "$*" >&2
+    exit 1
+}
+
+require_root() {
+    (( EUID == 0 )) || fail "This action needs administrator privileges."
+    install -d -m 0755 /run/lock
+    exec 9>/run/lock/damx-driver-manager.lock
+    flock -n 9 || fail "Another DAMX driver operation is already running."
+}
+
+validate_source() {
+    local source_dir="$1"
+    local driver_source="$source_dir/src/linuwu_sense.c"
+    local obsolete_calls fixed_calls
+
+    [[ -f "$source_dir/Makefile" && -f "$driver_source" ]] \
+        || fail "The bundled Linuwu-Sense source is incomplete."
+
+    obsolete_calls="$(grep -c 'strncpy(' "$driver_source" || true)"
+    fixed_calls="$(grep -Ec 'memcpy\((input|input_buf|str_buf), buf, len\);' "$driver_source" || true)"
+    [[ "$obsolete_calls" == "0" && "$fixed_calls" == "3" ]] \
+        || fail "The bundled driver does not contain the expected Linux 7.2 compatibility fix."
+}
+
+install_assets() {
+    local source_real system_real
+
+    [[ -f "$ASSET_ROOT/95-damx-driver.hook" ]] \
+        || fail "Pacman hook asset not found at $ASSET_ROOT."
+    validate_source "$ASSET_ROOT/source"
+
+    if [[ "$SELF_PATH" != "$SYSTEM_HELPER" ]]; then
+        install -Dm755 "$SELF_PATH" "$SYSTEM_HELPER"
+    fi
+    install -Dm644 "$ASSET_ROOT/95-damx-driver.hook" "$SYSTEM_HOOK"
+    install -d -m 0755 "$SYSTEM_SOURCE/src"
+
+    source_real="$(readlink -f -- "$ASSET_ROOT/source")"
+    system_real="$(readlink -f -- "$SYSTEM_SOURCE" 2>/dev/null || printf '%s' "$SYSTEM_SOURCE")"
+    if [[ "$source_real" != "$system_real" ]]; then
+        install -m 0644 "$ASSET_ROOT/source/Makefile" "$SYSTEM_SOURCE/Makefile"
+        install -m 0644 "$ASSET_ROOT/source/LICENSE" "$SYSTEM_SOURCE/LICENSE"
+        install -m 0644 "$ASSET_ROOT/source/README.md" "$SYSTEM_SOURCE/README.md"
+        install -m 0644 "$ASSET_ROOT/source/linuwu_sense.service" "$SYSTEM_SOURCE/linuwu_sense.service"
+        install -m 0644 "$ASSET_ROOT/source/src/linuwu_sense.c" "$SYSTEM_SOURCE/src/linuwu_sense.c"
+        install -Dm755 "$ASSET_ROOT/damx-suite-installer" \
+            "$SYSTEM_ASSET_ROOT/damx-suite-installer"
+    fi
+
+    validate_source "$SYSTEM_SOURCE"
+    log "Automatic pacman hook installed: $SYSTEM_HOOK"
+}
+
+compiler_args() {
+    local kernel="$1"
+    local config="/usr/lib/modules/$kernel/build/.config"
+
+    if [[ -r "$config" ]] && grep -q '^CONFIG_CC_IS_CLANG=y' "$config"; then
+        printf '%s\0' LLVM=1 CC=clang
+    fi
+}
+
+build_kernel() {
+    local kernel="$1"
+    local build_dir="/usr/lib/modules/$kernel/build"
+    local module_dir="/usr/lib/modules/$kernel/kernel/drivers/platform/x86"
+    local -a compiler=()
+
+    [[ -r "$build_dir/Makefile" ]] \
+        || fail "Kernel headers are missing for $kernel."
+    validate_source "$SYSTEM_SOURCE"
+
+    while IFS= read -r -d '' arg; do
+        compiler+=("$arg")
+    done < <(compiler_args "$kernel")
+
+    if (( ${#compiler[@]} )); then
+        log "Building $MODULE_NAME for $kernel with Clang..."
+    else
+        log "Building $MODULE_NAME for $kernel with the kernel's default compiler..."
+    fi
+
+    make -C "$SYSTEM_SOURCE" clean KVER="$kernel" "${compiler[@]}"
+    make -C "$SYSTEM_SOURCE" KVER="$kernel" "${compiler[@]}"
+    install -Dm644 "$SYSTEM_SOURCE/src/${MODULE_NAME}.ko" \
+        "$module_dir/${MODULE_NAME}.ko"
+    depmod -a "$kernel"
+    log "Installed $module_dir/${MODULE_NAME}.ko"
+}
+
+configure_permissions() {
+    local target_user="$1"
+    local sysfs_base="/sys/module/$MODULE_NAME/drivers/platform:acer-wmi/acer-wmi"
+    local model_name=""
+    local -a fields=()
+    local tmpfile
+
+    if ! getent group "$MODULE_NAME" >/dev/null; then
+        groupadd "$MODULE_NAME"
+    fi
+    if [[ -n "$target_user" ]]; then
+        getent passwd "$target_user" >/dev/null \
+            || fail "Unknown local user: $target_user"
+        usermod -aG "$MODULE_NAME" "$target_user"
+    fi
+
+    if [[ -d "$sysfs_base" ]]; then
+        model_name="$(find "$sysfs_base" -mindepth 1 -maxdepth 1 -type d \
+            -printf '%f\n' 2>/dev/null | grep -E '^(predator_sense|nitro_sense)' | head -n 1 || true)"
+    fi
+    if [[ -z "$model_name" ]]; then
+        log "Warning: the module loaded, but no Predator/Nitro sysfs controls were found."
+        return 0
+    fi
+
+    if [[ "$model_name" == nitro_sense* ]]; then
+        fields=(fan_speed battery_limiter battery_calibration usb_charging)
+    else
+        fields=(backlight_timeout battery_calibration battery_limiter boot_animation_sound fan_speed lcd_override usb_charging)
+    fi
+
+    tmpfile="$(mktemp /tmp/linuwu-sense-tmpfiles.XXXXXX)"
+    trap 'rm -f -- "${tmpfile:-}"' RETURN
+    for field in "${fields[@]}"; do
+        printf 'f %s/%s/%s 0660 root %s\n' \
+            "$sysfs_base" "$model_name" "$field" "$MODULE_NAME" >>"$tmpfile"
+    done
+    if [[ -d "$sysfs_base/four_zoned_kb" ]]; then
+        printf 'f %s/four_zoned_kb/four_zone_mode 0660 root %s\n' \
+            "$sysfs_base" "$MODULE_NAME" >>"$tmpfile"
+        printf 'f %s/four_zoned_kb/per_zone_mode 0660 root %s\n' \
+            "$sysfs_base" "$MODULE_NAME" >>"$tmpfile"
+    fi
+
+    install -Dm644 "$tmpfile" "/etc/tmpfiles.d/${MODULE_NAME}.conf"
+    systemd-tmpfiles --create "/etc/tmpfiles.d/${MODULE_NAME}.conf"
+    rm -f -- "$tmpfile"
+    trap - RETURN
+}
+
+activate_current_kernel() {
+    local target_user="${1:-}"
+    local daemon_was_active=0
+    local module_loaded=0
+
+    install -Dm644 "$SYSTEM_SOURCE/linuwu_sense.service" \
+        /etc/systemd/system/linuwu_sense.service
+    install -d -m 0755 /etc/modules-load.d /etc/modprobe.d
+    printf '%s\n' "$MODULE_NAME" >"/etc/modules-load.d/${MODULE_NAME}.conf"
+    printf '%s\n' 'blacklist acer_wmi' >/etc/modprobe.d/blacklist-acer_wmi.conf
+    systemctl daemon-reload
+
+    if systemctl is-active --quiet damx-daemon.service; then
+        daemon_was_active=1
+        systemctl stop damx-daemon.service
+    fi
+
+    systemctl stop linuwu_sense.service 2>/dev/null || true
+    modprobe -r "$MODULE_NAME" 2>/dev/null || true
+    modprobe -r acer_wmi 2>/dev/null || true
+    if modprobe "$MODULE_NAME"; then
+        module_loaded=1
+        log "$MODULE_NAME is loaded for $(uname -r)."
+        configure_permissions "$target_user"
+    else
+        log "Warning: the module is installed but could not be loaded; reboot to retry it."
+    fi
+
+    systemctl enable --now linuwu_sense.service
+    if (( daemon_was_active )); then
+        systemctl start damx-daemon.service || true
+    fi
+
+    (( module_loaded == 1 )) \
+        || fail "The build installed successfully, but loading the module failed."
+}
+
+manual_install() {
+    local target_user="${1:-}"
+    require_root
+    install_assets
+    build_kernel "$(uname -r)"
+    activate_current_kernel "$target_user"
+    log "DAMX driver repair finished. Future CachyOS kernel upgrades will rebuild it automatically."
+}
+
+hook_rebuild() {
+    local module_dir kernel
+    local built=0
+
+    require_root
+    [[ "$SELF_PATH" == "$SYSTEM_HELPER" ]] \
+        || fail "The pacman hook must use the installed root helper."
+
+    for module_dir in /usr/lib/modules/*-cachyos*; do
+        [[ -d "$module_dir" && -r "$module_dir/build/Makefile" ]] || continue
+        kernel="${module_dir##*/}"
+        build_kernel "$kernel"
+        built=$((built + 1))
+    done
+    (( built > 0 )) || fail "No installed CachyOS kernel headers were found."
+    log "DAMX driver hook rebuilt $built kernel module(s)."
+}
+
+install_suite() {
+    local target_user="${1:-}"
+    require_root
+    install_assets
+    log "Starting the patched full DAMX Suite installer..."
+    "$SYSTEM_ASSET_ROOT/damx-suite-installer"
+    if [[ -n "$target_user" ]] && getent passwd "$target_user" >/dev/null; then
+        usermod -aG "$MODULE_NAME" "$target_user"
+    fi
+    log "DAMX Suite installation finished; the automatic kernel hook is ready."
+}
+
+status() {
+    local kernel module_path=""
+    kernel="$(uname -r)"
+
+    if module_path="$(modinfo -k "$kernel" -n "$MODULE_NAME" 2>/dev/null)"; then
+        log "Current-kernel module: installed"
+        log "Module path: $module_path"
+    else
+        log "Current-kernel module: missing"
+    fi
+
+    if lsmod | awk '{print $1}' | grep -qx "$MODULE_NAME"; then
+        log "Driver state: loaded"
+    else
+        log "Driver state: not loaded"
+    fi
+
+    if [[ -x "$SYSTEM_HELPER" && -f "$SYSTEM_HOOK" ]]; then
+        log "Kernel upgrade hook: installed"
+    else
+        log "Kernel upgrade hook: not installed"
+    fi
+
+    if systemctl is-active --quiet damx-daemon.service 2>/dev/null; then
+        log "DAMX daemon: running"
+    elif [[ -f /etc/systemd/system/damx-daemon.service ]]; then
+        log "DAMX daemon: installed but stopped"
+    else
+        log "DAMX daemon: not installed"
+    fi
+
+    if [[ -x /usr/local/bin/DAMX ]]; then
+        log "DAMX GUI: installed"
+    else
+        log "DAMX GUI: not installed"
+    fi
+    log "Running kernel: $kernel"
+}
+
+usage() {
+    cat <<'EOF'
+Usage: damx-driver-manager COMMAND [USER]
+
+Commands:
+  status          Show driver, hook, daemon, and GUI state (no root needed)
+  install [USER]  Install the hook and rebuild/load the current driver
+  suite [USER]    Run the patched full DAMX Suite installer and install the hook
+  hook            Rebuild installed CachyOS kernels (called automatically by pacman)
+EOF
+}
+
+case "${1:-status}" in
+    status)  status ;;
+    install) manual_install "${2:-}" ;;
+    suite)   install_suite "${2:-}" ;;
+    hook)    hook_rebuild ;;
+    help|-h|--help) usage ;;
+    *) usage >&2; exit 2 ;;
+esac

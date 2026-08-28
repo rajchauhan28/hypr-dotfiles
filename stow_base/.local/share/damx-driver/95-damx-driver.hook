@@ -1,0 +1,12 @@
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Package
+Target = linux-cachyos*
+
+[Action]
+Description = Rebuilding the DAMX Linuwu-Sense module for installed CachyOS kernels...
+Depends = make
+When = PostTransaction
+Exec = /usr/local/libexec/damx-driver-manager hook
+
