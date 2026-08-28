@@ -1,3 +1,6 @@
+# One package per line. A trailing "# requires:<flag>" tag limits a package
+# to matching hardware -- Install.sh reads nvidia, acer and laptop.
+# Untagged lines install everywhere.
 7zip
 alsa-utils
 baobab
@@ -15,7 +18,7 @@ cpio
 debtap
 dialog
 dolphin
-envycontrol
+envycontrol # requires:nvidia
 eza
 fastfetch
 fzf
@@ -33,6 +36,7 @@ kamoso
 kdeconnect
 kdialog
 libc++
+libpulse
 libreoffice-fresh
 linux
 linux-firmware
@@ -47,19 +51,26 @@ ntfs-3g
 octopi
 os-prober
 pacman
+pamixer
 partitionmanager
 paru
 pavucontrol
+pciutils
 pipewire-pulse
+playerctl
 polkit-gnome
 polkit-kde-agent
 poppler
+power-profiles-daemon # requires:laptop
 pulsemixer
 pyprland
 python-dbus
 python-distro
 python-jinja
+python-numpy
+python-pillow
 python-pip
+python-psutil
 python-pydbus
 python-pyopenssl
 python-systemd
@@ -67,21 +78,28 @@ qt5-graphicaleffects
 qt5-multimedia
 qt5-quickcontrols
 qt5-tools
+qt6-declarative
+qt6-multimedia
+qt6-shadertools
+qt6-svg
+qt6-wayland
+quickshell-git
 rate-mirrors
 reflector
 repgrep
 resvg
+rofi
 sddm
 seahorse
 sof-firmware
 starship
+stow
 strace
 sudo
-swaync
 thunar
+tigervnc
 timeshift
 timeshift-autosnap
-tigervnc
 tree
 ttf-firacode-nerd
 ttf-jetbrains-mono-nerd
@@ -89,21 +107,13 @@ ttf-noto-nerd
 unzip
 vi
 visual-studio-code-bin
-quickshell-git
-qt6-declarative
-qt6-multimedia
-qt6-svg
-qt6-wayland
-qt6-shadertools
-playerctl
-pamixer
+walker
+wallust
 wget
 wireguard-tools
 wireplumber
 wl-clipboard
 wlogout
-stow
-walker
 xclip
 xdg-desktop-portal-gtk
 xdg-desktop-portal-wlr
@@ -114,5 +124,3 @@ zoxide
 zsh
 zsh-autosuggestions
 zsh-syntax-highlighting
-rofi
-wallust
