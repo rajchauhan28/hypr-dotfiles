@@ -64,7 +64,50 @@ if [ ! -f "$SCRIPT_DIR/package_list.txt" ]; then
     if [ -d "$INSTALL_DIR" ]; then
         echo -e "\033[0;33mDirectory $INSTALL_DIR already exists. Updating...\033[0m"
         cd "$INSTALL_DIR"
-        git pull
+
+        # settings.json, the two pinned.json files and walllust's config.json
+        # USED to be tracked. They are per-user state written by the running
+        # shell, so anyone who had ever opened the Settings app has local
+        # modifications to a tracked file -- and `git pull` refuses to merge
+        # over those ("Your local changes would be overwritten"). Under
+        # `set -e` that aborted the whole installer, so upgrading was
+        # impossible for exactly the users who had customised anything.
+        #
+        # Set them aside, let the pull convert them to ignored files, then put
+        # the user's own copies back. seed_user_state() never overwrites an
+        # existing file, so the restored settings survive from here on.
+        MIGRATED_STATE=(
+            "stow_base/.config/quickshell/settings.json"
+            "stow_base/.config/quickshell/dock/pinned.json"
+            "stow_base/.config/quickshell/leftbar/pinned.json"
+            "stow_base/.config/walllust/config.json"
+        )
+        STATE_BACKUP="$(mktemp -d)"
+        for state_file in "${MIGRATED_STATE[@]}"; do
+            # Only act on a file git still tracks AND that has local edits.
+            if git ls-files --error-unmatch "$state_file" &>/dev/null \
+                    && ! git diff --quiet -- "$state_file"; then
+                echo -e "\033[0;34m  -> Preserving your $state_file across the update...\033[0m"
+                mkdir -p "$STATE_BACKUP/$(dirname "$state_file")"
+                cp "$state_file" "$STATE_BACKUP/$state_file"
+                git checkout -- "$state_file"
+            fi
+        done
+
+        if ! git pull; then
+            echo -e "\033[0;31mError: 'git pull' failed in $INSTALL_DIR.\033[0m"
+            echo -e "\033[0;34mYou have local changes that conflict with the update. Either commit"
+            echo -e "them, or run 'git stash' in $INSTALL_DIR and re-run this installer.\033[0m"
+            exit 1
+        fi
+
+        for state_file in "${MIGRATED_STATE[@]}"; do
+            if [ -f "$STATE_BACKUP/$state_file" ]; then
+                mkdir -p "$(dirname "$state_file")"
+                cp "$STATE_BACKUP/$state_file" "$state_file"
+            fi
+        done
+        rm -rf "$STATE_BACKUP"
     else
         echo -e "\033[0;34mCloning repository to $INSTALL_DIR...\033[0m"
         git clone --depth=1 "$REPO_URL" "$INSTALL_DIR"
@@ -839,6 +882,49 @@ seed_optional_caches() {
     msg "$C_GREEN" "✅ Colour cache placeholders in place."
 }
 
+# Clear symlinks left pointing at files this repository no longer ships.
+#
+# Stow links a file into $HOME; a later commit deletes or renames it; the link
+# survives the `git pull` and now points at nothing. `stow -R` does not clean
+# these up because the package no longer mentions them. Left in place they are
+# actively confusing: a dangling ~/.local/bin/auralink still resolves on PATH
+# and fails with "No such file or directory", and a dangling .desktop entry is
+# a menu item that silently does nothing.
+clean_dangling_links() {
+    msg "$C_CYAN" "🧹 Clearing links to files the repository no longer ships..."
+    local removed=0 link
+    local -a search_dirs=(
+        "$HOME/.local/bin"
+        "$HOME/.local/share/applications"
+        "$HOME/.config/systemd/user"
+    )
+
+    for dir in "${search_dirs[@]}"; do
+        [ -d "$dir" ] || continue
+        while IFS= read -r -d '' link; do
+            # find already selected symlinks whose target does not exist.
+            # Narrow to OURS so an unrelated broken link from another tool is
+            # never touched: match this checkout's real path first, and fall
+            # back to the conventional directory name for a clone that has
+            # since been moved.
+            local target
+            target="$(readlink -f "$link" 2>/dev/null || true)"
+            [ -n "$target" ] || target="$(readlink "$link" 2>/dev/null || true)"
+            case "$target" in
+                "$REPO_DIR"/*|*hypr-dotfiles*) ;;
+                *) continue ;;
+            esac
+            rm -f "$link"
+            msg "$C_BLUE" "  -> Removed stale link $(basename "$link")."
+            removed=$((removed + 1))
+        done < <(find "$dir" -maxdepth 1 -type l ! -exec test -e {} \; -print0 2>/dev/null)
+    done
+
+    if [ "$removed" -eq 0 ]; then
+        msg "$C_GREEN" "✅ No stale links found."
+    fi
+}
+
 # AuraLink is the Wi-Fi/Bluetooth manager the sidepanel and the app menu launch.
 #
 # Its two binaries used to be committed to this repository -- 23 MB of stripped
@@ -1014,6 +1100,9 @@ BANNER
     check_aur_helper
     install_packages
     stow_configs
+    # Upgrades first: clear links to files an older version stowed but this
+    # one no longer ships, before anything tries to write through them.
+    clean_dangling_links
     # Templates and defaults come straight after stow so that the rendered
     # files replace stow's symlinks rather than the other way round.
     render_templates
