@@ -33,3 +33,10 @@ stow_base/.local/bin/damx-driver-manager
 # into this repository, so these land inside the working tree.
 stow_base/.config/hypr/hardware.conf
 stow_base/.config/hypr/hardware.lua
+
+# Prebuilt AuraLink binaries (~23 MB, x86-64 only) used to be committed here
+# and went stale silently. Install.sh now builds them from
+# github.com/rajchauhan28/auralink, whose own install.sh also installs and
+# enables the Bluetooth auto-connect systemd unit.
+stow_base/.local/bin/auralink
+stow_base/.local/bin/auralink-bt

@@ -26,6 +26,8 @@ A modern, fluid, and futuristic Hyprland desktop environment powered by a custom
     the wrong one breaks hardware video decode.
   - **Laptop or desktop**: the AC/battery refresh-rate daemon only starts where
     there is a battery to react to.
+  - **Bluetooth**: AuraLink's auto-connect daemon is left enabled only on a
+    machine that actually has a radio.
   - Results are written to `~/.config/hypr/hardware.{conf,lua}`, which the
     Hyprland config reads. Re-run `Install.sh` after a hardware change.
 - **📐 Screen-Aware Scaling**: Panel geometry ships tuned for 1920x1200 and is
@@ -34,6 +36,11 @@ A modern, fluid, and futuristic Hyprland desktop environment powered by a custom
   resolution, so a 4K panel at compositor scale 2 is correctly treated as
   1920x1080 rather than doubled. Every value stays editable in the Settings app
   (`Super + ,`).
+- **📡 AuraLink**: the Wi-Fi/Bluetooth manager the sidepanel and the app menu
+  launch is **built from source** at install time
+  ([rajchauhan28/auralink](https://github.com/rajchauhan28/auralink)) rather
+  than committed here as a 23 MB x86-64 binary that silently went stale. Its
+  own installer sets up and enables the Bluetooth auto-connect systemd unit.
 - **🛡️ Automated Installer & Safety Rollback**:
   - `Install.sh`: One-line automated Arch Linux installer that sets up QuickShell, Qt6 dependencies, fonts, systemd services, and replaces Waybar.
   - `rollback.sh`: Unstows this repository and restores the most recent
