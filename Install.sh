@@ -433,6 +433,16 @@ activate_quickshell_replacements() {
         else
             msg "$C_YELLOW" "  -> Could not start hypridle now; it will start after login/reboot."
         fi
+
+        # The AuraLink Bluetooth auto-connect daemon is installed and enabled
+        # by auralink's own install.sh (see offer_auralink). All that is left
+        # here is to switch it off on a machine with no radio, where it would
+        # poll forever with nothing to find.
+        if [ "$HW_BLUETOOTH" != 1 ] \
+                && systemctl --user is-enabled auralink-bt-daemon.service &>/dev/null; then
+            systemctl --user disable --now auralink-bt-daemon.service &>/dev/null || true
+            msg "$C_BLUE" "  -> No Bluetooth adapter: auto-connect daemon disabled."
+        fi
     fi
 
     # Waybar and swayidle are session daemons, unlike lockers which only exist
@@ -554,6 +564,7 @@ HW_GPU_NVIDIA=0
 HW_IGPU=""           # "intel", "amd", or empty
 HW_BATTERY=0
 HW_LAPTOP=0
+HW_BLUETOOTH=0
 
 detect_hardware() {
     msg "$C_CYAN" "🖥️  Detecting hardware..."
@@ -614,6 +625,13 @@ detect_hardware() {
         HW_LAPTOP=1
     fi
 
+    # Bluetooth: the auralink auto-connect daemon is pointless without a radio.
+    if [ -d /sys/class/bluetooth ] && [ -n "$(ls -A /sys/class/bluetooth 2>/dev/null || true)" ]; then
+        HW_BLUETOOTH=1
+    elif lsusb 2>/dev/null | grep -qi bluetooth; then
+        HW_BLUETOOTH=1
+    fi
+
     local nv_label="no" bat_label="no" chassis_label="desktop"
     if [ "$HW_GPU_NVIDIA" = 1 ]; then nv_label="yes"; fi
     if [ "$HW_BATTERY" = 1 ]; then bat_label="yes"; fi
@@ -621,7 +639,9 @@ detect_hardware() {
 
     msg "$C_BLUE" "  -> Machine : ${HW_VENDOR:-unknown} ${HW_PRODUCT:-unknown}"
     msg "$C_BLUE" "  -> GPU     : iGPU=${HW_IGPU:-none} NVIDIA=$nv_label"
-    msg "$C_BLUE" "  -> Chassis : $chassis_label (battery=$bat_label)"
+    local bt_label="no"
+    if [ "$HW_BLUETOOTH" = 1 ]; then bt_label="yes"; fi
+    msg "$C_BLUE" "  -> Chassis : $chassis_label (battery=$bat_label, bluetooth=$bt_label)"
     if [ "$HW_ACER_GAMING" = 1 ]; then
         msg "$C_GREEN" "  -> Acer Predator/Nitro: turbo key and DAMX driver kept."
     else
@@ -819,6 +839,64 @@ seed_optional_caches() {
     msg "$C_GREEN" "✅ Colour cache placeholders in place."
 }
 
+# AuraLink is the Wi-Fi/Bluetooth manager the sidepanel and the app menu launch.
+#
+# Its two binaries used to be committed to this repository -- 23 MB of stripped
+# x86-64 ELF that went stale silently and could not work on another
+# architecture. Build them from source instead, which also installs and enables
+# the Bluetooth auto-connect systemd unit via auralink's own install.sh.
+#
+# Never unattended: a Rust build is minutes of CPU and a large crate download,
+# so it stays an explicit opt-in.
+readonly AURALINK_REPO="https://github.com/rajchauhan28/auralink.git"
+
+offer_auralink() {
+    local src_dir="$HOME/.local/src/auralink"
+
+    if command -v auralink-bt &>/dev/null && [ -x "$HOME/.local/bin/auralink" ]; then
+        msg "$C_GREEN" "✅ AuraLink is already installed."
+        return
+    fi
+
+    msg "$C_CYAN" "📡 AuraLink (Wi-Fi + Bluetooth manager) is not installed."
+    if ! command -v cargo &>/dev/null; then
+        msg "$C_YELLOW" "  -> cargo not found; skipping. Install rustup, then run:"
+        msg "$C_BLUE"   "     git clone $AURALINK_REPO && cd auralink && cargo build --release && ./install.sh"
+        return
+    fi
+
+    if [ ! -t 0 ]; then
+        msg "$C_YELLOW" "  -> Not an interactive terminal; skipping the AuraLink build."
+        return
+    fi
+
+    local answer
+    read -rp "  Build and install AuraLink from source now? (~3 min) [y/N] " answer
+    if [[ ! "$answer" =~ ^[Yy]$ ]]; then
+        msg "$C_BLUE" "  -> Skipped. The sidepanel's network button stays inert until it is installed."
+        return
+    fi
+
+    mkdir -p "$(dirname "$src_dir")"
+    if [ -d "$src_dir/.git" ]; then
+        msg "$C_BLUE" "  -> Updating $src_dir..."
+        git -C "$src_dir" pull --ff-only || msg "$C_YELLOW" "  -> Could not update; building the checkout as-is."
+    else
+        msg "$C_BLUE" "  -> Cloning into $src_dir..."
+        if ! git clone --depth=1 "$AURALINK_REPO" "$src_dir"; then
+            msg "$C_RED" "  ❌ Clone failed; skipping AuraLink."
+            return
+        fi
+    fi
+
+    msg "$C_BLUE" "  -> Building (this takes a few minutes)..."
+    if ( cd "$src_dir" && cargo build --release && ./install.sh ); then
+        msg "$C_GREEN" "✅ AuraLink installed; Bluetooth auto-connect daemon enabled."
+    else
+        msg "$C_YELLOW" "⚠️  AuraLink build or install failed; the rest of the shell is unaffected."
+    fi
+}
+
 # --- SCREEN-AWARE SCALING ---
 #
 # Every pixel value in settings.json was hand-tuned on a 1920x1200 laptop
@@ -945,6 +1023,7 @@ BANNER
     offer_acer_driver
     # Scaling reads the seeded settings.json, so it must follow seed_user_state.
     scale_shell_to_screen
+    offer_auralink
     install_fonts
     set_script_permissions
     activate_quickshell_replacements
