@@ -1,0 +1,16 @@
+# GNU Stow ignore list.
+#
+# NOTE: Stow anchors every one of these regexes at BOTH ends, so a bare
+# `\.in$` never matches anything -- each pattern must describe the whole
+# path segment. That is why they all start with `.*`.
+#
+# Templates and shipped defaults must not be symlinked into $HOME: Install.sh
+# renders the .in templates (they contain @HOME@, which no config format
+# expands on its own) and seeds the .default files without clobbering a user's
+# own edits.
+.*\.in
+.*\.default
+.*\.bak
+\.stow-local-ignore
+__pycache__
+.*\.pyc

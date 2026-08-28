@@ -43,7 +43,7 @@
   },
   "notifications": {
     "panelWidth": 380,
-    "topMargin": 30,
+    "bottomMargin": 30,
     "cardPadding": 14,
     "iconSize": 34,
     "radiusPanel": 18,
@@ -60,5 +60,10 @@
   },
   "lockscreen": {
     "icon": ""
+  },
+  "_baseline": {
+    "width": 1920,
+    "height": 1200,
+    "note": "Geometry below is tuned for this resolution. Install.sh scales it to the detected screen."
   }
 }
