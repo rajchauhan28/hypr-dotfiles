@@ -4,7 +4,7 @@ GenericName=Network Manager
 Comment=Modern Wi-Fi, VPN, and Network Manager built with Rust
 # Absolute path on purpose: ~/.local/bin is NOT in the PATH Hyprland inherits
 # (it only has /usr/local/bin), so a bare `auralink` fails from any launcher.
-Exec=/home/reign/.local/bin/auralink
+Exec=@HOME@/.local/bin/auralink
 Icon=auralink
 Terminal=false
 Type=Application

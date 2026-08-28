@@ -1,0 +1,30 @@
+# Tool output / caches — regenerated, never worth versioning.
+graphify-out/
+__pycache__/
+*.pyc
+*.pyo
+
+# Editor / backup leftovers.
+*.bak
+*~
+*.swp
+
+# Per-user state written by the shell at runtime. The repo ships the defaults
+# under *.default; the installer copies them into place on first install and
+# never overwrites an existing one, so a user's own tweaks survive `git pull`.
+stow_base/.config/quickshell/settings.json
+stow_base/.config/quickshell/dock/pinned.json
+stow_base/.config/quickshell/leftbar/pinned.json
+stow_base/.config/walllust/config.json
+
+# The avatar is a personal photo. Users drop their own in via the Settings app.
+stow_base/.config/quickshell/assets/avatar-*.png
+
+# fontconfig writes these per-directory cache markers; they are machine state.
+.uuid
+
+# Third-party GPL-3 Acer kernel module (PXDiv/Div-Acer-Manager-Max). Not
+# vendored: Install.sh offers to run the upstream installer on Acer gaming
+# hardware, which also keeps the driver current instead of frozen at a snapshot.
+stow_base/.local/share/damx-driver/
+stow_base/.local/bin/damx-driver-manager

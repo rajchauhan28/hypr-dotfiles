@@ -13,37 +13,19 @@
       "icon": "com.mitchellh.ghostty"
     },
     {
-      "name": "Brave",
+      "name": "Browser",
       "exec": "brave",
       "class": "brave-browser",
       "icon": "brave-desktop"
     },
     {
-      "name": "VS Code",
+      "name": "Editor",
       "exec": "code",
       "class": "code",
       "icon": "vscode"
     },
     {
-      "name": "Obsidian",
-      "exec": "obsidian",
-      "class": "obsidian",
-      "icon": "obsidian"
-    },
-    {
-      "name": "Spotify",
-      "exec": "spotify",
-      "class": "spotify",
-      "icon": "spotify"
-    },
-    {
-      "name": "Antigravity IDE",
-      "exec": "/usr/bin/antigravity-ide",
-      "class": "antigravity-ide",
-      "icon": "antigravity-ide"
-    },
-    {
-      "name": "Disk Usage Analyzer",
+      "name": "Disk Usage",
       "exec": "baobab",
       "class": "org.gnome.baobab",
       "icon": "org.gnome.baobab"
