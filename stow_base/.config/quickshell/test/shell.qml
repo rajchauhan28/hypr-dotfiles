@@ -7,7 +7,7 @@ ShellRoot {
 
     Component.onCompleted: {
         var p = Qt.createQmlObject('import Quickshell.Io; Process {}', root);
-        p.command = ["/home/reign/.config/quickshell/overview/hyprctl-compat.sh", "workspace", "2"];
+        p.command = [Quickshell.env("HOME") + "/.config/quickshell/overview/hyprctl-compat.sh", "workspace", "2"];
         p.running = true;
         p.exited.connect((code) => {
             console.log("Exited with", code);

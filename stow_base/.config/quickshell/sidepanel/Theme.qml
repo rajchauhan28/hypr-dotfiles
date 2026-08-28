@@ -13,7 +13,7 @@ Singleton {
     property var cfg: ({})
 
     FileView {
-        path: "/home/reign/.config/quickshell/settings.json"
+        path: Quickshell.env("HOME") + "/.config/quickshell/settings.json"
         watchChanges: true
         onFileChanged: reload()
         onLoaded: {

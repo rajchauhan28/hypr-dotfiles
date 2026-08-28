@@ -7,7 +7,7 @@ import QtQuick.Shapes
 ShellRoot {
     id: root
 
-    readonly property string script: "/home/reign/.config/quickshell/sidepanel/syspanel.py"
+    readonly property string script: Quickshell.env("HOME") + "/.config/quickshell/sidepanel/syspanel.py"
 
     property bool revealed: false
     property var sys: ({})
@@ -102,6 +102,9 @@ ShellRoot {
         // Wi-Fi scan list, the sink list and the full Bluetooth enumeration
         // are all skipped. Halves the poll cost.
         command: ["python3", root.script, "status", "--lite"]
+        // Seed volume/brightness even when the strip has not been opened yet,
+        // so the first media-key IPC step starts from the real current value.
+        running: true
         stdout: SplitParser { onRead: data => root.ingest(data) }
     }
 
@@ -406,7 +409,7 @@ ShellRoot {
                     available: root.net.available
                     clickable: true
                     activeColor: root.net.ssid !== "" ? Theme.good : Theme.textPrimary
-                    onActivated: root.launch("/home/reign/.local/bin/auralink")
+                    onActivated: root.launch(Quickshell.env("HOME") + "/.local/bin/auralink")
                 }
 
                 IconButton {
@@ -416,7 +419,7 @@ ShellRoot {
                     available: root.bt.available
                     clickable: true
                     activeColor: root.btConnected ? Theme.good : Theme.textPrimary
-                    onActivated: root.launch("/home/reign/.local/bin/auralink-bt")
+                    onActivated: root.launch(Quickshell.env("HOME") + "/.local/bin/auralink-bt")
                 }
             }
         }

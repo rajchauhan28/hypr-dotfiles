@@ -8,7 +8,12 @@ import QtQuick.Shapes
 ShellRoot {
     id: root
 
-    // ---- Reveal state -------------------------------------------------
+    // ---- Reveal state: two steps ---------------------------------------
+    // Step 1: the pointer reaches the top edge and the rail slides down out of
+    // it. Step 2: that rail is clicked and the dashboard grows out of the rail.
+    // Hover alone no longer opens the dashboard, so brushing the top edge on
+    // the way to a window's controls costs nothing but a hairline.
+    property bool railShown: false
     property bool revealed: false
     property int tabIndex: 0
 
@@ -50,6 +55,10 @@ ShellRoot {
 
     // Everything below is gated on `revealed` so a hidden panel costs nothing.
     onRevealedChanged: {
+        // Whatever opened the dashboard — a tap, a keybind, IPC — the rail it
+        // grows out of has to be down first, or the body would hang in the air.
+        if (revealed)
+            root.railShown = true;
         MediaService.active = root.wantMedia;
         MediaService.wantVolume = revealed && root.tabIndex === 1;
         MediaService.wantSpectrum = revealed;
@@ -117,7 +126,7 @@ ShellRoot {
 
     Process {
         id: updatesProc
-        command: ["/home/reign/.config/quickshell/topbar/updates.sh"]
+        command: [Quickshell.env("HOME") + "/.config/quickshell/topbar/updates.sh"]
         stdout: SplitParser {
             onRead: data => {
                 try {
@@ -139,14 +148,14 @@ ShellRoot {
         // ffmpeg probing a freshly added video) would eat every click after it.
         wallpaperSetProc.running = false;
         wallpaperSetProc.command = ["python3",
-            "/home/reign/.config/quickshell/topbar/wallpapers.py", "set", path];
+            Quickshell.env("HOME") + "/.config/quickshell/topbar/wallpapers.py", "set", path];
         wallpaperSetProc.running = true;
     }
 
     Process {
         id: wallpapersProc
         running: true
-        command: ["python3", "/home/reign/.config/quickshell/topbar/wallpapers.py", "list"]
+        command: ["python3", Quickshell.env("HOME") + "/.config/quickshell/topbar/wallpapers.py", "list"]
         stdout: SplitParser {
             onRead: data => {
                 try { root.wallpapers = JSON.parse(data.trim()); } catch (e) {}
@@ -175,14 +184,14 @@ ShellRoot {
 
     function addBookmark(dateKey, text) {
         bookmarkWrite.command = ["python3",
-            "/home/reign/.config/quickshell/topbar/calendar_store.py",
+            Quickshell.env("HOME") + "/.config/quickshell/topbar/calendar_store.py",
             "add", dateKey, text];
         bookmarkWrite.running = true;
     }
 
     function deleteBookmark(dateKey, idx) {
         bookmarkWrite.command = ["python3",
-            "/home/reign/.config/quickshell/topbar/calendar_store.py",
+            Quickshell.env("HOME") + "/.config/quickshell/topbar/calendar_store.py",
             "delete", dateKey, idx.toString()];
         bookmarkWrite.running = true;
     }
@@ -192,14 +201,14 @@ ShellRoot {
             return;
         root.holidayYear = year;
         holidaysProc.command = ["python3",
-            "/home/reign/.config/quickshell/topbar/holidays_in.py", year.toString()];
+            Quickshell.env("HOME") + "/.config/quickshell/topbar/holidays_in.py", year.toString()];
         holidaysProc.running = true;
     }
 
     Process {
         id: bookmarksProc
         running: true
-        command: ["python3", "/home/reign/.config/quickshell/topbar/calendar_store.py", "list"]
+        command: ["python3", Quickshell.env("HOME") + "/.config/quickshell/topbar/calendar_store.py", "list"]
         stdout: SplitParser {
             onRead: data => {
                 try { root.bookmarks = JSON.parse(data.trim()) || ({}); } catch (e) {}
@@ -243,7 +252,7 @@ ShellRoot {
 
     Process {
         id: statsProc
-        command: ["python3", "/home/reign/.config/quickshell/topbar/sysinfo.py"]
+        command: ["python3", Quickshell.env("HOME") + "/.config/quickshell/topbar/sysinfo.py"]
         stdout: SplitParser {
             onRead: data => {
                 try {
@@ -372,7 +381,7 @@ ShellRoot {
     // to this Hyprland's Lua dispatch API.
     function dispatchHypr(cmd, arg) {
         var p = Qt.createQmlObject('import Quickshell.Io; Process {}', root);
-        p.command = ["/home/reign/.config/quickshell/overview/hyprctl-compat.sh", cmd, arg];
+        p.command = [Quickshell.env("HOME") + "/.config/quickshell/overview/hyprctl-compat.sh", cmd, arg];
         p.running = true;
     }
 
@@ -382,18 +391,24 @@ ShellRoot {
         target: "panel"
 
         function toggle(): void {
-            hideTimer.stop();
-            root.revealed = !root.revealed;
+            root.toggleDashboard();
         }
         // Named open/close rather than show/hide: `qs ipc` has its own `show`
         // subcommand, and the CLI swallows the name before it reaches us.
         function open(): void {
             hideTimer.stop();
+            root.railShown = true;
             root.revealed = true;
         }
         function close(): void {
             hideTimer.stop();
             root.revealed = false;
+            root.railShown = false;
+        }
+        // Step 1 on its own: put the rail down without opening the dashboard.
+        function rail(): void {
+            hideTimer.stop();
+            root.railShown = true;
         }
         // Scripting hook: apply a wallpaper through the exact same path the
         // dashboard card's click takes.
@@ -415,16 +430,57 @@ ShellRoot {
         id: hideTimer
         interval: 320
         repeat: false
-        onTriggered: root.revealed = false
+        onTriggered: {
+            root.revealed = false;
+            root.railShown = false;
+        }
     }
 
+    // Hover only ever drives step 1. The dashboard is a deliberate click now,
+    // so a pointer resting on the top edge no longer drops a 1280x720 panel
+    // over whatever is underneath it.
     function syncHover(hovered) {
         if (hovered) {
             hideTimer.stop();
-            root.revealed = true;
-        } else if (root.revealed) {
+            root.railShown = true;
+        } else if (root.railShown || root.revealed) {
             hideTimer.restart();
         }
+    }
+
+    // Step 2. Tapping the rail again closes the dashboard but leaves the rail
+    // down, so it can be reopened without moving the pointer away and back.
+    //
+    // DEBOUNCED, and that is not paranoia: a TapHandler takes only a PASSIVE
+    // grab, so a single physical click is delivered to every overlapping item
+    // that has one. The trigger strip and the rail overlap at the top centre —
+    // precisely where the pointer is when the rail appears — so one click ran
+    // this twice, the two toggles cancelled, and clicking the bar looked like
+    // it did nothing at all.
+    property bool tapCooling: false
+    Timer {
+        id: tapCooldown
+        interval: 250
+        repeat: false
+        onTriggered: root.tapCooling = false
+    }
+
+    function toggleDashboard() {
+        if (root.tapCooling)
+            return;
+        root.tapCooling = true;
+        tapCooldown.restart();
+
+        hideTimer.stop();
+        root.railShown = true;
+        root.revealed = !root.revealed;
+    }
+
+    // Click-away dismissal. Idempotent on purpose so it can never fight a
+    // toggle that ran for the same click.
+    function closeDashboard() {
+        hideTimer.stop();
+        root.revealed = false;
     }
 
     PanelWindow {
@@ -452,14 +508,28 @@ ShellRoot {
         // slid over the pointer it took hover away from the hotspot, whose
         // false then started the hide timer and bounced the panel shut — a
         // permanent flicker whenever the cursor sat on the screen edge.
-        readonly property bool pointerInside: hotspotHover.hovered || cardHover.hovered
+        readonly property bool pointerInside: hotspotHover.hovered
+                                              || railHover.hovered
+                                              || scrimHover.hovered
+                                              || cardHover.hovered
         onPointerInsideChanged: root.syncHover(pointerInside)
 
-        // Only this region swallows pointer input. Collapsed that is the
-        // 15px x 10% strip; revealed it also covers the panel and the gap
-        // above it so the pointer never falls through mid-travel.
+        // Only this region swallows pointer input, and it only ever GROWS as
+        // the two steps happen — never switches. A region that shrinks under a
+        // resting pointer is the old edge-flicker bug: hover drops for a frame,
+        // the hide timer starts, and the panel bounces shut.
+        //
+        //   idle      trigger strip
+        //   rail down trigger strip + the 5px rail, full width
+        //   open      + the whole panel band, full width
+        //
+        // Nested regions union; the two nested items collapse to 0 height when
+        // their step is not active, so nothing has to be swapped out.
         mask: Region {
-            item: root.revealed ? openMask : hotspot
+            item: hotspot
+
+            Region { item: railStrip }
+            Region { item: scrim }
         }
 
         // --- Trigger strip: top 15px, middle 10% of the screen ---
@@ -471,21 +541,94 @@ ShellRoot {
             y: 0
 
             HoverHandler { id: hotspotHover }
+            // Clicking the trigger strip does the same thing as clicking the
+            // rail: by the time a click lands here the rail is already down,
+            // and this strip already swallowed the click either way.
+            //
+            // Disabled while the pointer is on the rail, which sits INSIDE this
+            // strip. Both handlers firing for one click is the bug that made
+            // clicking the bar do nothing; toggleDashboard() also debounces,
+            // but making only one of them live is the structural fix rather
+            // than a race that happens to be caught.
+            TapHandler {
+                enabled: !railHover.hovered
+                onTapped: root.toggleDashboard()
+            }
         }
 
-        // Invisible input region used while open. Its geometry is deliberately
-        // STATIC — deriving the height from the animating card.y made the
-        // region collapse to nothing for the first frames of the slide-in, so
-        // the pointer fell through, hover dropped, and the panel flickered.
+        // --- Step 1: the rail, and the thing that is clicked for step 2 ---
+        // Exactly as tall as the rail is painted, so the width of screen edge
+        // that stops being clickable is the width of screen edge that is
+        // visibly covered — and only while the rail is actually down. 5px is a
+        // fine target because the pointer cannot travel above y=0.
         Item {
-            id: openMask
-            // Widened by the fillet radius: the scoops paint that far past the
-            // body's edges, and painted-but-unmasked pixels would not hold the
-            // panel open when hovered.
-            x: Math.round((win.width - win.targetBodyWidth) / 2) - Theme.cornerFillet
+            id: railStrip
+            x: 0
             y: 0
-            width: win.targetBodyWidth + Theme.cornerFillet * 2
-            height: Theme.edgeLine + Theme.panelHeight
+            width: win.width
+            height: root.railShown ? Theme.edgeLine : 0
+
+            // cursorShape belongs on the HOVER handler: a TapHandler is only
+            // `active` while the button is held, so the hand would appear on
+            // press instead of on approach.
+            HoverHandler {
+                id: railHover
+                cursorShape: Qt.PointingHandCursor
+            }
+            // A TapHandler rather than a MouseArea: a hover-enabled MouseArea
+            // would steal hover from the handlers around it, which is the exact
+            // shape of the old edge-flicker bug.
+            TapHandler { onTapped: root.toggleDashboard() }
+        }
+
+        // --- Step 2: everything the open dashboard owns ---
+        // FULL WIDTH, not just the card. This used to be a card-width region
+        // and the gap either side of it was a trap: click the rail near the
+        // screen edge and the pointer had to cross unmasked pixels to reach the
+        // centred card, hover dropped, and the 320ms hide timer shut the panel
+        // while you were still on your way to it.
+        //
+        // Its geometry is deliberately STATIC — deriving the height from the
+        // animating card.y made the region collapse to nothing for the first
+        // frames of the slide-in, so the pointer fell through and the panel
+        // flickered. It collapses to 0 height when closed rather than being
+        // switched out of the mask.
+        Item {
+            id: scrim
+            x: 0
+            y: 0
+            width: win.width
+            height: root.revealed ? Theme.edgeLine + Theme.panelHeight : 0
+
+            HoverHandler { id: scrimHover }
+
+            // Click anywhere off the card to dismiss. Disabled wherever another
+            // handler owns the click: the card's own controls are on top of
+            // this, and the rail/trigger already toggle — and since a tap is
+            // delivered to ALL of them, an unguarded close here would race the
+            // toggle and reopen the panel it just shut.
+            TapHandler {
+                enabled: !cardHover.hovered
+                         && !railHover.hovered
+                         && !hotspotHover.hovered
+                onTapped: root.closeDashboard()
+            }
+        }
+
+        // --- Step 1 motion: the rail slides down out of the screen edge ---
+        // Same easing family as the body, just shorter: 5px travelling for the
+        // body's 380ms reads as a stall rather than as motion.
+        property real railOffset: root.railShown ? 0 : -(Theme.edgeLine + 2)
+        Behavior on railOffset {
+            NumberAnimation { duration: Theme.animNormal; easing.type: Theme.easeOutExpo }
+        }
+
+        property real chromeOpacity: root.railShown ? 1.0 : 0.0
+        Behavior on chromeOpacity {
+            NumberAnimation {
+                duration: root.railShown ? Theme.animNormal : Theme.animFast
+                easing.type: Theme.easeOutQuint
+            }
         }
 
         // --- Geometry shared by the silhouette, the mask and the content ---
@@ -520,6 +663,11 @@ ShellRoot {
             anchors.fill: parent
             preferredRendererType: Shape.CurveRenderer
             antialiasing: true
+            opacity: win.chromeOpacity
+            // Rail and body are one path, so one translate carries both. It is
+            // 0 whenever the dashboard is open, so this only ever moves the
+            // bare rail.
+            transform: Translate { y: win.railOffset }
 
             ShapePath {
                 fillColor: Theme.panelBg
@@ -586,6 +734,9 @@ ShellRoot {
             opacity: root.revealed ? 1.0 : 0.0
             scale: root.revealed ? 1.0 : 0.95
             transformOrigin: Item.Top
+            // Follows the rail so the content never detaches from the
+            // silhouette it is drawn inside.
+            transform: Translate { y: win.railOffset }
 
             Behavior on opacity {
                 NumberAnimation { duration: root.revealed ? Theme.animNormal : Theme.animFast; easing.type: Theme.easeOutQuint }

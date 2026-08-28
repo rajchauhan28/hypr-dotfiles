@@ -19,16 +19,16 @@ ShellRoot {
 
     FontLoader {
         id: anuratiFont
-        source: "file:///home/reign/.local/share/fonts/Anurati/Anurati-Regular.otf"
+        source: "file://" + Quickshell.env("HOME") + "/.local/share/fonts/Anurati/Anurati-Regular.otf"
     }
 
     FontLoader {
         id: audiowideFont
-        source: "file:///home/reign/.local/share/fonts/Google Fonts/Audiowide/Audiowide_Regular.22.ttf"
+        source: "file://" + Quickshell.env("HOME") + "/.local/share/fonts/Google Fonts/Audiowide/Audiowide_Regular.22.ttf"
     }
 
     FileView {
-        path: "/home/reign/.cache/wal/colors.json"
+        path: Quickshell.env("HOME") + "/.cache/wal/colors.json"
         watchChanges: true
         onFileChanged: reload()
         onLoaded: {

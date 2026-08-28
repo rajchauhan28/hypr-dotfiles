@@ -110,7 +110,7 @@ ShellRoot {
 
     function dispatchHypr(cmd, arg) {
         var p = Qt.createQmlObject('import Quickshell.Io; Process {}', root);
-        p.command = ["/home/reign/.config/quickshell/overview/hyprctl-compat.sh", cmd, arg];
+        p.command = [Quickshell.env("HOME") + "/.config/quickshell/overview/hyprctl-compat.sh", cmd, arg];
         p.running = true;
     }
 
@@ -132,7 +132,7 @@ ShellRoot {
     property var sidebarPinned: sidebarPinnedDefaults
 
     FileView {
-        path: "/home/reign/.config/quickshell/leftbar/pinned.json"
+        path: Quickshell.env("HOME") + "/.config/quickshell/leftbar/pinned.json"
         watchChanges: true
         onFileChanged: reload()
         // onLoaded only fires when the file exists; onLoadFailed is what covers
@@ -860,7 +860,7 @@ ShellRoot {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: root.launchApp("/home/reign/.config/hypr/toggle_overview.sh")
+                            onClicked: root.launchApp(Quickshell.env("HOME") + "/.config/hypr/toggle_overview.sh")
                             onContainsMouseChanged: root.setTooltip(containsMouse ? "Overview (Super+Tab)" : "", ovMouse)
                         }
                     }

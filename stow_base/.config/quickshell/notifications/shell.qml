@@ -38,7 +38,7 @@ ShellRoot {
     PanelWindow {
         id: win
 
-        // Full height even though the card only occupies the top: resizing a
+        // Full height even though the card only occupies the bottom: resizing a
         // layer surface every time the stack grows makes the slide stutter.
         // The input mask, not the surface, decides what is clickable.
         anchors { top: true; bottom: true; right: true }
@@ -56,7 +56,6 @@ ShellRoot {
 
         // --- Geometry shared by silhouette, mask and content ---------------
         readonly property real edgeX: width
-        readonly property real bodyTop: Theme.topMargin
         // The card is exactly as tall as its rows; the Behavior is what makes
         // it grow and shrink around them instead of snapping.
         property real bodyHeight: shown ? stack.implicitHeight : 0
@@ -64,7 +63,10 @@ ShellRoot {
             NumberAnimation { duration: Theme.animPanel; easing.type: Theme.easeOutExpo }
         }
 
-        readonly property real bodyBottom: bodyTop + bodyHeight
+        // Keep the lower edge fixed so a notification stack at bottom-right
+        // grows upward as new rows arrive.
+        readonly property real bodyBottom: height - Theme.bottomMargin
+        readonly property real bodyTop: bodyBottom - bodyHeight
         readonly property real bodyLeft: edgeX - Theme.panelWidth
 
         // Both radii collapse with the card so the path stays well-formed at

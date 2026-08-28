@@ -43,7 +43,7 @@ ShellRoot {
 
     Process {
         id: devProc
-        command: ["python3", "/home/reign/.config/quickshell/widgets/volume/audio_info.py"]
+        command: ["python3", Quickshell.env("HOME") + "/.config/quickshell/widgets/volume/audio_info.py"]
         stdout: SplitParser {
             onRead: data => {
                 try {

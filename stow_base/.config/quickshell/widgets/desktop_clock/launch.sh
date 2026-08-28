@@ -1,7 +1,10 @@
 #!/bin/bash
-# Launch/Toggle script for Quickshell Anurati Pywal Desktop Clock
-if quickshell list --all | grep -q "desktop_clock"; then
-    quickshell kill -p "$HOME/.config/quickshell/widgets/desktop_clock" 2>/dev/null || pkill -f "quickshell.*desktop_clock"
-else
-    quickshell -d -p "$HOME/.config/quickshell/widgets/desktop_clock"
-fi
+# OBSOLETE as of the shell consolidation.
+#
+# The desktop clock is no longer its own `qs` process — it is one component of
+# the consolidated shell at ~/.config/quickshell/shell.qml (DesktopClockPanel).
+# There is no separate instance to toggle, so this script has nothing to kill.
+#
+# To reload the clock, reload the whole shell:  ~/.config/quickshell/reload.sh
+echo "desktop_clock is part of the consolidated shell; use ~/.config/quickshell/reload.sh" >&2
+exit 1

@@ -8,18 +8,24 @@ command = "ghostty --class=com.ghostty.term"
 class = "com.ghostty.term"
 position = "17% 6%"
 size = "65% 60%"
-offset = "200%"
+# Let Hyprland finish the slide before Pyprland moves the client back to its
+# hidden special workspace.  The old 200%/0.2s transition was still animating
+# when that second move happened, which made the window flash and hide twice.
+offset = "100%"
+hide_delay = 0.45
 
 [scratchpads.music]
 animation = "fromBottom"
 command = "ghostty --class=com.ghostty.music -e pulsemixer"
 class = "com.ghostty.music"
 size = "50% 20%"
-offset = "200%"
+offset = "100%"
+hide_delay = 0.45
 
 [scratchpads.taskbar]
 animation = "fromLeft"
 command = "ghostty --class=com.ghostty.taskbar -e btop --force-utf"
 class = "com.ghostty.taskbar"
 size = "50% 80%"
-offset = "200%"
+offset = "100%"
+hide_delay = 0.45

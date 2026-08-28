@@ -20,7 +20,7 @@ Singleton {
     }]
 
     FileView {
-        path: "/home/reign/.config/quickshell/settings.json"
+        path: Quickshell.env("HOME") + "/.config/quickshell/settings.json"
         watchChanges: true
         onFileChanged: reload()
         onLoaded: {
@@ -55,7 +55,7 @@ Singleton {
 
     Process {
         running: true
-        command: ["python3", "/home/reign/.config/quickshell/settings/system_info.py"]
+        command: ["python3", Quickshell.env("HOME") + "/.config/quickshell/settings/system_info.py"]
         stdout: SplitParser {
             onRead: output => {
                 try {
@@ -69,7 +69,7 @@ Singleton {
 
     Process {
         running: true
-        command: ["python3", "/home/reign/.config/quickshell/lock/background.py"]
+        command: ["python3", Quickshell.env("HOME") + "/.config/quickshell/lock/background.py"]
         stdout: SplitParser {
             onRead: output => {
                 try {
@@ -83,7 +83,7 @@ Singleton {
 
     Process {
         running: true
-        command: ["python3", "/home/reign/.config/quickshell/lock/users.py"]
+        command: ["python3", Quickshell.env("HOME") + "/.config/quickshell/lock/users.py"]
         stdout: SplitParser {
             onRead: output => {
                 try {

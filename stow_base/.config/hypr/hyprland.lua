@@ -1,6 +1,22 @@
 -- Reign's Hyprland Lua Configuration
 -- Ported from hyprland.conf to native Lua API (introduced in Hyprland v0.55+)
 
+-- The config must work for any user, so nothing below may hardcode a home
+-- directory. HOME is always set in a Hyprland session; the empty fallback
+-- keeps the file parseable if it somehow is not.
+local HOME = os.getenv("HOME") or ""
+
+-- Hardware profile written by Install.sh (detect_hardware). It reports what
+-- this machine actually has -- vendor, GPUs, battery -- so nothing below has
+-- to assume an Acer Predator with an NVIDIA Optimus GPU. A missing file gives
+-- an empty table, which switches every vendor-specific extra OFF: the shell
+-- still comes up fully on hardware the installer never saw.
+local hw = (function()
+    local ok, profile = pcall(dofile, HOME .. "/.config/hypr/hardware.lua")
+    if ok and type(profile) == "table" then return profile end
+    return {}
+end)()
+
 --------------------------
 ---- COLOR GENERATOR -----
 --------------------------
@@ -18,7 +34,7 @@ local function load_colors(file_path)
     return colors
 end
 
-local colors = load_colors("/home/reign/.cache/wal/colors-hyprland.conf")
+local colors = load_colors(HOME .. "/.cache/wal/colors-hyprland.conf")
 
 ------------------
 ---- MONITORS ----
@@ -44,7 +60,7 @@ local terminal           = "ghostty"
 local fileManager        = "dolphin"
 local menu               = "walker"
 local browser            = "brave"
-local wallpaperSwitcher  = "/home/reign/.config/hypr/wallpaper_switcher.sh"
+local wallpaperSwitcher  = HOME .. "/.config/hypr/wallpaper_switcher.sh"
 local mainMod            = "SUPER"
 
 -- The leftbar changes its layer-surface width when a horizontal drawer opens.
@@ -66,37 +82,55 @@ hl.env("QT_QPA_PLATFORMTHEME", "qt6ct")
 hl.env("QT_STYLE_OVERRIDE", "kvantum")
 hl.env("XDG_CURRENT_DESKTOP", "Hyprland")
 hl.env("XDG_MENU_PREFIX", "arch-")
--- hl.env("LIBVA_DRIVER_NAME", "nvidia")
 hl.env("XDG_SESSION_TYPE", "wayland")
--- hl.env("GBM_BACKEND", "nvidia-drm")
--- hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
+
+-- Hardware-video-decode driver. Setting the wrong one here is worse than
+-- setting none: iHD on an AMD box breaks decode in every Electron app.
+if hw.igpu == "intel" then
+    hl.env("LIBVA_DRIVER_NAME", "iHD")
+elseif hw.igpu == "amd" then
+    hl.env("LIBVA_DRIVER_NAME", "radeonsi")
+elseif hw.gpu_nvidia and not hw.igpu then
+    -- NVIDIA-only machine: no integrated GPU to hand decode to.
+    hl.env("LIBVA_DRIVER_NAME", "nvidia")
+    hl.env("GBM_BACKEND", "nvidia-drm")
+    hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
+end
+
+if hw.gpu_nvidia then
+    hl.env("NVD_BACKEND", "direct")
+end
 
 -------------------
 ---- AUTOSTART ----
 -------------------
 hl.on("hyprland.start", function()
-    hl.exec_cmd("dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP && systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP && systemctl --user start hyprland-session.target && systemctl --user restart walllust-daemon.service walker.service elephant.service")
+    hl.exec_cmd("dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE && systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE && systemctl --user start hyprland-session.target && systemctl --user restart walllust-daemon.service walker.service elephant.service")
     -- hl.exec_cmd("clipse -listen")  -- Replaced by walker clipboard
     hl.exec_cmd("hypridle")
-    hl.exec_cmd("qs -d -c topbar &")
-    hl.exec_cmd("qs -d -c leftbar &")
-    hl.exec_cmd("qs -d -c sidepanel &")
-    hl.exec_cmd("qs -d -c dock &")
-    hl.exec_cmd("qs -d -c widgets/desktop_clock &")
-    hl.exec_cmd("qs -d -c lock &")
-    hl.exec_cmd("qs -d -c notifications &")
+    -- Consolidated shell: topbar + leftbar + sidepanel + dock + desktop_clock
+    -- + notifications all live in ~/.config/quickshell/shell.qml (one process).
+    -- `qs -d` with no -c launches that default config.
+    hl.exec_cmd("qs -d &")
+    -- The lockscreen stays its OWN process on purpose: reloading the bars must
+    -- not be able to drop an active lock. See quickshell/lock/lock.sh.
+    hl.exec_cmd("qs -d -p " .. HOME .. "/.config/quickshell/lock &")
     hl.exec_cmd("pypr")
     hl.exec_cmd("pactl set-sink-mute @DEFAULT_SINK@ 0")
     hl.exec_cmd("hyprpm reload -n")
     hl.exec_cmd(wallpaperSwitcher)
     hl.exec_cmd("XDG_MENU_PREFIX=arch- kbuildsycoca6")
-    hl.exec_cmd("/home/reign/.config/hypr/mpvpaper-stop.sh &")
+    hl.exec_cmd(HOME .. "/.config/hypr/mpvpaper-stop.sh &")
     hl.exec_cmd("hyprpm update")
     hl.exec_cmd("kbuildsycoca6")
     hl.exec_cmd("systemctl --user start hyprpolkitagent")
     hl.exec_cmd("command -v libinput-gestures-setup >/dev/null && libinput-gestures-setup start")
     hl.exec_cmd("test -x /usr/lib/pam_kwallet_init && /usr/lib/pam_kwallet_init")
-    hl.exec_cmd("/home/reign/.config/hypr/smart_gpu.py")
+    -- Refresh-rate/governor tuning against AC vs battery. Skipped on a
+    -- desktop, where the daemon has nothing to react to.
+    if hw.battery then
+        hl.exec_cmd(HOME .. "/.config/hypr/smart_gpu.py")
+    end
 end)
 
 ----------------------
@@ -245,14 +279,14 @@ hl.bind(mainMod .. " + Q", hl.dsp.window.close())
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd(browser))
 hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd(wallpaperSwitcher))
-hl.bind(mainMod .. " + TAB", hl.dsp.exec_cmd("/home/reign/.config/hypr/toggle_overview.sh"))
+hl.bind(mainMod .. " + TAB", hl.dsp.exec_cmd(HOME .. "/.config/hypr/toggle_overview.sh"))
 -- Quick settings, for when reaching the right-edge hotspot is inconvenient.
-hl.bind(mainMod .. " + I", hl.dsp.exec_cmd("qs -c sidepanel ipc call sidepanel toggle"))
-hl.bind(mainMod .. " + D", hl.dsp.exec_cmd("qs -c dock ipc call dock toggle"))
+hl.bind(mainMod .. " + I", hl.dsp.exec_cmd("qs ipc call sidepanel toggle"))
+hl.bind(mainMod .. " + D", hl.dsp.exec_cmd("qs ipc call dock toggle"))
 -- Settings for the shell itself: dock apps, panel geometry, palette.
-hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd("/home/reign/.config/quickshell/settings/launch.sh"))
-hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("/home/reign/.config/quickshell/reload.sh"))
-hl.bind(mainMod .. " + O", hl.dsp.exec_cmd("qs -d -c topbar & qs -d -c leftbar & qs -d -c dock & qs -d -c sidepanel &"))
+hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd(HOME .. "/.config/quickshell/settings/launch.sh"))
+hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd(HOME .. "/.config/quickshell/reload.sh"))
+hl.bind(mainMod .. " + O", hl.dsp.exec_cmd(HOME .. "/.config/quickshell/reload.sh"))
 hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("walker -m clipboard"))
 hl.bind(mainMod .. " + SHIFT + E", hl.dsp.exec_cmd("walker -m files"))
@@ -282,7 +316,7 @@ hl.bind(mainMod .. " + SHIFT + bracketright", hl.dsp.window.move({ monitor = "ri
 hl.bind(mainMod .. " + bracketleft",  hl.dsp.focus({ monitor = "left" }))
 hl.bind(mainMod .. " + bracketright", hl.dsp.focus({ monitor = "right" }))
 
-hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("qs -c notifications ipc call notifications dismissAll"))
+hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("qs ipc call notifications dismissAll"))
 
 -- Workspaces
 for i = 1, 10 do
@@ -292,34 +326,41 @@ for i = 1, 10 do
 end
 
 -- Media & Brightness (locked = true, repeating = true)
-hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+"), { locked = true, repeating = true })
-hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"), { locked = true, repeating = true })
+hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("qs ipc call sidepanel volume 1"), { locked = true, repeating = true })
+hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("qs ipc call sidepanel volume -1"), { locked = true, repeating = true })
 hl.bind("XF86AudioMute",        hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"), { locked = true, repeating = true })
 hl.bind("XF86AudioMicMute",     hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"), { locked = true, repeating = true })
-hl.bind("XF86MonBrightnessUp",  hl.dsp.exec_cmd("brightnessctl s 10%+"), { locked = true, repeating = true })
-hl.bind("XF86MonBrightnessDown",hl.dsp.exec_cmd("brightnessctl s 10%-"), { locked = true, repeating = true })
+hl.bind("XF86MonBrightnessUp",  hl.dsp.exec_cmd("qs ipc call sidepanel brightness 1"), { locked = true, repeating = true })
+hl.bind("XF86MonBrightnessDown",hl.dsp.exec_cmd("qs ipc call sidepanel brightness -1"), { locked = true, repeating = true })
 
 -- Media Controls (locked = true)
 hl.bind("XF86AudioNext",  hl.dsp.exec_cmd("playerctl next"), { locked = true })
 hl.bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
 hl.bind("XF86AudioPlay",  hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
 hl.bind("XF86AudioPrev",  hl.dsp.exec_cmd("playerctl previous"), { locked = true })
-hl.bind("XF86Launch1",    hl.dsp.exec_cmd("DAMX"), { locked = true })
+-- The Predator/Nitro turbo key. Only Acer gaming laptops have it, and DAMX
+-- only exists once the acer-wmi driver has been installed.
+if hw.acer_gaming then
+    hl.bind("XF86Launch1", hl.dsp.exec_cmd("DAMX"), { locked = true })
+end
 
 -- Screenshots
-hl.bind("Print",             hl.dsp.exec_cmd("/home/reign/.config/hypr/screenshot.sh region"))
-hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd("/home/reign/.config/hypr/screenshot.sh output"))
+hl.bind("Print",             hl.dsp.exec_cmd(HOME .. "/.config/hypr/screenshot.sh region"))
+hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd(HOME .. "/.config/hypr/screenshot.sh output"))
 
 -- Pyprland & Special Workspaces
-hl.bind(mainMod .. " + slash",     hl.dsp.exec_cmd("/home/reign/.config/keybinds_gui.py"))
-hl.bind(mainMod .. " + l",         hl.dsp.exec_cmd("/home/reign/.config/quickshell/lock/lock.sh"))
+hl.bind(mainMod .. " + slash",     hl.dsp.exec_cmd(HOME .. "/.config/keybinds_gui.py"))
+hl.bind(mainMod .. " + l",         hl.dsp.exec_cmd(HOME .. "/.config/quickshell/lock/lock.sh"))
 hl.bind(mainMod .. " + S",         hl.dsp.workspace.toggle_special("magic"))
 hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:magic" }))
 hl.bind(mainMod .. " + SPACE",     hl.dsp.exec_cmd("pypr toggle term"))
 hl.bind(mainMod .. " + G",         hl.dsp.exec_cmd("pypr toggle music"))
 hl.bind(mainMod .. " + T",         hl.dsp.exec_cmd("pypr toggle taskbar"))
-hl.bind(mainMod .. " + ALT + G",   hl.dsp.exec_cmd("/home/reign/.config/hypr/gamemode.sh"))
-hl.bind(mainMod .. " + SHIFT + G", hl.dsp.exec_cmd("/home/reign/.config/hypr/gpu_switcher.sh"))
+hl.bind(mainMod .. " + ALT + G",   hl.dsp.exec_cmd(HOME .. "/.config/hypr/gamemode.sh"))
+-- gpu_switcher.sh drops its envycontrol entries by itself on a machine
+-- without NVIDIA, so the binding stays useful everywhere: on a non-Optimus
+-- laptop it is just the battery/performance tweak menu.
+hl.bind(mainMod .. " + SHIFT + G", hl.dsp.exec_cmd(HOME .. "/.config/hypr/gpu_switcher.sh"))
 
 -- Mouse Binds (mouse = true)
 hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })

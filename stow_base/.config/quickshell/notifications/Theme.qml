@@ -17,7 +17,7 @@ Singleton {
     }
 
     FileView {
-        path: "/home/reign/.config/quickshell/settings.json"
+        path: Quickshell.env("HOME") + "/.config/quickshell/settings.json"
         watchChanges: true
         onFileChanged: reload()
         onLoaded: theme.parseCfg(text())
@@ -57,10 +57,10 @@ Singleton {
     readonly property color danger: theme.col("danger", "#e06b6b")
 
     readonly property int panelWidth: theme.num("notifications", "panelWidth", 380)
-    // Must stay >= cornerFillet: the top scoop is drawn in the band above the
-    // card, and a smaller margin runs it off the surface and clips it flat.
-    readonly property int topMargin: Math.max(
-        theme.num("notifications", "topMargin", 30), cornerFillet)
+    // Must stay >= cornerFillet: the bottom scoop is drawn in the band below
+    // the card, and a smaller margin runs it off the surface and clips it flat.
+    readonly property int bottomMargin: Math.max(
+        theme.num("notifications", "bottomMargin", 30), cornerFillet)
     readonly property int cardPadding: theme.num("notifications", "cardPadding", 14)
     readonly property int iconSize: theme.num("notifications", "iconSize", 34)
     readonly property int radiusPanel: theme.num("notifications", "radiusPanel", 18)

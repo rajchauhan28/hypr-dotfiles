@@ -14,13 +14,13 @@ import Quickshell.Io
 Singleton {
     id: cfg
 
-    readonly property string settingsPath: "/home/reign/.config/quickshell/settings.json"
-    readonly property string pinnedPath: "/home/reign/.config/quickshell/dock/pinned.json"
+    readonly property string settingsPath: Quickshell.env("HOME") + "/.config/quickshell/settings.json"
+    readonly property string pinnedPath: Quickshell.env("HOME") + "/.config/quickshell/dock/pinned.json"
     // Lives next to the bar that reads it, the same way dock/pinned.json does.
     // It used to point at ~/.config/quickshell/sidebar_pinned.json, a file
     // nothing created and the leftbar never read -- which is why this page came
     // up empty while the bar showed a hardcoded list.
-    readonly property string sidebarPinnedPath: "/home/reign/.config/quickshell/leftbar/pinned.json"
+    readonly property string sidebarPinnedPath: Quickshell.env("HOME") + "/.config/quickshell/leftbar/pinned.json"
 
     // The single source of truth for what a knob means: its default, range and
     // label all come from here, so adding a knob is one entry plus one row in a
@@ -80,7 +80,7 @@ Singleton {
         // SliderRow both read this table, and a missing section throws.
         "notifications": {
             "panelWidth": 380,
-            "topMargin": 30,
+            "bottomMargin": 30,
             "cardPadding": 14,
             "iconSize": 34,
             "radiusPanel": 18,
@@ -283,7 +283,7 @@ Singleton {
 
     function write(proc, path, obj) {
         proc.running = false;
-        proc.command = ["python3", "/home/reign/.config/quickshell/settings/store.py",
+        proc.command = ["python3", Quickshell.env("HOME") + "/.config/quickshell/settings/store.py",
                         path, JSON.stringify(obj)];
         proc.running = true;
     }
@@ -357,7 +357,7 @@ Singleton {
     Process {
         id: appsProc
         running: true
-        command: ["python3", "/home/reign/.config/quickshell/settings/apps.py"]
+        command: ["python3", Quickshell.env("HOME") + "/.config/quickshell/settings/apps.py"]
         stdout: SplitParser {
             onRead: data => {
                 try {
@@ -370,7 +370,7 @@ Singleton {
     Process {
         id: systemInfoProc
         running: true
-        command: ["python3", "/home/reign/.config/quickshell/settings/system_info.py"]
+        command: ["python3", Quickshell.env("HOME") + "/.config/quickshell/settings/system_info.py"]
         stdout: SplitParser {
             onRead: output => {
                 try {

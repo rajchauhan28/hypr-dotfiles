@@ -2,14 +2,20 @@
 image/jpeg=org.kde.gwenview.desktop;brave-browser.desktop;firefox.desktop;
 image/png=org.kde.gwenview.desktop;brave-browser.desktop;firefox.desktop;
 inode/directory=org.kde.dolphin.desktop;kitty-open.desktop;
+text/csv=onlyoffice-desktopeditors.desktop;libreoffice-calc.desktop;libreoffice-writer.desktop;micro.desktop;org.gnome.TextEditor.desktop;vim.desktop;nvim.desktop;org.x.editor.desktop;
+video/mp4=mpv.desktop;vlc.desktop;fr.handbrake.ghb.desktop;
 
 [Default Applications]
-inode/directory=org.kde.dolphin.desktop
+application/x-bittorrent=freedownloadmanager_torrent.desktop
 image/jpeg=org.kde.gwenview.desktop;
 image/png=org.kde.gwenview.desktop;
+inode/directory=org.kde.dolphin.desktop
+text/csv=onlyoffice-desktopeditors.desktop;
+video/mp4=mpv.desktop;
 x-scheme-handler/claude-cli=claude-code-url-handler.desktop
-x-scheme-handler/mailto=brave-browser.desktop
+x-scheme-handler/discord=vesktop.desktop
 x-scheme-handler/fdm=freedownloadmanager_fdm_up.desktop
+x-scheme-handler/flywheel-local=local.desktop
 x-scheme-handler/magnet=freedownloadmanager_magnet_up.desktop
-application/x-bittorrent=freedownloadmanager_torrent.desktop
-x-scheme-handler/postman=Postman.desktop
+x-scheme-handler/mailto=brave-browser.desktop
+x-scheme-handler/postman=postman.desktop

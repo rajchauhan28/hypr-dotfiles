@@ -133,7 +133,7 @@ ShellRoot {
 
     Process {
         id: switchUserProc
-        command: ["bash", "/home/reign/.config/quickshell/lock/switch-user.sh"]
+        command: ["bash", Quickshell.env("HOME") + "/.config/quickshell/lock/switch-user.sh"]
         onExited: code => {
             root.authInProgress = false;
             if (code !== 0)

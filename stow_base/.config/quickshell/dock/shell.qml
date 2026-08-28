@@ -94,7 +94,7 @@ ShellRoot {
     }
 
     FileView {
-        path: "/home/reign/.config/quickshell/dock/pinned.json"
+        path: Quickshell.env("HOME") + "/.config/quickshell/dock/pinned.json"
         watchChanges: true
         onFileChanged: reload()
         onLoaded: {
