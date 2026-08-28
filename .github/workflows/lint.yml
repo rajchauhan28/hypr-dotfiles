@@ -12,9 +12,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Run ShellCheck
         uses: ludeeus/action-shellcheck@master
         with:
           scandir: './'
+          # stow_base/.local holds desktop-entry templates and fonts, no scripts.
           ignore_paths: 'stow_base/.local'
+          # .zshrc is zsh, and ShellCheck has no zsh support -- it lints the
+          # file as bash and reports zsh's own syntax as errors: `${(j:,:)a}`
+          # parameter-expansion flags, `$array[idx]` subscripting, and every
+          # oh-my-zsh variable as "appears unused". All false positives, and
+          # they are what kept this workflow red.
+          ignore_names: '.zshrc'
