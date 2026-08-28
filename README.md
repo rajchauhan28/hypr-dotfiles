@@ -13,9 +13,32 @@ A modern, fluid, and futuristic Hyprland desktop environment powered by a custom
   - **Side Panel (`sidepanel`)**: Quick settings strip with volume, brightness, bluetooth, wifi, and system controls.
   - **Super + Tab Overview (`overview`)**: Interactive workspace and window manager with smooth card physics.
 - **🎵 Real-Time Audio Visualizer**: Liquid dual-ring circumference waves surrounding rotating album art with real-time PulseAudio/PipeWire spectrum analysis (`spectrum.py`).
+- **🖥️ Hardware-Adaptive Install**: The installer reads DMI and PCI data and
+  configures itself for the machine it is actually on.
+  - **Any vendor**: the Predator/Nitro turbo key is bound only on an Acer gaming
+    laptop. The DAMX (`acer-wmi`) driver it needs is not vendored here -- the
+    installer offers to run [upstream's](https://github.com/PXDiv/Div-Acer-Manager-Max)
+    own installer, and only after you say yes, since it builds and loads a
+    kernel module.
+  - **Any GPU**: `envycontrol` and the GPU-switching keybind appear only with an
+    NVIDIA GPU present. The VA-API driver is picked to match the real hardware
+    (`iHD` for Intel, `radeonsi` for AMD, `nvidia` for an NVIDIA-only box) --
+    the wrong one breaks hardware video decode.
+  - **Laptop or desktop**: the AC/battery refresh-rate daemon only starts where
+    there is a battery to react to.
+  - Results are written to `~/.config/hypr/hardware.{conf,lua}`, which the
+    Hyprland config reads. Re-run `Install.sh` after a hardware change.
+- **📐 Screen-Aware Scaling**: Panel geometry ships tuned for 1920x1200 and is
+  rescaled at install time to the detected screen -- 1366x768, 1080p, 1440p and
+  4K all get proportionate icons, bars and dashboards. Scaling uses *logical*
+  resolution, so a 4K panel at compositor scale 2 is correctly treated as
+  1920x1080 rather than doubled. Every value stays editable in the Settings app
+  (`Super + ,`).
 - **🛡️ Automated Installer & Safety Rollback**:
   - `Install.sh`: One-line automated Arch Linux installer that sets up QuickShell, Qt6 dependencies, fonts, systemd services, and replaces Waybar.
-  - `rollback.sh`: One-click script to safely restore previous dotfiles backup (`hypr-dotfiles-old`).
+  - `rollback.sh`: Unstows this repository and restores the most recent
+    `~/.dotfiles_backup_<timestamp>` that `Install.sh` created. It never
+    deletes the repository itself.
 
 ---
 
@@ -50,6 +73,17 @@ If you ever need to restore your previous configuration, simply run:
 ./rollback.sh
 ```
 
+It unstows the dotfiles and copies back the newest `~/.dotfiles_backup_<timestamp>`
+directory written by `Install.sh`. Your clone of this repository is left in
+place -- remove it yourself if you no longer want it.
+
+### Per-user files
+
+`settings.json`, the two `pinned.json` files and `walllust/config.json` are
+written by the running shell, so they are **not** tracked. The repository ships
+each as a `.default`, which `Install.sh` copies into place only when the real
+file is missing -- your own tweaks survive every `git pull`.
+
 ---
 
 ## ⌨️ Keybindings Quick Reference
@@ -57,13 +91,18 @@ If you ever need to restore your previous configuration, simply run:
 | Keybinding | Action |
 | :--- | :--- |
 | `Super + TAB` | Toggle Super+Tab Workspace & Window Overview |
-| `Super + O` | Reload QuickShell Daemons (Topbar, Leftbar, Dock, Sidepanel) |
-| `Super + Shift + R` | Stop QuickShell Daemons |
+| `Super + O` | Reload the QuickShell suite |
+| `Super + Shift + R` | Reload the QuickShell suite (same action as `Super + O`) |
+| `Super + ,` | Open the Settings app |
+| `Super + L` | Lock the session |
 | `Super + I` | Toggle Quick Settings Side Panel |
 | `Super + D` | Toggle Bottom Dock |
+| `Super + /` | Keybinding cheatsheet |
 | `Super + Enter` | Launch Terminal |
 | `Super + R` | Application Launcher |
 | `Super + Q` | Close Focused Window |
+| `Super + Alt + G` | Game Mode (disable external monitors) |
+| `Super + Shift + G` | GPU mode & power tweaks (GPU entries need NVIDIA) |
 
 ---
 

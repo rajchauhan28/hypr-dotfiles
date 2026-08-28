@@ -12,7 +12,8 @@
 set -Eeuo pipefail
 
 readonly REPO_URL="https://github.com/rajchauhan28/hypr-dotfiles.git"
-readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+readonly SCRIPT_DIR
 
 # Components superseded by the Quickshell suite.  Keep this list explicit so
 # detection is predictable and never mistakes an unrelated process for a
@@ -28,6 +29,16 @@ readonly -a LEGACY_LOCKERS=(
     xsecurelock
     betterlockscreen
     physlock
+)
+
+# Notification daemons. The Quickshell suite registers its own
+# org.freedesktop.Notifications server (notifications/NotificationsPanel.qml);
+# a second daemon claims the same bus name, and whichever loses simply never
+# receives a notification again.
+readonly -a LEGACY_NOTIFIERS=(
+    swaync
+    mako
+    dunst
 )
 
 declare -a LEGACY_COMPONENTS_FOUND=()
@@ -96,18 +107,6 @@ readonly ALL_CONFIG_DIRS=(
     systemd
 )
 
-# Directories containing scripts that need executable permissions
-readonly SCRIPT_DIRS=(
-    "hypr"
-    "quickshell/topbar"
-    "quickshell/leftbar"
-    "quickshell/sidepanel"
-    "quickshell/dock"
-    "quickshell/overview"
-    "quickshell/settings"
-    "quickshell/lock"
-)
-
 # --- UTILITY FUNCTIONS ---
 
 # msg <color> <message>
@@ -137,7 +136,7 @@ detect_legacy_shell_components() {
     msg "$C_CYAN" "🔎 Checking for Waybar and existing lockscreen components..."
 
     local component
-    for component in waybar swayidle "${LEGACY_LOCKERS[@]}"; do
+    for component in waybar swayidle "${LEGACY_NOTIFIERS[@]}" "${LEGACY_LOCKERS[@]}"; do
         if command -v "$component" &>/dev/null \
                 || pgrep -x "$component" &>/dev/null \
                 || [ -e "$HOME/.config/$component" ] \
@@ -167,6 +166,7 @@ detect_legacy_shell_components() {
         while read -r unit _state; do
             case "$unit" in
                 waybar*.service|swayidle*.service|hyprlock*.service|\
+                swaync*.service|mako*.service|dunst*.service|\
                 swaylock*.service|gtklock*.service|waylock*.service|\
                 i3lock*.service|xsecurelock*.service|betterlockscreen*.service|\
                 physlock*.service)
@@ -180,7 +180,7 @@ detect_legacy_shell_components() {
     if [ -d "$user_unit_dir" ]; then
         local unit_file
         while IFS= read -r -d '' unit_file; do
-            if grep -Eqi '^[[:space:]]*Exec(Start|StartPre)=.*(waybar|swayidle|hyprlock|swaylock|gtklock|waylock|i3lock|xsecurelock|betterlockscreen|physlock)' "$unit_file"; then
+            if grep -Eqi '^[[:space:]]*Exec(Start|StartPre)=.*(waybar|swayidle|swaync|mako|dunst|hyprlock|swaylock|gtklock|waylock|i3lock|xsecurelock|betterlockscreen|physlock)' "$unit_file"; then
                 append_unique LEGACY_SERVICE_UNITS "$(basename "$unit_file")"
             fi
         done < <(find "$user_unit_dir" -maxdepth 1 -type f -name '*.service' -print0 2>/dev/null)
@@ -190,7 +190,7 @@ detect_legacy_shell_components() {
     if [ -d "$autostart_dir" ]; then
         local desktop_file
         while IFS= read -r -d '' desktop_file; do
-            if grep -Eqi '^[[:space:]]*Exec=.*(waybar|swayidle|hyprlock|swaylock|gtklock|waylock|i3lock|xsecurelock|betterlockscreen|physlock)' "$desktop_file"; then
+            if grep -Eqi '^[[:space:]]*Exec=.*(waybar|swayidle|swaync|mako|dunst|hyprlock|swaylock|gtklock|waylock|i3lock|xsecurelock|betterlockscreen|physlock)' "$desktop_file"; then
                 append_unique LEGACY_AUTOSTART_FILES "$desktop_file"
             fi
         done < <(find "$autostart_dir" -maxdepth 1 -type f -name '*.desktop' -print0 2>/dev/null)
@@ -246,6 +246,44 @@ check_aur_helper() {
     fi
 }
 
+# filter_packages_for_hardware <file>
+# Emits the package names that apply to THIS machine. A line may end with a
+# "# requires:<flag>" tag (nvidia, acer, laptop); untagged lines always apply.
+filter_packages_for_hardware() {
+    local file="$1" line pkg tag
+    while IFS= read -r line; do
+        # Strip comments only when they are a trailing annotation, so a
+        # whole-line comment still drops out.
+        case "$line" in
+            \#*|"") continue ;;
+        esac
+
+        tag=""
+        if printf '%s' "$line" | grep -q '#[[:space:]]*requires:'; then
+            tag="$(printf '%s' "$line" | sed -n 's/.*#[[:space:]]*requires:[[:space:]]*\([a-z-]*\).*/\1/p')"
+        fi
+        pkg="$(printf '%s' "$line" | sed 's/[[:space:]]*#.*$//' | tr -d '[:space:]')"
+        if [ -z "$pkg" ]; then
+            continue
+        fi
+
+        # Plain `if`s, not `test && printf`: this runs under `set -e` inside a
+        # process substitution, where a false test would abort the subshell and
+        # silently truncate the package list on the first non-matching tag.
+        case "$tag" in
+            nvidia)
+                if [ "$HW_GPU_NVIDIA" = 1 ]; then printf '%s\n' "$pkg"; fi ;;
+            acer)
+                if [ "$HW_ACER_GAMING" = 1 ]; then printf '%s\n' "$pkg"; fi ;;
+            laptop)
+                if [ "$HW_LAPTOP" = 1 ]; then printf '%s\n' "$pkg"; fi ;;
+            *)
+                printf '%s\n' "$pkg" ;;
+        esac
+    done < "$file"
+    return 0
+}
+
 # Function to install packages from package_list.txt
 install_packages() {
     msg "$C_CYAN" "📦 Reading package list and installing packages..."
@@ -255,8 +293,9 @@ install_packages() {
         return
     fi
     
-    # Convert file content to an array, ignoring empty lines and comments
-    mapfile -t PACKAGES < <(grep -vE '^\s*#|^\s*$' "$package_file")
+    # Lines may carry a "# requires:<flag>" tag; those install only on
+    # matching hardware, so an AMD desktop never pulls in envycontrol.
+    mapfile -t PACKAGES < <(filter_packages_for_hardware "$package_file")
     
     if [ ${#PACKAGES[@]} -eq 0 ]; then
         msg "$C_YELLOW" "⚠️ No packages found in $package_file. Skipping."
@@ -328,7 +367,7 @@ stow_configs() {
     # them in place makes it easy for a user service or autostart file to bring
     # the old UI back. Preserve them beside the normal dotfile backup.
     local legacy_config
-    for legacy_config in waybar swayidle "${LEGACY_LOCKERS[@]}"; do
+    for legacy_config in waybar swayidle "${LEGACY_NOTIFIERS[@]}" "${LEGACY_LOCKERS[@]}"; do
         local legacy_path="$HOME/.config/$legacy_config"
         if [ -e "$legacy_path" ] || [ -L "$legacy_path" ]; then
             msg "$C_YELLOW" "  -> Backing up legacy '$legacy_config' config..."
@@ -367,9 +406,8 @@ stow_configs() {
     fi
     
     msg "$C_BLUE" "  -> Applying GNU Stow from stow_base..."
-    cd stow_base
-    stow -t "$HOME" .
-    cd ..
+    # Absolute, so this keeps working wherever an earlier step left the cwd.
+    ( cd "$REPO_DIR/stow_base" && stow -t "$HOME" . )
     
     msg "$C_GREEN" "✅ Config files successfully stowed."
 }
@@ -402,6 +440,13 @@ activate_quickshell_replacements() {
     pkill -TERM -x waybar 2>/dev/null || true
     pkill -TERM -x swayidle 2>/dev/null || true
 
+    # Free the notification bus name before the Quickshell shell starts, or it
+    # comes up without a notification server and every notify-send is lost.
+    local notifier
+    for notifier in "${LEGACY_NOTIFIERS[@]}"; do
+        pkill -TERM -x "$notifier" 2>/dev/null || true
+    done
+
     if command -v qs &>/dev/null \
             && [ -n "${WAYLAND_DISPLAY:-}" ] \
             && [ -x "$HOME/.config/quickshell/reload.sh" ]; then
@@ -418,38 +463,49 @@ activate_quickshell_replacements() {
     msg "$C_BLUE" "  -> Previous files are recoverable from $BACKUP_DIR"
 }
 
-# Function to install fonts
+# Refresh the font cache for the fonts stow just linked.
+#
+# This used to look for a top-level `fonts/` directory that does not exist in
+# this repository -- the fonts live in stow_base/.local/share/fonts and arrive
+# via stow -- so it printed "Skipping" every run and fc-cache never ran. New
+# installs then had a shell referencing fonts fontconfig had not indexed.
 install_fonts() {
-    msg "$C_CYAN" "🔤 Installing fonts..."
-    local dotfiles_dir
-    dotfiles_dir=$(pwd)
-    local src="$dotfiles_dir/fonts"
+    msg "$C_CYAN" "🔤 Refreshing font cache..."
     local dest="$HOME/.local/share/fonts"
-    
-    if [ -d "$src" ]; then
-        mkdir -p "$dest"
-        msg "$C_BLUE" "  -> Copying fonts to $dest..."
-        cp -r "$src/." "$dest/"
-        msg "$C_BLUE" "  -> Updating font cache..."
-        fc-cache -f
-        msg "$C_GREEN" "✅ Fonts installed and cache updated."
+
+    if [ ! -d "$dest" ]; then
+        msg "$C_YELLOW" "⚠️ $dest not present; skipping font cache refresh."
+        return
+    fi
+
+    if command -v fc-cache &>/dev/null; then
+        fc-cache -f "$dest" >/dev/null 2>&1 || fc-cache -f >/dev/null 2>&1 || true
+        msg "$C_GREEN" "✅ Font cache updated."
     else
-        msg "$C_YELLOW" "⚠️ Fonts directory not found in repo. Skipping."
+        msg "$C_YELLOW" "⚠️ fc-cache not found; fonts may not appear until next login."
     fi
 }
 
-
-
 # Function to set executable permissions for scripts.
+#
+# Walks the installed config tree instead of the old hand-kept SCRIPT_DIRS
+# list, which had drifted: quickshell/widgets, quickshell/notifications and
+# hypr/lib all ship scripts and none of them were in it, so those arrived
+# non-executable on a fresh install.
 set_script_permissions() {
     msg "$C_CYAN" "🔐 Setting executable permissions for scripts..."
-    for dir in "${SCRIPT_DIRS[@]}"; do
+    local dir
+    for dir in "${ALL_CONFIG_DIRS[@]}"; do
         local target_dir="$HOME/.config/$dir"
         if [ -d "$target_dir" ]; then
-            find "$target_dir" -type f \( -name "*.sh" -o -name "*.py" \) -exec chmod +x {} +
-            msg "$C_GREEN" "  -> Permissions set for scripts in '$target_dir'."
+            find -L "$target_dir" -type f \( -name "*.sh" -o -name "*.py" \) \
+                -exec chmod +x {} + 2>/dev/null || true
         fi
     done
+    if [ -d "$HOME/.local/bin" ]; then
+        find -L "$HOME/.local/bin" -maxdepth 1 -type f -exec chmod +x {} + 2>/dev/null || true
+    fi
+    msg "$C_GREEN" "  -> Permissions set."
 }
 
 # Function to build and install fastfetch with GIF support from source.
@@ -477,6 +533,357 @@ build_fastfetch_from_source() {
         cd "$HOME"
     else
         msg "$C_RED" "❌ Failed to clone fastfetch-gif-support repository."
+    fi
+}
+
+# --- HARDWARE DETECTION ---
+#
+# Everything vendor-specific in this repository was written on an Acer Predator
+# with an Intel + NVIDIA Optimus GPU. None of it may be forced onto a machine
+# that is not one. These flags are the single source of truth for that, and
+# they are written out to ~/.config/hypr/hardware.{conf,lua} so the Hyprland
+# config gates on exactly the same facts.
+#
+# Note on style: this script runs under `set -e`, where a bare `test ... && x=1`
+# aborts the whole install the moment the test is false. Every check below is
+# therefore a real `if`, never a short-circuit at statement level.
+HW_VENDOR=""
+HW_PRODUCT=""
+HW_ACER_GAMING=0     # Acer Predator / Nitro -- the only models DAMX supports
+HW_GPU_NVIDIA=0
+HW_IGPU=""           # "intel", "amd", or empty
+HW_BATTERY=0
+HW_LAPTOP=0
+
+detect_hardware() {
+    msg "$C_CYAN" "🖥️  Detecting hardware..."
+
+    HW_VENDOR="$(cat /sys/class/dmi/id/sys_vendor 2>/dev/null || true)"
+    HW_PRODUCT="$(cat /sys/class/dmi/id/product_name 2>/dev/null || true)"
+
+    # Match the product string, not just the vendor: an Acer Aspire has no
+    # turbo key and no predator_sense/nitro_sense sysfs nodes.
+    if printf '%s' "$HW_VENDOR" | grep -qi 'acer' \
+            && printf '%s' "$HW_PRODUCT" | grep -qiE 'predator|nitro|helios|triton|PHN|PH[0-9]|AN[0-9]'; then
+        HW_ACER_GAMING=1
+    fi
+
+    # PCI vendor IDs are stable where marketing names are not:
+    # 10de = NVIDIA, 8086 = Intel, 1002/1022 = AMD.
+    if command -v lspci &>/dev/null; then
+        local gpus
+        gpus="$(lspci -nn 2>/dev/null | grep -Ei 'vga compatible|3d controller|display controller' || true)"
+        if printf '%s' "$gpus" | grep -q '\[10de:'; then
+            HW_GPU_NVIDIA=1
+        fi
+        if printf '%s' "$gpus" | grep -q '\[8086:'; then
+            HW_IGPU="intel"
+        elif printf '%s' "$gpus" | grep -qE '\[100[24]:'; then
+            HW_IGPU="amd"
+        fi
+    else
+        # pciutils only arrives with the package install, so on a first run
+        # fall back to the loaded DRM drivers. That is enough to pick a
+        # VA-API driver correctly.
+        if [ -d /sys/module/nvidia ]; then
+            HW_GPU_NVIDIA=1
+        fi
+        if [ -d /sys/module/i915 ] || [ -d /sys/module/xe ]; then
+            HW_IGPU="intel"
+        elif [ -d /sys/module/amdgpu ] || [ -d /sys/module/radeon ]; then
+            HW_IGPU="amd"
+        fi
+    fi
+
+    local supply
+    for supply in /sys/class/power_supply/*; do
+        [ -e "$supply/type" ] || continue
+        if [ "$(cat "$supply/type" 2>/dev/null || true)" = "Battery" ]; then
+            HW_BATTERY=1
+            break
+        fi
+    done
+
+    # DMI chassis types 8-11 and 14 are the portable/laptop/notebook family.
+    local chassis
+    chassis="$(cat /sys/class/dmi/id/chassis_type 2>/dev/null || echo 0)"
+    case "$chassis" in
+        8|9|10|11|14) HW_LAPTOP=1 ;;
+    esac
+    if [ "$HW_BATTERY" = 1 ]; then
+        HW_LAPTOP=1
+    fi
+
+    local nv_label="no" bat_label="no" chassis_label="desktop"
+    if [ "$HW_GPU_NVIDIA" = 1 ]; then nv_label="yes"; fi
+    if [ "$HW_BATTERY" = 1 ]; then bat_label="yes"; fi
+    if [ "$HW_LAPTOP" = 1 ]; then chassis_label="laptop"; fi
+
+    msg "$C_BLUE" "  -> Machine : ${HW_VENDOR:-unknown} ${HW_PRODUCT:-unknown}"
+    msg "$C_BLUE" "  -> GPU     : iGPU=${HW_IGPU:-none} NVIDIA=$nv_label"
+    msg "$C_BLUE" "  -> Chassis : $chassis_label (battery=$bat_label)"
+    if [ "$HW_ACER_GAMING" = 1 ]; then
+        msg "$C_GREEN" "  -> Acer Predator/Nitro: turbo key and DAMX driver kept."
+    else
+        msg "$C_BLUE" "  -> Not an Acer Predator/Nitro: DAMX driver and turbo key skipped."
+    fi
+    if [ "$HW_GPU_NVIDIA" != 1 ]; then
+        msg "$C_BLUE" "  -> No NVIDIA GPU: envycontrol and GPU-switching entries skipped."
+    fi
+}
+
+# lua_escape <string> -- make a value safe inside a Lua double-quoted string.
+# DMI strings are vendor-supplied and have contained quotes and backslashes.
+lua_escape() {
+    printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' | tr -d '\n'
+}
+
+# Write the profile the Hyprland configs read. Both formats carry the same
+# facts because hyprland.lua (v0.55+) and hyprland.conf are both shipped.
+write_hardware_profile() {
+    msg "$C_CYAN" "🧩 Writing hardware profile for Hyprland..."
+    local hypr_dir="$HOME/.config/hypr"
+    mkdir -p "$hypr_dir"
+
+    # Generated per machine: never a symlink into the repository, or the next
+    # `git pull` would fight the installer.
+    rm -f "$hypr_dir/hardware.conf" "$hypr_dir/hardware.lua"
+
+    {
+        echo "# Generated by Install.sh on $(date -Iseconds) -- do not edit."
+        echo "# Machine: ${HW_VENDOR:-unknown} ${HW_PRODUCT:-unknown}"
+        echo
+        case "$HW_IGPU" in
+            intel) echo "env = LIBVA_DRIVER_NAME,iHD" ;;
+            amd)   echo "env = LIBVA_DRIVER_NAME,radeonsi" ;;
+            *)
+                if [ "$HW_GPU_NVIDIA" = 1 ]; then
+                    echo "env = LIBVA_DRIVER_NAME,nvidia"
+                    echo "env = GBM_BACKEND,nvidia-drm"
+                    echo "env = __GLX_VENDOR_LIBRARY_NAME,nvidia"
+                fi
+                ;;
+        esac
+        if [ "$HW_GPU_NVIDIA" = 1 ]; then
+            echo "env = NVD_BACKEND,direct"
+        fi
+        echo
+        if [ "$HW_ACER_GAMING" = 1 ]; then
+            echo "# Predator/Nitro turbo key."
+            echo "bindl = , XF86Launch1, exec, DAMX"
+        fi
+        if [ "$HW_BATTERY" = 1 ]; then
+            echo "# AC/battery refresh-rate and governor tuning."
+            echo "exec-once = \$HOME/.config/hypr/smart_gpu.py"
+        fi
+    } > "$hypr_dir/hardware.conf"
+
+    local lua_acer="false" lua_nvidia="false" lua_battery="false" lua_laptop="false" lua_igpu="false"
+    if [ "$HW_ACER_GAMING" = 1 ]; then lua_acer="true"; fi
+    if [ "$HW_GPU_NVIDIA" = 1 ]; then lua_nvidia="true"; fi
+    if [ "$HW_BATTERY" = 1 ]; then lua_battery="true"; fi
+    if [ "$HW_LAPTOP" = 1 ]; then lua_laptop="true"; fi
+    if [ -n "$HW_IGPU" ]; then lua_igpu="\"$HW_IGPU\""; fi
+
+    {
+        echo "-- Generated by Install.sh on $(date -Iseconds) -- do not edit."
+        echo "return {"
+        # %q is SHELL quoting, not Lua -- it emits bare words and backslash
+        # escapes that make the file a syntax error, which pcall() would then
+        # swallow into an empty profile. Quote for Lua explicitly.
+        printf '    vendor      = "%s",\n' "$(lua_escape "${HW_VENDOR:-unknown}")"
+        printf '    product     = "%s",\n' "$(lua_escape "${HW_PRODUCT:-unknown}")"
+        echo "    acer_gaming = $lua_acer,"
+        echo "    gpu_nvidia  = $lua_nvidia,"
+        echo "    igpu        = $lua_igpu,"
+        echo "    battery     = $lua_battery,"
+        echo "    laptop      = $lua_laptop,"
+        echo "}"
+    } > "$hypr_dir/hardware.lua"
+
+    msg "$C_GREEN" "✅ Hardware profile written to $hypr_dir/hardware.{conf,lua}"
+}
+
+# The Acer turbo key needs the DAMX suite (PXDiv/Div-Acer-Manager-Max), a GPL-3
+# kernel module that is deliberately NOT vendored here: it would freeze at a
+# snapshot and mix GPL-3 into an MIT repository. Offer the upstream installer
+# instead, and only on hardware it supports.
+#
+# It is never run unattended. It builds and loads a kernel module and needs
+# root, so it stays an explicit opt-in even inside an installer the user
+# already trusted.
+offer_acer_driver() {
+    if [ "$HW_ACER_GAMING" != 1 ]; then
+        return
+    fi
+    if command -v DAMX &>/dev/null; then
+        msg "$C_GREEN" "✅ DAMX is already installed; the turbo key will work."
+        return
+    fi
+
+    msg "$C_CYAN" "🔧 Acer Predator/Nitro detected."
+    msg "$C_BLUE" "  -> The XF86Launch1 turbo key needs the DAMX suite, which builds and"
+    msg "$C_BLUE" "     loads an acer-wmi kernel module and requires root."
+    msg "$C_BLUE" "     Upstream: https://github.com/PXDiv/Div-Acer-Manager-Max"
+
+    if [ ! -t 0 ]; then
+        msg "$C_YELLOW" "  -> Not an interactive terminal; skipping. Install it later with:"
+        msg "$C_BLUE"   "     curl -sSL https://raw.githubusercontent.com/PXDiv/Div-Acer-Manager-Max/main/remote-setup.sh | bash"
+        return
+    fi
+
+    local answer
+    read -rp "  Install the DAMX suite now? [y/N] " answer
+    if [[ ! "$answer" =~ ^[Yy]$ ]]; then
+        msg "$C_BLUE" "  -> Skipped. The turbo key binding stays inert until DAMX is installed."
+        return
+    fi
+
+    if curl -sSL https://raw.githubusercontent.com/PXDiv/Div-Acer-Manager-Max/main/remote-setup.sh | bash; then
+        msg "$C_GREEN" "✅ DAMX suite installed."
+    else
+        msg "$C_YELLOW" "⚠️  DAMX install failed; the turbo key will not work until it succeeds."
+    fi
+}
+
+# --- TEMPLATES AND PER-USER STATE ---
+
+# Render the *.in templates that no config format can expand for itself.
+# .desktop Exec= lines in particular are NOT shell-expanded, so "$HOME/..."
+# there would simply not launch.
+render_templates() {
+    msg "$C_CYAN" "📝 Rendering templates for this user..."
+    local template target rendered=0
+    while IFS= read -r -d '' template; do
+        target="$HOME/${template#"$REPO_DIR/stow_base/"}"
+        target="${target%.in}"
+        mkdir -p "$(dirname "$target")"
+        # Overwrite a stale render, but never a real file the user replaced it
+        # with -- a symlink here is stow's, a plain file is ours from last run.
+        sed -e "s|@HOME@|$HOME|g" -e "s|@USER@|$USER|g" "$template" > "$target"
+        rendered=$((rendered + 1))
+    done < <(find "$REPO_DIR/stow_base" -type f -name '*.in' -print0)
+    msg "$C_GREEN" "✅ Rendered $rendered template(s)."
+
+    if command -v update-desktop-database &>/dev/null; then
+        update-desktop-database "$HOME/.local/share/applications" &>/dev/null || true
+    fi
+}
+
+# Seed the per-user state files. These are gitignored on purpose: they are
+# rewritten by the Settings app at runtime, so shipping them tracked would mean
+# every `git pull` fighting the user's own choices.
+seed_user_state() {
+    msg "$C_CYAN" "🌱 Seeding per-user configuration..."
+    local default target seeded=0 kept=0
+    while IFS= read -r -d '' default; do
+        target="$HOME/${default#"$REPO_DIR/stow_base/"}"
+        target="${target%.default}"
+        if [ -e "$target" ] && [ ! -L "$target" ]; then
+            kept=$((kept + 1))
+            continue
+        fi
+        mkdir -p "$(dirname "$target")"
+        rm -f "$target"
+        sed -e "s|@HOME@|$HOME|g" -e "s|@USER@|$USER|g" "$default" > "$target"
+        seeded=$((seeded + 1))
+    done < <(find "$REPO_DIR/stow_base" -type f -name '*.default' -print0)
+    msg "$C_GREEN" "✅ Seeded $seeded file(s); kept $kept existing user file(s)."
+}
+
+# The wallpaper palette (wallust/pywal) is generated at runtime, but
+# hyprland.conf `source`s it at parse time and hypridle reads it in its
+# notification commands. On a fresh install the directory does not exist yet,
+# so Hyprland logs a config error on every startup until the first wallpaper
+# is applied. Seed empty files: whatever generates the palette later simply
+# overwrites them.
+seed_optional_caches() {
+    msg "$C_CYAN" "🎨 Seeding placeholder colour cache..."
+    local wal_dir="$HOME/.cache/wal"
+    mkdir -p "$wal_dir"
+
+    local stub
+    for stub in colors-hyprland.conf colors.sh; do
+        if [ ! -e "$wal_dir/$stub" ]; then
+            printf '# Placeholder written by Install.sh. Replaced the first time\n# a wallpaper is applied.\n' > "$wal_dir/$stub"
+        fi
+    done
+    if [ ! -e "$wal_dir/colors.json" ]; then
+        printf '{}\n' > "$wal_dir/colors.json"
+    fi
+    msg "$C_GREEN" "✅ Colour cache placeholders in place."
+}
+
+# --- SCREEN-AWARE SCALING ---
+#
+# Every pixel value in settings.json was hand-tuned on a 1920x1200 laptop
+# panel. On a 1366x768 screen the 720px-tall dashboard does not fit; on a 4K
+# screen at scale 1 the whole shell is half the size it should be. Detect the
+# real screen and rescale those values once, at install time. The Settings app
+# (Super+comma) still edits every one of them afterwards.
+SCREEN_W=0
+SCREEN_H=0
+SCREEN_SCALE=1
+
+detect_screen() {
+    msg "$C_CYAN" "📐 Detecting screen geometry..."
+
+    # 1. A running Hyprland is the best source: it knows the fractional scale
+    #    the user actually has applied.
+    if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] \
+            && command -v hyprctl &>/dev/null && command -v jq &>/dev/null; then
+        local geometry
+        geometry="$(hyprctl monitors -j 2>/dev/null | jq -r '
+            (map(select(.focused)) | first) // (first) //empty
+            | "\(.width) \(.height) \(.scale // 1)"' 2>/dev/null || true)"
+        if [ -n "$geometry" ]; then
+            read -r SCREEN_W SCREEN_H SCREEN_SCALE <<<"$geometry"
+        fi
+    fi
+
+    # 2. Installing from a TTY is normal. DRM sysfs reports the preferred mode
+    #    of every connected output with no compositor running at all.
+    if [ "${SCREEN_W:-0}" -eq 0 ] 2>/dev/null; then
+        local card mode
+        for card in /sys/class/drm/card*-*/; do
+            [ -r "$card/status" ] || continue
+            [ "$(cat "$card/status" 2>/dev/null || true)" = "connected" ] || continue
+            mode="$(head -1 "$card/modes" 2>/dev/null || true)"
+            if printf '%s' "$mode" | grep -qE '^[0-9]+x[0-9]+'; then
+                SCREEN_W="${mode%%x*}"
+                SCREEN_H="${mode##*x}"
+                SCREEN_SCALE=1
+                break
+            fi
+        done
+    fi
+
+    if [ "${SCREEN_W:-0}" -eq 0 ] 2>/dev/null; then
+        msg "$C_YELLOW" "⚠️  Could not detect a screen; keeping the shipped 1920x1200 geometry."
+        msg "$C_BLUE"   "  -> Retune it any time from the Settings app (Super+comma)."
+        return 1
+    fi
+
+    msg "$C_BLUE" "  -> Screen: ${SCREEN_W}x${SCREEN_H} at scale ${SCREEN_SCALE}"
+    return 0
+}
+
+scale_shell_to_screen() {
+    if ! detect_screen; then
+        return 0
+    fi
+    if ! command -v python3 &>/dev/null; then
+        msg "$C_YELLOW" "⚠️  python3 not available; skipping geometry scaling."
+        return 0
+    fi
+
+    msg "$C_CYAN" "🎚️  Scaling the Quickshell suite to this screen..."
+    if SCREEN_W="$SCREEN_W" SCREEN_H="$SCREEN_H" SCREEN_SCALE="$SCREEN_SCALE" \
+            python3 "$REPO_DIR/scripts/scale_settings.py" \
+                "$HOME/.config/quickshell/settings.json"; then
+        msg "$C_GREEN" "✅ Panel geometry scaled for ${SCREEN_W}x${SCREEN_H}."
+    else
+        msg "$C_YELLOW" "⚠️  Scaling failed; the shipped geometry is still in place."
     fi
 }
 
@@ -517,10 +924,22 @@ BANNER
     
     msg "$C_GREEN" "🚀 Starting installation of Rajchauhan28's Hyprland Dotfiles..."
     
+    # Hardware first: install_packages filters on these flags, and every later
+    # step needs to know what this machine actually is.
+    detect_hardware
     detect_legacy_shell_components
     check_aur_helper
     install_packages
     stow_configs
+    # Templates and defaults come straight after stow so that the rendered
+    # files replace stow's symlinks rather than the other way round.
+    render_templates
+    seed_user_state
+    seed_optional_caches
+    write_hardware_profile
+    offer_acer_driver
+    # Scaling reads the seeded settings.json, so it must follow seed_user_state.
+    scale_shell_to_screen
     install_fonts
     set_script_permissions
     activate_quickshell_replacements
