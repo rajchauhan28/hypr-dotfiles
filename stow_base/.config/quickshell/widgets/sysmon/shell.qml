@@ -23,7 +23,7 @@ ShellRoot {
 
     Process {
         id: statProc
-        command: ["python3", "/home/reign/.config/quickshell/topbar/sysinfo.py"]
+        command: ["python3", Quickshell.env("HOME") + "/.config/quickshell/topbar/sysinfo.py"]
         stdout: SplitParser {
             onRead: data => {
                 try {

@@ -161,9 +161,6 @@ unset __conda_setup
 # <<< conda initialize <<<
 
 # Aliases
-alias ls='exa --icons -a 2>/dev/null || eza --icons -a'
-alias ll='exa --icons -la 2>/dev/null || eza --icons -la'
-alias la='exa --icons -a 2>/dev/null || eza --icons -a'
 alias make="make -j$(nproc)"
 alias ninja="ninja -j$(nproc)"
 alias update="sudo pacman -Syu"
@@ -171,14 +168,26 @@ alias cleanup="sudo pacman -Rsn \$(pacman -Qtdq)"
 alias jctl="journalctl -p 3 -xb"
 alias rip="expac --timefmt='%Y-%m-%d %T' '%l\t%n %v' | sort | tail -200 | nl"
 
-# Qt & KDE Desktop Theming
+# Qt Theming
+# Duplicates hyprland.lua:65-66; kept so Qt apps launched from a non-Hyprland
+# context (TTY, ssh) still theme correctly.
 export QT_QPA_PLATFORMTHEME=qt6ct
 export QT_STYLE_OVERRIDE=kvantum
-export XDG_CURRENT_DESKTOP=KDE
-export KDE_SESSION_VERSION=6
+
+# Do NOT set XDG_CURRENT_DESKTOP=KDE here. It only applies to terminal-launched
+# apps, so an app's environment ended up depending on how it was started:
+#   - Brave's password store flipped between KWallet and libsecret, which changed
+#     the cookie encryption key and silently signed out every logged-in site.
+#   - Portal backend selection breaks: only hyprland-portals.conf exists
+#     ([preferred] default=hyprland;gtk). There is no kde-portals.conf and no
+#     generic portals.conf, so under "KDE" it falls back to UseIn= matching,
+#     which neither xdg-desktop-portal-hyprland (UseIn=wlroots;Hyprland;...) nor
+#     -gtk (UseIn=gnome) satisfies -> no screencast, no file chooser.
+# Qt theming does not need it: QT_QPA_PLATFORMTHEME selects the theme directly.
+# If a KDE app ever needs it, use "Hyprland:KDE", never bare "KDE".
 
 # Dart CLI completion
-[[ -f /home/reign/.dart-cli-completion/zsh-config.zsh ]] && . /home/reign/.dart-cli-completion/zsh-config.zsh || true
+[[ -f $HOME/.dart-cli-completion/zsh-config.zsh ]] && . $HOME/.dart-cli-completion/zsh-config.zsh || true
 
 # --- Hiddify Proxy Switcher ---
 HIDDIFY_PORT="12334"
@@ -212,19 +221,27 @@ function pcheck() {
 }
 
 # Added by Antigravity CLI installer
-export PATH="/home/reign/.local/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
 
 # --- Migrated Env Vars from old archlinux ---
 export BROWSER=brave
-export HF_HOME="/home/reign/ddrive/GenAI/huggingface_cache"
+export HF_HOME="$HOME/ddrive/GenAI/huggingface_cache"
 export CUDA_HOME=/opt/cuda
 export PATH=$CUDA_HOME/bin:$PATH
 export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
 export GROQ_API_KEY=""
 export CEREBRAS_API_KEY=""
-export PATH="$PATH:/home/reign/.lmstudio/bin"
-export PATH=/home/reign/.opencode/bin:$PATH
+export PATH="$PATH:$HOME/.lmstudio/bin"
+export PATH=$HOME/.opencode/bin:$PATH
 export ANDROID_HOME=/opt/android-sdk
 export JAVA_HOME=/usr/lib/jvm/default
 export PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/cmdline-tools/latest/bin
 export CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
+# WinBoat: local throwaway Windows VM in Docker. Password is inline deliberately --
+# it is a disposable test VM on loopback with no data in it. Do NOT copy this shape
+# for anything real; /from-stdin is the version that keeps a password out of argv.
+# KRB5_CONFIG points at a dead realm: without it FreeRDP burns ~46s on ATHENA.MIT.EDU
+# before falling back to NTLM.
+alias wb='KRB5_CONFIG=~/.config/krb5-null.conf xfreerdp3 /v:127.0.0.1:47300 /u:reign /p:Omaewamoshindeiru28 /cert:ignore /dynamic-resolution +clipboard'
+# Same, plus a shared folder that appears in the guest as \\tsclient\wb
+

@@ -8,7 +8,7 @@ import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Services.Notifications
 
-ShellRoot {
+Scope {
     id: root
 
     NotificationServer {

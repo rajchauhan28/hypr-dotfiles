@@ -6,6 +6,14 @@
 # - Video wallpaper fallback (mpvpaper)
 # - Pywal color generation
 
+# walllust is not packaged; it is a separate binary the user installs into
+# ~/.local/bin. Without it there is simply no wallpaper daemon to talk to, and
+# an exec-once that errors on every login is worse than one that opts out.
+if ! command -v walllust-cli >/dev/null 2>&1; then
+    echo "walllust-cli not found; skipping wallpaper rotation."
+    exit 0
+fi
+
 # Wait for walllust-daemon to fully initialize on startup
 sleep 2
 

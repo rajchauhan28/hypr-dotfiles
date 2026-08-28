@@ -5,7 +5,7 @@ import Quickshell.Io
 import QtQuick.Shapes
 import QtQuick.Effects
 
-ShellRoot {
+Scope {
     id: root
 
     property bool revealed: false

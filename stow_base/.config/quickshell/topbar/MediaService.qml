@@ -161,7 +161,7 @@ Singleton {
             }
             artProc.running = false;
             artProc.command = ["python3",
-                "/home/reign/.config/quickshell/topbar/artcolor.py", svc.artUrl];
+                Quickshell.env("HOME") + "/.config/quickshell/topbar/artcolor.py", svc.artUrl];
             artProc.running = true;
         }
     }
@@ -205,7 +205,7 @@ Singleton {
     Process {
         id: spectrumProc
         running: svc.wantSpectrum
-        command: ["python3", "/home/reign/.config/quickshell/topbar/spectrum.py",
+        command: ["python3", Quickshell.env("HOME") + "/.config/quickshell/topbar/spectrum.py",
                   String(svc.bandCount), "30"]
         stdout: SplitParser {
             onRead: data => {

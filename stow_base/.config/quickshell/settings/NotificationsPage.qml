@@ -14,20 +14,20 @@ ColumnLayout {
         title: "POPUP SHAPE"
         subtitle: "One card welded to the right screen edge"
         section: "notifications"
-        keys: ["panelWidth", "topMargin", "radiusPanel", "cornerFillet"]
+        keys: ["panelWidth", "bottomMargin", "radiusPanel", "cornerFillet"]
 
         SliderRow { section: "notifications"; key: "panelWidth"; label: "Card width"; from: 260; to: 560; step: 4; suffix: " px" }
-        SliderRow { section: "notifications"; key: "topMargin"; label: "Distance from top"; from: 0; to: 160; suffix: " px" }
+        SliderRow { section: "notifications"; key: "bottomMargin"; label: "Distance from bottom"; from: 0; to: 160; suffix: " px" }
         SliderRow { section: "notifications"; key: "radiusPanel"; label: "Corner radius"; from: 0; to: 36; suffix: " px" }
         SliderRow { section: "notifications"; key: "cornerFillet"; label: "Edge fillet"; from: 0; to: 48; suffix: " px" }
 
         Text {
             Layout.fillWidth: true
             Layout.topMargin: 2
-            visible: Config.get("notifications", "topMargin")
+            visible: Config.get("notifications", "bottomMargin")
                      < Config.get("notifications", "cornerFillet")
-            text: "Distance from top is below the fillet size, so the shell clamps it — "
-                  + "the top scoop is drawn above the card and would otherwise clip flat."
+            text: "Distance from bottom is below the fillet size, so the shell clamps it — "
+                  + "the bottom scoop is drawn below the card and would otherwise clip flat."
             font.pixelSize: 9
             lineHeight: 1.35
             color: Theme.warn
@@ -140,7 +140,7 @@ ColumnLayout {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: Quickshell.execDetached([
-                        "qs", "-c", "notifications", "ipc", "call", "notifications", "dismissAll"
+                        "qs", "ipc", "call", "notifications", "dismissAll"
                     ])
                 }
             }

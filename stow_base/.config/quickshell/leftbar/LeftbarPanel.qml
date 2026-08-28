@@ -9,7 +9,7 @@ import Quickshell.Hyprland
 import QtQuick.Shapes
 import Quickshell.Services.SystemTray
 
-ShellRoot {
+Scope {
     id: root
 
     // Hyprland status

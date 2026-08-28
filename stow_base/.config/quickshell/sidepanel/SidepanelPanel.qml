@@ -4,7 +4,7 @@ import Quickshell.Wayland
 import Quickshell.Io
 import QtQuick.Shapes
 
-ShellRoot {
+Scope {
     id: root
 
     readonly property string script: Quickshell.env("HOME") + "/.config/quickshell/sidepanel/syspanel.py"

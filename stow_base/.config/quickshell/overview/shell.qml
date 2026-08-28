@@ -85,7 +85,7 @@ ShellRoot {
     function dispatchHypr(cmdStr) {
         console.log("dispatchHypr called with:", cmdStr);
         var firstSpace = cmdStr.indexOf(" ");
-        var cmd = [ "/home/reign/.config/quickshell/overview/hyprctl-compat.sh" ];
+        var cmd = [ Quickshell.env("HOME") + "/.config/quickshell/overview/hyprctl-compat.sh" ];
         if (firstSpace !== -1) {
             cmd.push(cmdStr.substring(0, firstSpace));
             cmd.push(cmdStr.substring(firstSpace + 1));

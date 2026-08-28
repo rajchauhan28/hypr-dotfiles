@@ -20,7 +20,7 @@ ColumnLayout {
             page.importError = "";
             avatarImporter.command = [
                 "python3",
-                "/home/reign/.config/quickshell/settings/avatar.py",
+                Quickshell.env("HOME") + "/.config/quickshell/settings/avatar.py",
                 selectedFile.toString()
             ];
             avatarImporter.running = true;

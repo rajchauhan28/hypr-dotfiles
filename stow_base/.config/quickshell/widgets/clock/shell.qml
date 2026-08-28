@@ -48,7 +48,7 @@ ShellRoot {
 
     Process {
         id: eventsProc
-        command: ["python3", "/home/reign/.config/quickshell/widgets/clock/events.py", "list"]
+        command: ["python3", Quickshell.env("HOME") + "/.config/quickshell/widgets/clock/events.py", "list"]
         stdout: SplitParser {
             onRead: data => {
                 try {
@@ -383,7 +383,7 @@ ShellRoot {
                                 onClicked: {
                                     if (noteInput.text.trim().length > 0) {
                                         var k = root.getFormattedKey(root.selYear, root.selMonth, root.selDay);
-                                        root.runEventsCmd(["python3", "/home/reign/.config/quickshell/widgets/clock/events.py", "add", k, noteInput.text.trim()]);
+                                        root.runEventsCmd(["python3", Quickshell.env("HOME") + "/.config/quickshell/widgets/clock/events.py", "add", k, noteInput.text.trim()]);
                                         noteInput.text = "";
                                     }
                                 }
@@ -432,7 +432,7 @@ ShellRoot {
                                                 anchors.fill: parent
                                                 onClicked: {
                                                     var k = root.getFormattedKey(root.selYear, root.selMonth, root.selDay);
-                                                    root.runEventsCmd(["python3", "/home/reign/.config/quickshell/widgets/clock/events.py", "delete", k, index.toString()]);
+                                                    root.runEventsCmd(["python3", Quickshell.env("HOME") + "/.config/quickshell/widgets/clock/events.py", "delete", k, index.toString()]);
                                                 }
                                             }
                                         }

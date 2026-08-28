@@ -5,7 +5,7 @@ import Quickshell
 import Quickshell.Wayland
 import Quickshell.Io
 
-ShellRoot {
+Scope {
     id: root
 
     property string dayStr: "SUNDAY"

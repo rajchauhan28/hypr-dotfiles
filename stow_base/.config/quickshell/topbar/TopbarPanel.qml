@@ -5,7 +5,7 @@ import Quickshell.Wayland
 import Quickshell.Io
 import QtQuick.Shapes
 
-ShellRoot {
+Scope {
     id: root
 
     // ---- Reveal state: two steps ---------------------------------------

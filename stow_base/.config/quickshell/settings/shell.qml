@@ -26,6 +26,7 @@ ShellRoot {
         { key: "sidebar", glyph: "󰕮", label: "Sidebar", hint: "Left sidebar apps & size", source: "SidebarPage.qml" },
         { key: "panels", glyph: "󰕰", label: "Panels", hint: "Top and right panel geometry", source: "PanelsPage.qml" },
         { key: "notifications", glyph: "󰂚", label: "Notifications", hint: "Popup shape and timeouts", source: "NotificationsPage.qml" },
+        { key: "maintenance", glyph: "󰒓", label: "Maintenance", hint: "DAMX driver and kernel hook", source: "MaintenancePage.qml" },
         { key: "appearance", glyph: "󰸌", label: "Appearance", hint: "Shared palette", source: "AppearancePage.qml" },
         { key: "lockscreen", glyph: "󰌾", label: "Lockscreen", hint: "User icon and assets", source: "LockscreenPage.qml" }
     ]

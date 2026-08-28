@@ -1,4 +1,4 @@
-96;9u#!/bin/bash
+#!/bin/bash
 
 # Update this with the correct partition (e.g., /dev/sda3)
 PARTITION="/dev/nvme0n1p4"

@@ -15,7 +15,7 @@ Singleton {
     readonly property string username: Quickshell.env("USER") || "user"
 
     FileView {
-        path: "/home/reign/.config/quickshell/settings.json"
+        path: Quickshell.env("HOME") + "/.config/quickshell/settings.json"
         watchChanges: true
         onFileChanged: reload()
         onLoaded: {
@@ -82,8 +82,10 @@ Singleton {
     // 16:9 frame by default.
     readonly property int panelWidth: theme.num("topbar", "panelWidth", 1280)
     readonly property int panelHeight: theme.num("topbar", "panelHeight", 720)
-    // Always-visible rail along the very top of the screen. The panel grows
-    // out of it, joined by concave fillets of cornerFillet radius.
+    // The rail along the very top of the screen. It is NOT always visible: it
+    // slides down when the pointer reaches the top edge, and clicking it opens
+    // the dashboard, which grows out of it joined by concave fillets of
+    // cornerFillet radius.
     readonly property int edgeLine: theme.num("topbar", "edgeLine", 5)
     readonly property int cornerFillet: theme.num("topbar", "cornerFillet", 30)
     readonly property int panelTopMargin: 0
@@ -105,7 +107,7 @@ Singleton {
 
     Process {
         running: true
-        command: ["python3", "/home/reign/.config/quickshell/settings/system_info.py"]
+        command: ["python3", Quickshell.env("HOME") + "/.config/quickshell/settings/system_info.py"]
         stdout: SplitParser {
             onRead: output => {
                 try {
