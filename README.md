@@ -16,10 +16,13 @@ A modern, fluid, and futuristic Hyprland desktop environment powered by a custom
 - **🖥️ Hardware-Adaptive Install**: The installer reads DMI and PCI data and
   configures itself for the machine it is actually on.
   - **Any vendor**: the Predator/Nitro turbo key is bound only on an Acer gaming
-    laptop. The DAMX (`acer-wmi`) driver it needs is not vendored here -- the
-    installer offers to run [upstream's](https://github.com/PXDiv/Div-Acer-Manager-Max)
-    own installer, and only after you say yes, since it builds and loads a
-    kernel module.
+    laptop, where the installer also offers to build the `linuwu_sense` module
+    and install the pacman hook that rebuilds it on every kernel upgrade
+    (there is no DKMS, so without the hook a kernel update silently leaves the
+    module behind). Only after you say yes -- it needs root. The driver source
+    is vendored under `stow_base/.local/share/damx-driver/source/` and is
+    **GPL-3, not covered by this repository's MIT licence**; see the README
+    there for its lineage and why it cannot simply be fetched from upstream.
   - **Any GPU**: `envycontrol` and the GPU-switching keybind appear only with an
     NVIDIA GPU present. The VA-API driver is picked to match the real hardware
     (`iHD` for Intel, `radeonsi` for AMD, `nvidia` for an NVIDIA-only box) --
