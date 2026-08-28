@@ -113,6 +113,51 @@ build_kernel() {
     log "Installed $module_dir/${MODULE_NAME}.ko"
 }
 
+# find_model_dir <sysfs_base>
+# Print predator_sense or nitro_sense once the module has registered it.
+#
+# NOTE THE -L. This is the whole bug:
+#
+#   /sys/module/linuwu_sense/drivers/platform:acer-wmi/acer-wmi
+#       -> ../../../../devices/platform/acer-wmi
+#
+# The path handed to find is itself a symlink, and find does not follow a
+# symlink given as its starting point unless -L (or -H) is passed. Without it
+# find descended nothing and printed nothing, on every machine and every run --
+# so configure_permissions always logged "no Predator/Nitro sysfs controls were
+# found" and returned early, silently skipping the tmpfiles rules that make
+# fan_speed and the RGB zones writable by the linuwu_sense group. `[[ -d ]]`
+# did not catch it because that DOES follow symlinks, so the guard above passed
+# while find came back empty. Net effect: the driver looked healthy and every
+# control still demanded root.
+#
+# The retry loop is belt-and-braces on top of the real fix: modprobe returns
+# once the module's init has run, while acer-wmi registers its platform device
+# and attribute groups asynchronously, so the tree can legitimately be a moment
+# late. Five seconds is generous. An Acer model that genuinely exposes neither
+# block still falls through to the warning, just later.
+find_model_dir() {
+    local sysfs_base="$1"
+    local attempt=0
+    local model=""
+
+    while [[ "$attempt" -lt 50 ]]; do
+        if [[ -d "$sysfs_base" ]]; then
+            model="$(find -L "$sysfs_base" -mindepth 1 -maxdepth 1 -type d \
+                -printf '%f\n' 2>/dev/null \
+                | grep -E '^(predator_sense|nitro_sense)' | head -n 1 || true)"
+            if [[ -n "$model" ]]; then
+                printf '%s' "$model"
+                return 0
+            fi
+        fi
+        attempt=$((attempt + 1))
+        sleep 0.1
+    done
+
+    return 1
+}
+
 configure_permissions() {
     local target_user="$1"
     local sysfs_base="/sys/module/$MODULE_NAME/drivers/platform:acer-wmi/acer-wmi"
@@ -129,12 +174,10 @@ configure_permissions() {
         usermod -aG "$MODULE_NAME" "$target_user"
     fi
 
-    if [[ -d "$sysfs_base" ]]; then
-        model_name="$(find "$sysfs_base" -mindepth 1 -maxdepth 1 -type d \
-            -printf '%f\n' 2>/dev/null | grep -E '^(predator_sense|nitro_sense)' | head -n 1 || true)"
-    fi
+    model_name="$(find_model_dir "$sysfs_base" || true)"
     if [[ -z "$model_name" ]]; then
-        log "Warning: the module loaded, but no Predator/Nitro sysfs controls were found."
+        log "Warning: the module loaded, but no Predator/Nitro sysfs controls"
+        log "appeared within 5s. This model may not be supported."
         return 0
     fi
 
