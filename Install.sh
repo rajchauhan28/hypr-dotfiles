@@ -758,8 +758,13 @@ render_templates() {
         target="$HOME/${template#"$REPO_DIR/stow_base/"}"
         target="${target%.in}"
         mkdir -p "$(dirname "$target")"
-        # Overwrite a stale render, but never a real file the user replaced it
-        # with -- a symlink here is stow's, a plain file is ours from last run.
+        # Remove any symlink first. An earlier version of this repository
+        # stowed these files directly, so upgrading leaves a symlink pointing
+        # at the now-renamed .in -- and `>` follows a symlink, which would
+        # write the rendered output back INTO the repository instead of $HOME.
+        if [ -L "$target" ]; then
+            rm -f "$target"
+        fi
         sed -e "s|@HOME@|$HOME|g" -e "s|@USER@|$USER|g" "$template" > "$target"
         rendered=$((rendered + 1))
     done < <(find "$REPO_DIR/stow_base" -type f -name '*.in' -print0)

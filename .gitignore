@@ -28,3 +28,8 @@ stow_base/.config/quickshell/assets/avatar-*.png
 # hardware, which also keeps the driver current instead of frozen at a snapshot.
 stow_base/.local/share/damx-driver/
 stow_base/.local/bin/damx-driver-manager
+
+# Written per machine by Install.sh. ~/.config/hypr is a stow-folded symlink
+# into this repository, so these land inside the working tree.
+stow_base/.config/hypr/hardware.conf
+stow_base/.config/hypr/hardware.lua
