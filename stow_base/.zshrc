@@ -226,9 +226,6 @@ export PATH="$HOME/.local/bin:$PATH"
 # --- Migrated Env Vars from old archlinux ---
 export BROWSER=brave
 export HF_HOME="$HOME/ddrive/GenAI/huggingface_cache"
-export CUDA_HOME=/opt/cuda
-export PATH=$CUDA_HOME/bin:$PATH
-export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
 export GROQ_API_KEY=""
 export CEREBRAS_API_KEY=""
 export PATH="$PATH:$HOME/.lmstudio/bin"
