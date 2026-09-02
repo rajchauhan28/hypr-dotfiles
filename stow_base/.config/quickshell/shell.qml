@@ -1,3 +1,10 @@
+//@ pragma UseQApplication
+// QApplication mode is required for platform menus -- the system tray's
+// right-click menus (QsMenuAnchor) refuse to open without it. The pragma is
+// only honoured on the ROOT QML file, so it has to live here: leftbar/ still
+// carries its own copy from when it was its own `qs -c leftbar` process, but
+// that copy has been dead since the panels were consolidated into this file.
+
 // Consolidated shell: one QML engine hosting every panel that used to be its
 // own `qs -d -c <name>` process (topbar, leftbar, dock, sidepanel,
 // notifications, desktop_clock).
