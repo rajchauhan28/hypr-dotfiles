@@ -1,10 +1,12 @@
 [Unit]
-Description=Cliphist Image Service
+Description=Clipboard history capture (images)
+Documentation=https://github.com/sentriz/cliphist
 PartOf=graphical-session.target
 After=graphical-session.target
 
 [Service]
-ExecStart=/usr/bin/wl-paste --type image --watch cliphist store
+Type=simple
+ExecStart=/usr/bin/wl-paste --type image --watch /usr/bin/cliphist -max-items 100 store
 Restart=on-failure
 RestartSec=2
 

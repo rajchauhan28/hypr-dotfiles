@@ -1,0 +1,42 @@
+#!/bin/sh
+# Drop-in replacement for `walker --dmenu -p PROMPT`.
+#
+# Reads options on stdin, one per line, hands them to the Quickshell launcher
+# over IPC, and prints the chosen line on stdout. Prints nothing and exits 0
+# when the user cancels -- which is exactly what the callers
+# (hypr/display_switcher.sh, hypr/gpu_switcher.sh) already expect from walker.
+#
+# The reply comes back over a FIFO rather than a polled file so this blocks
+# properly instead of spinning. The launcher guarantees exactly one write on
+# every exit path, cancel included; without that guarantee this would hang
+# holding the user's keybind.
+set -u
+
+prompt="Select"
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -p|--prompt) prompt="${2:-Select}"; shift 2 ;;
+        --dmenu)     shift ;;
+        *)           shift ;;
+    esac
+done
+
+dir=$(mktemp -d) || exit 1
+cleanup() { rm -rf "$dir"; }
+trap cleanup EXIT INT TERM
+
+items="$dir/items"
+reply="$dir/reply"
+
+cat > "$items"
+[ -s "$items" ] || exit 0
+
+mkfifo "$reply" || exit 1
+
+if ! qs ipc call launcher dmenu "$items" "$prompt" "$reply" >/dev/null 2>&1; then
+    echo "qs-dmenu: launcher IPC unavailable (is the quickshell shell running?)" >&2
+    exit 1
+fi
+
+# Blocks until the panel writes the selection, or an empty line on cancel.
+cat "$reply"
