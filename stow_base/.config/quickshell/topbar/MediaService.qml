@@ -10,7 +10,13 @@ Singleton {
 
     // The panel flips these so nothing runs while hidden: `active` gates the
     // playhead, `wantVolume` the sink query, `wantSpectrum` the audio capture.
-    property bool active: false
+    // Each surface that needs live media state sets its own flag. The position
+    // ticker has to keep running for the floating lyrics window even when the
+    // dashboard is shut, so this is a union rather than one flag the topbar
+    // owns and the popout would have to fight over.
+    property bool activeForPanel: false
+    property bool activeForPopout: false
+    readonly property bool active: svc.activeForPanel || svc.activeForPopout
     property bool wantVolume: false
     property bool wantSpectrum: false
 

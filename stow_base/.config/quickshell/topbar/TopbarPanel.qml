@@ -46,7 +46,7 @@ Scope {
     readonly property bool wantClock: revealed && tabIndex === 0
     readonly property bool wantMedia: revealed && (tabIndex === 0 || tabIndex === 1)
 
-    onWantMediaChanged: MediaService.active = root.wantMedia
+    onWantMediaChanged: MediaService.activeForPanel = root.wantMedia
     onTabIndexChanged: {
         MediaService.wantVolume = (root.tabIndex === 1);
         // Spectrum runs whenever the topbar panel is open to feed circumference waves
@@ -59,7 +59,7 @@ Scope {
         // grows out of has to be down first, or the body would hang in the air.
         if (revealed)
             root.railShown = true;
-        MediaService.active = root.wantMedia;
+        MediaService.activeForPanel = root.wantMedia;
         MediaService.wantVolume = revealed && root.tabIndex === 1;
         MediaService.wantSpectrum = revealed;
         if (revealed) {
