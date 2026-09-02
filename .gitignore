@@ -16,6 +16,7 @@ stow_base/.config/quickshell/settings.json
 stow_base/.config/quickshell/dock/pinned.json
 stow_base/.config/quickshell/leftbar/pinned.json
 stow_base/.config/quickshell/launcher/frecency.json
+stow_base/.config/quickshell/topbar/history.json
 stow_base/.config/walllust/config.json
 
 # The avatar is a personal photo. Users drop their own in via the Settings app.

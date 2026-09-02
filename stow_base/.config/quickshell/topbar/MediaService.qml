@@ -17,7 +17,22 @@ Singleton {
     // ---- Players ------------------------------------------------------
     // Mpris is event-driven, so metadata lands the moment it changes instead
     // of up to 3s later like the old `playerctl` poll.
-    readonly property var players: Mpris.players ? Mpris.players.values : []
+    readonly property var players: {
+        var all = Mpris.players ? Mpris.players.values : [];
+        var out = [];
+        for (var i = 0; i < all.length; i++) {
+            // playerctld is a proxy that mirrors whichever player is active,
+            // and it reports that player's own Identity and DesktopEntry --
+            // so it appears as an exact duplicate row (two "Spotify"s) rather
+            // than as a source of its own. The bus name is the only field
+            // that gives it away; filtering on identity would drop the real
+            // player just as readily.
+            if ((all[i].dbusName || "").indexOf("org.mpris.MediaPlayer2.playerctld") === 0)
+                continue;
+            out.push(all[i]);
+        }
+        return out;
+    }
 
     // A manual pick wins until that player goes away; otherwise whichever
     // player is actually playing does, so starting a video takes over from a
@@ -119,7 +134,10 @@ Singleton {
     }
 
     onPlayerChanged: svc.syncPosition()
-    onTitleChanged: svc.syncPosition()
+    onTitleChanged: {
+        svc.syncPosition();
+        historyDwell.restart();
+    }
 
     // Re-read the real position periodically; the 1s tick below covers the gaps
     // so the bar moves every second rather than every four.
@@ -136,6 +154,84 @@ Singleton {
         running: svc.active && svc.playing && svc.length > 0
         repeat: true
         onTriggered: svc.position = Math.min(svc.length, svc.position + 1)
+    }
+
+    // ---- Recently played -----------------------------------------------
+    // No player on this machine implements the MPRIS TrackList interface --
+    // Spotify answers "No such interface" and Brave exposes none -- so there
+    // is no queue to read. What the shell CAN observe is every track that
+    // actually played through it, which is the same panel filled with data
+    // that is real rather than invented.
+    property var history: []
+    readonly property int historyMax: 40
+
+    // Same contract as the dock's pinned.json: per-user state, gitignored,
+    // shipped as history.json.default.
+    FileView {
+        id: historyFile
+        path: Quickshell.env("HOME") + "/.config/quickshell/topbar/history.json"
+        watchChanges: false
+        onLoaded: {
+            try {
+                svc.history = JSON.parse(text()) || [];
+            } catch (e) {
+                svc.history = [];
+            }
+        }
+        onLoadFailed: svc.history = []
+    }
+
+    // A track has to stay current for a few seconds before it counts. Skipping
+    // through a playlist rewrites the metadata once per skip, and recording
+    // each of those would bury the tracks actually listened to.
+    Timer {
+        id: historyDwell
+        interval: 5000
+        repeat: false
+        onTriggered: svc.recordTrack()
+    }
+
+    function recordTrack() {
+        if (!svc.hasPlayer || svc.title === "" || svc.title === "Unknown Track")
+            return;
+
+        var h = svc.history.slice();
+        // Metadata gets rewritten on pause/resume and on art arriving, so the
+        // same track can land here repeatedly; only a genuine change counts.
+        if (h.length > 0 && h[0].title === svc.title && h[0].artist === svc.artist)
+            return;
+
+        h.unshift({
+            title: svc.title,
+            artist: svc.artist,
+            album: svc.album,
+            art: svc.artUrl,
+            player: svc.playerLabel(svc.player),
+            playerId: svc.player ? svc.player.dbusName : "",
+            at: Date.now()
+        });
+        while (h.length > svc.historyMax)
+            h.pop();
+
+        svc.history = h;
+        historyFile.setText(JSON.stringify(h));
+    }
+
+    function clearHistory() {
+        svc.history = [];
+        historyFile.setText("[]");
+    }
+
+    // Clicking a past track can only do something useful if the player it came
+    // from is still on the bus; nothing else can be resumed from outside.
+    function playerAlive(dbusName) {
+        if (!dbusName)
+            return false;
+        var list = svc.players;
+        for (var i = 0; i < list.length; i++)
+            if (list[i].dbusName === dbusName)
+                return true;
+        return false;
     }
 
     // ---- Album-art accent ---------------------------------------------
