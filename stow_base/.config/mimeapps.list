@@ -1,16 +1,20 @@
 [Added Associations]
+application/pdf=brave-browser.desktop;onlyoffice-desktopeditors.desktop;firefox.desktop;libreoffice-draw.desktop;
 image/jpeg=org.kde.gwenview.desktop;brave-browser.desktop;firefox.desktop;
 image/png=org.kde.gwenview.desktop;brave-browser.desktop;firefox.desktop;
 inode/directory=org.kde.dolphin.desktop;kitty-open.desktop;
 text/csv=onlyoffice-desktopeditors.desktop;libreoffice-calc.desktop;libreoffice-writer.desktop;micro.desktop;org.gnome.TextEditor.desktop;vim.desktop;nvim.desktop;org.x.editor.desktop;
+text/plain=org.gnome.TextEditor.desktop;libreoffice-writer.desktop;onlyoffice-desktopeditors.desktop;nvim.desktop;org.x.editor.desktop;vim.desktop;micro.desktop;
 video/mp4=mpv.desktop;vlc.desktop;fr.handbrake.ghb.desktop;
 
 [Default Applications]
+application/pdf=brave-browser.desktop;
 application/x-bittorrent=freedownloadmanager_torrent.desktop
 image/jpeg=org.kde.gwenview.desktop;
 image/png=org.kde.gwenview.desktop;
 inode/directory=org.kde.dolphin.desktop
 text/csv=onlyoffice-desktopeditors.desktop;
+text/plain=org.gnome.TextEditor.desktop;
 video/mp4=mpv.desktop;
 x-scheme-handler/claude-cli=claude-code-url-handler.desktop
 x-scheme-handler/discord=vesktop.desktop
