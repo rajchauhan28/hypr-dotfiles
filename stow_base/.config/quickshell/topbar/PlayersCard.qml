@@ -146,5 +146,151 @@ ColumnLayout {
         }
     }
 
-    Item { Layout.fillHeight: true }
+    Rectangle {
+        Layout.fillWidth: true
+        Layout.topMargin: 4
+        implicitHeight: 1
+        color: Theme.border
+    }
+
+    // ---- Recently played --------------------------------------------------
+    // Not a queue: nothing on the bus exposes one (see MediaService.history).
+    // This is what actually played, newest first.
+    RowLayout {
+        Layout.fillWidth: true
+
+        Text {
+            text: "RECENTLY PLAYED"
+            font.pixelSize: 10
+            font.bold: true
+            font.letterSpacing: 1.2
+            color: Theme.textMuted
+        }
+
+        Item { Layout.fillWidth: true }
+
+        Text {
+            visible: MediaService.history.length > 0
+            text: "clear"
+            font.pixelSize: 9
+            color: clearMouse.containsMouse ? Theme.danger : Theme.textFaint
+            Behavior on color { ColorAnimation { duration: 120 } }
+
+            MouseArea {
+                id: clearMouse
+                anchors.fill: parent
+                anchors.margins: -4
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: MediaService.clearHistory()
+            }
+        }
+    }
+
+    Text {
+        visible: MediaService.history.length === 0
+        text: "Nothing played yet"
+        font.pixelSize: 11
+        color: Theme.textFaint
+    }
+
+    ListView {
+        id: historyList
+
+        // Ticks so the relative timestamps age without needing a track change
+        // to repaint them.
+        property double nowMs: Date.now()
+        Timer {
+            interval: 30000
+            repeat: true
+            running: historyList.visible
+            onTriggered: historyList.nowMs = Date.now()
+        }
+
+        function ago(ms) {
+            var mins = Math.floor((historyList.nowMs - ms) / 60000);
+            if (mins < 1)
+                return "now";
+            if (mins < 60)
+                return mins + "m";
+            var hrs = Math.floor(mins / 60);
+            if (hrs < 24)
+                return hrs + "h";
+            return Math.floor(hrs / 24) + "d";
+        }
+
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        visible: MediaService.history.length > 0
+        clip: true
+        spacing: 2
+        model: MediaService.history
+        boundsBehavior: Flickable.StopAtBounds
+
+        delegate: Rectangle {
+            id: histRow
+
+            required property var modelData
+
+            // Only rows whose player is still running can do anything on
+            // click, so the rest must not pretend to be buttons.
+            readonly property bool resumable: MediaService.playerAlive(modelData.playerId)
+
+            width: historyList.width
+            implicitHeight: 34
+            height: implicitHeight
+            radius: Theme.radiusSmall
+            color: histMouse.containsMouse && resumable ? Theme.cardHover : "transparent"
+            Behavior on color { ColorAnimation { duration: 120 } }
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 8
+                anchors.rightMargin: 8
+                spacing: 8
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 0
+
+                    Text {
+                        text: histRow.modelData.title || "\u2014"
+                        font.pixelSize: 10
+                        color: histRow.resumable ? Theme.textSecondary : Theme.textMuted
+                        elide: Text.ElideRight
+                        Layout.fillWidth: true
+                    }
+                    Text {
+                        text: (histRow.modelData.artist || "")
+                              + (histRow.modelData.player
+                                 ? "  \u00b7  " + histRow.modelData.player : "")
+                        font.pixelSize: 9
+                        color: Theme.textFaint
+                        elide: Text.ElideRight
+                        Layout.fillWidth: true
+                    }
+                }
+
+                Text {
+                    text: historyList.ago(histRow.modelData.at || 0)
+                    font.pixelSize: 9
+                    color: Theme.textFaint
+                }
+            }
+
+            MouseArea {
+                id: histMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: histRow.resumable ? Qt.PointingHandCursor : Qt.ArrowCursor
+                // The most a shell can do from outside is put the transport
+                // back on the player that track came from; it cannot make
+                // Spotify or a browser tab seek to an old song.
+                onClicked: {
+                    if (histRow.resumable)
+                        MediaService.selectPlayer(histRow.modelData.playerId);
+                }
+            }
+        }
+    }
 }
