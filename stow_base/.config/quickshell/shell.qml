@@ -36,4 +36,8 @@ ShellRoot {
     NotificationsNS.NotificationsPanel {}
     DesktopClockNS.DesktopClockPanel {}
     LauncherNS.LauncherPanel {}
+    // Floating lyrics window. Lives at shell scope, not inside the topbar, so
+    // it survives the dashboard being closed -- which is the whole point of
+    // popping it out.
+    TopbarNS.LyricsPopout {}
 }
