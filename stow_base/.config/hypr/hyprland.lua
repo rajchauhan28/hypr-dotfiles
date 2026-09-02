@@ -58,7 +58,10 @@ hl.monitor({
 ---------------------
 local terminal           = "ghostty"
 local fileManager        = "dolphin"
-local menu               = "walker"
+-- The launcher is a module inside the consolidated Quickshell shell
+-- (~/.config/quickshell/launcher), not a separate process. `qs ipc` talks
+-- to the already-running shell, so there is no daemon to keep alive.
+local menu               = "qs ipc call launcher apps"
 local browser            = "brave"
 local wallpaperSwitcher  = HOME .. "/.config/hypr/wallpaper_switcher.sh"
 local mainMod            = "SUPER"
@@ -105,8 +108,9 @@ end
 ---- AUTOSTART ----
 -------------------
 hl.on("hyprland.start", function()
-    hl.exec_cmd("dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE && systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE && systemctl --user start hyprland-session.target && systemctl --user restart walllust-daemon.service walker.service elephant.service")
-    -- hl.exec_cmd("clipse -listen")  -- Replaced by walker clipboard
+    hl.exec_cmd("dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE && systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE && systemctl --user start hyprland-session.target && systemctl --user restart walllust-daemon.service")
+    -- Clipboard history is cliphist now (cliphist-text/image.service), driven
+    -- by the Quickshell launcher panel. Nothing to start here.
     hl.exec_cmd("hypridle")
     -- Consolidated shell: topbar + leftbar + sidepanel + dock + desktop_clock
     -- + notifications all live in ~/.config/quickshell/shell.qml (one process).
@@ -288,8 +292,8 @@ hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd(HOME .. "/.config/quickshell/sett
 hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd(HOME .. "/.config/quickshell/reload.sh"))
 hl.bind(mainMod .. " + O", hl.dsp.exec_cmd(HOME .. "/.config/quickshell/reload.sh"))
 hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
-hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("walker -m clipboard"))
-hl.bind(mainMod .. " + SHIFT + E", hl.dsp.exec_cmd("walker -m files"))
+hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("qs ipc call launcher clipboard"))
+hl.bind(mainMod .. " + SHIFT + E", hl.dsp.exec_cmd("qs ipc call launcher files"))
 hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))

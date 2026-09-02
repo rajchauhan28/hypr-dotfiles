@@ -1,10 +1,18 @@
 [Unit]
-Description=Cliphist Text Service
+Description=Clipboard history capture (text)
+Documentation=https://github.com/sentriz/cliphist
 PartOf=graphical-session.target
 After=graphical-session.target
 
 [Service]
-ExecStart=/usr/bin/wl-paste --type text --watch cliphist store
+Type=simple
+# wl-paste stays in the foreground and forks cliphist per copy; Restart covers
+# the compositor restarting underneath it.
+# -max-items caps the retained history (cliphist's own default is 750).
+# The flag MUST precede the `store` subcommand: Go's flag package stops
+# parsing at the first non-flag argument, so `store -max-items 100` leaves the
+# flag as an ignored positional and silently keeps the 750 default.
+ExecStart=/usr/bin/wl-paste --type text --watch /usr/bin/cliphist -max-items 100 store
 Restart=on-failure
 RestartSec=2
 

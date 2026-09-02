@@ -25,7 +25,7 @@ if has_nvidia && has_envycontrol; then
 fi
 options+=("$OPT_OPT_BATTERY" "$OPT_OPT_GAMING")
 
-CHOICE=$(printf '%s\n' "${options[@]}" | walker --dmenu -p "GPU Mode & Optimizations")
+CHOICE=$(printf '%s\n' "${options[@]}" | "$HOME/.local/bin/qs-dmenu" --dmenu -p "GPU Mode & Optimizations")
 [ -z "$CHOICE" ] && exit 0
 
 # The panel's own advertised rates, not this laptop's 165/60.

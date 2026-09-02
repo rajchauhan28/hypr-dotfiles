@@ -19,6 +19,7 @@ import "dock" as DockNS
 import "sidepanel" as SidepanelNS
 import "notifications" as NotificationsNS
 import "widgets/desktop_clock" as DesktopClockNS
+import "launcher" as LauncherNS
 
 ShellRoot {
     TopbarNS.TopbarPanel {}
@@ -27,4 +28,5 @@ ShellRoot {
     SidepanelNS.SidepanelPanel {}
     NotificationsNS.NotificationsPanel {}
     DesktopClockNS.DesktopClockPanel {}
+    LauncherNS.LauncherPanel {}
 }

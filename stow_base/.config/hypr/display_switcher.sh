@@ -51,7 +51,7 @@ OPT_EXT_ONLY="External Only ($EXTERNAL)"
 OPT_INT_ONLY="Laptop Only ($INTERNAL)"
 
 CHOICE=$(printf '%s\n' "$OPT_EXTEND_R" "$OPT_EXTEND_L" "$OPT_MIRROR" \
-    "$OPT_EXT_ONLY" "$OPT_INT_ONLY" | walker --dmenu -p "Display Mode")
+    "$OPT_EXT_ONLY" "$OPT_INT_ONLY" | "$HOME/.local/bin/qs-dmenu" --dmenu -p "Display Mode")
 
 case "$CHOICE" in
     "$OPT_EXTEND_R")
