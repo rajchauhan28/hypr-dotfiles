@@ -416,7 +416,8 @@ Scope {
 
             Timer {
                 id: pwrArmTimer
-                interval: 4000
+                // Time the drawer stays up once you stop interacting with it.
+                interval: 1500
                 repeat: false
                 onTriggered: {
                     root.powerExpanded = false;
@@ -427,7 +428,13 @@ Scope {
             MouseArea {
                 anchors.fill: parent
                 hoverEnabled: true
-                onEntered: pwrArmTimer.restart()
+                // Stop, not restart: entering the drawer means you are aiming
+                // for one of the buttons in it, so the countdown has to be held
+                // rather than merely extended. Restarting here gave you a fixed
+                // window from first hover to land the click no matter where the
+                // cursor was -- survivable at 4s, but at 1.5s the drawer would
+                // close out from under the pointer mid-reach.
+                onEntered: pwrArmTimer.stop()
                 onExited: pwrArmTimer.restart()
             }
 
