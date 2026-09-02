@@ -199,7 +199,16 @@ Item {
                             }
                         }
 
-                        Item { Layout.fillHeight: true }
+                        Rectangle {
+                            Layout.fillWidth: true
+                            implicitHeight: 1
+                            color: Theme.border
+                        }
+
+                        LyricsPane {
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                        }
                     }
                 }
             }

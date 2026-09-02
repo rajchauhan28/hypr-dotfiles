@@ -33,10 +33,31 @@ ColumnLayout {
         color: Theme.textFaint
     }
 
-    Repeater {
-        model: MediaService.players
+    // Scrolls once there are more than maxVisibleRows players. Below that the
+    // list is exactly as tall as its contents, so the card does not reserve a
+    // fixed well of empty space for players that are not running.
+    Item {
+        Layout.fillWidth: true
+        Layout.preferredHeight: sourceList.height
+        visible: MediaService.players.length > 0
 
-        delegate: Rectangle {
+        ListView {
+            id: sourceList
+
+            readonly property int rowHeight: 40
+            readonly property int rowSpacing: 8
+            readonly property int maxVisibleRows: 4
+            readonly property int maxHeight: maxVisibleRows * rowHeight
+                                             + (maxVisibleRows - 1) * rowSpacing
+
+            width: parent.width
+            height: Math.min(contentHeight, maxHeight)
+            spacing: rowSpacing
+            clip: true
+            model: MediaService.players
+            boundsBehavior: Flickable.StopAtBounds
+
+            delegate: Rectangle {
             required property var modelData
 
             readonly property bool current: MediaService.player === modelData
@@ -44,8 +65,9 @@ ColumnLayout {
             // the one the transport is driving.
             readonly property bool pinned: MediaService.preferredId === modelData.dbusName
 
-            Layout.fillWidth: true
-            implicitHeight: 40
+            width: sourceList.width
+            implicitHeight: sourceList.rowHeight
+            height: implicitHeight
             radius: Theme.radiusSmall
             color: rowMouse.containsMouse ? Theme.cardHover : Theme.cardAlt
             border.color: current ? MediaService.accent : Theme.border
@@ -103,6 +125,24 @@ ColumnLayout {
                 // to "follow whatever is playing" without restarting the panel.
                 onClicked: MediaService.selectPlayer(pinned ? "" : modelData.dbusName)
             }
+            }
+        }
+
+        // Slim scroll indicator, drawn rather than pulled from QtQuick.Controls
+        // to match the rest of the shell. Only appears once the list actually
+        // overflows.
+        Rectangle {
+            anchors.right: parent.right
+            anchors.rightMargin: 1
+            width: 3
+            radius: 1.5
+            color: Theme.textFaint
+            visible: sourceList.contentHeight > sourceList.height
+
+            height: sourceList.height * (sourceList.height / sourceList.contentHeight)
+            y: sourceList.contentHeight > 0
+               ? sourceList.contentY / sourceList.contentHeight * sourceList.height
+               : 0
         }
     }
 
