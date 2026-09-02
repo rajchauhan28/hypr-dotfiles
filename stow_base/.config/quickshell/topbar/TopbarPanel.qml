@@ -492,9 +492,29 @@ Scope {
             right: true
         }
 
+        // --- Screen-relative sizing ---------------------------------------
+        // The dashboard is designed at Theme.panelWidth x Theme.panelHeight
+        // against a 1920x1200 reference display. Held at those literal pixel
+        // sizes it swallows ~80% of a small laptop screen, so everything --
+        // geometry, spacing and type -- is scaled by how much smaller the
+        // screen actually is. Capped at 1: this shrinks on small displays, it
+        // never inflates on big ones.
+        //
+        // Width comes from the window (a layer surface anchored left+right is
+        // exactly the screen's logical width); height is derived from the
+        // screen's aspect ratio rather than read directly, so it lands in the
+        // same units whether the backend reports logical or physical pixels.
+        readonly property real logicalW: win.width > 0 ? win.width : 1920
+        readonly property real screenAspect: (win.screen && win.screen.width > 0)
+                                             ? (win.screen.height / win.screen.width)
+                                             : (1200 / 1920)
+        readonly property real logicalH: logicalW * screenAspect
+        readonly property real uiScale: Math.max(0.5, Math.min(1,
+                                            Math.min(logicalW / 1920, logicalH / 1200)))
+
         // No reserved space: windows keep the full screen, the panel floats.
         exclusiveZone: 0
-        implicitHeight: Theme.edgeLine + Theme.panelHeight + 4
+        implicitHeight: Theme.edgeLine + Math.round(Theme.panelHeight * win.uiScale) + 4
         color: "transparent"
 
         WlrLayershell.layer: WlrLayer.Overlay
@@ -598,7 +618,7 @@ Scope {
             x: 0
             y: 0
             width: win.width
-            height: root.revealed ? Theme.edgeLine + Theme.panelHeight : 0
+            height: root.revealed ? Theme.edgeLine + Math.round(Theme.panelHeight * win.uiScale) : 0
 
             HoverHandler { id: scrimHover }
 
@@ -632,7 +652,7 @@ Scope {
         }
 
         // --- Geometry shared by the silhouette, the mask and the content ---
-        readonly property real targetBodyWidth: Math.min(Theme.panelWidth, width - 40)
+        readonly property real targetBodyWidth: Math.min(Theme.panelWidth * uiScale, width - 40)
 
         // Animates both width and height simultaneously from top-center, creating
         // a diagonal outward-and-downward expansion effect.
@@ -641,7 +661,7 @@ Scope {
             NumberAnimation { duration: Theme.animPanel; easing.type: Theme.easeOutExpo }
         }
 
-        property real bodyHeight: root.revealed ? Theme.panelHeight : 0
+        property real bodyHeight: root.revealed ? Theme.panelHeight * uiScale : 0
         Behavior on bodyHeight {
             NumberAnimation { duration: Theme.animPanel; easing.type: Theme.easeOutExpo }
         }
@@ -750,10 +770,18 @@ Scope {
 
             // Laid out centered inside the clipper, so the diagonal reveal wipes
             // the content into view out from top center.
+            // Everything below is written in design-space pixels -- font
+            // sizes included -- and the whole tree is scaled once, here. That
+            // is why no individual card had to learn about screen size: a
+            // 10px label stays 10px against the panel and shrinks with it.
             ColumnLayout {
-                anchors.horizontalCenter: parent.horizontalCenter
-                y: Theme.cardPadding
-                width: Math.max(100, win.targetBodyWidth - Theme.cardPadding * 2)
+                transformOrigin: Item.TopLeft
+                scale: win.uiScale
+                x: Math.round((card.width - win.targetBodyWidth) / 2
+                              + Theme.cardPadding * win.uiScale)
+                y: Math.round(Theme.cardPadding * win.uiScale)
+                width: Math.max(100, win.targetBodyWidth / win.uiScale
+                                     - Theme.cardPadding * 2)
                 height: Theme.panelHeight - Theme.cardPadding * 2
                 spacing: 10
 

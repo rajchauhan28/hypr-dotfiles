@@ -34,18 +34,27 @@ Scope {
         // Only the card is clickable.
         mask: Region { item: card }
 
+        // Screen-relative sizing, same rule as the dashboard: the default box
+        // and the type were picked against a 1920x1200 display, so both shrink
+        // on a smaller screen instead of taking over most of it. Capped at 1,
+        // and floored so the words stay readable. This only seeds the size --
+        // the resize grip writes width/height directly and breaks the binding,
+        // which is what you want once the user has chosen a size.
+        readonly property real uiScale: Math.max(0.65, Math.min(1,
+                                            Math.min(width / 1920, height / 1200)))
+
         Item {
             id: card
 
             // Opening position: lower-left, clear of the dock, which puts it
             // against an edge so the fade has a direction to run in.
-            x: 90
+            x: Math.round(90 * win.uiScale)
             y: Math.round(win.height * 0.45)
-            width: 420
-            height: 340
+            width: Math.round(420 * win.uiScale)
+            height: Math.round(340 * win.uiScale)
 
-            readonly property int minWidth: 240
-            readonly property int minHeight: 140
+            readonly property int minWidth: Math.round(240 * win.uiScale)
+            readonly property int minHeight: Math.round(140 * win.uiScale)
 
             // ---- Nearest-edge fade ------------------------------------
             readonly property real distLeft: x
@@ -126,7 +135,7 @@ Scope {
                 anchors.top: parent.top
                 anchors.left: parent.left
                 anchors.right: parent.right
-                height: 30
+                height: Math.round(30 * win.uiScale)
                 cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
                 hoverEnabled: true
 
@@ -155,13 +164,13 @@ Scope {
                 anchors.top: parent.top
                 anchors.left: parent.left
                 anchors.right: parent.right
-                anchors.margins: 10
-                height: 18
-                spacing: 8
+                anchors.margins: Math.round(10 * win.uiScale)
+                height: Math.round(18 * win.uiScale)
+                spacing: Math.round(8 * win.uiScale)
 
                 Text {
                     text: MediaService.hasPlayer ? MediaService.title : "Lyrics"
-                    font.pixelSize: 11
+                    font.pixelSize: Math.round(11 * win.uiScale)
                     font.bold: true
                     color: Theme.textPrimary
                     elide: Text.ElideRight
@@ -171,13 +180,13 @@ Scope {
                 Text {
                     visible: LyricsService.synced
                     text: MediaService.fmtTime(LyricsService.pos)
-                    font.pixelSize: 10
+                    font.pixelSize: Math.round(10 * win.uiScale)
                     color: Theme.textMuted
                 }
 
                 Text {
                     text: "✕"
-                    font.pixelSize: 11
+                    font.pixelSize: Math.round(11 * win.uiScale)
                     color: closeMouse.containsMouse ? Theme.danger : Theme.textMuted
                     Behavior on color { ColorAnimation { duration: 120 } }
 
@@ -195,21 +204,21 @@ Scope {
             // ---- Lyrics ------------------------------------------------
             LyricsPane {
                 anchors.top: header.bottom
-                anchors.topMargin: 8
+                anchors.topMargin: Math.round(8 * win.uiScale)
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
-                anchors.leftMargin: 12
-                anchors.rightMargin: 12
-                anchors.bottomMargin: 12
+                anchors.leftMargin: Math.round(12 * win.uiScale)
+                anchors.rightMargin: Math.round(12 * win.uiScale)
+                anchors.bottomMargin: Math.round(12 * win.uiScale)
 
                 // Its own header and pop-out button would be redundant here,
                 // and read from further away than a dashboard card, so the
                 // type runs a couple of sizes larger.
                 showHeader: false
                 showPopoutButton: false
-                baseFontSize: 13
-                activeFontSize: 16
+                baseFontSize: Math.round(13 * win.uiScale)
+                activeFontSize: Math.round(16 * win.uiScale)
             }
 
             // ---- Resize grip -------------------------------------------
@@ -217,8 +226,8 @@ Scope {
                 id: resizeArea
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
-                width: 18
-                height: 18
+                width: Math.round(18 * win.uiScale)
+                height: Math.round(18 * win.uiScale)
                 cursorShape: Qt.SizeFDiagCursor
                 hoverEnabled: true
 
