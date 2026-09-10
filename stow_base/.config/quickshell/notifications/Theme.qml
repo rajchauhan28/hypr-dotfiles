@@ -73,6 +73,39 @@ Singleton {
     readonly property int timeoutLow: theme.num("notifications", "timeoutLow", 4)
     readonly property int timeoutNormal: theme.num("notifications", "timeoutNormal", 6)
 
+    // How long a notification the SENDER marked critical stays up. 0 means
+    // never expire, which is what the spec suggests and what this shell used
+    // to do unconditionally -- but plenty of apps mark routine chatter
+    // critical, and those were the ones piling up on screen until clicked.
+    readonly property int timeoutCritical: theme.num("notifications", "timeoutCritical", 20)
+
+    // Notifications whose app name, summary or body contains one of these
+    // (case-insensitive substring) are treated as critical no matter what the
+    // sender said, and stay until dismissed. This is the escape hatch for the
+    // things that genuinely must not scroll past.
+    readonly property var criticalKeywordDefaults: [
+        "reboot",
+        "restart required",
+        "system upgrade",
+        "system update",
+        "security update",
+        "updates available",
+        "low battery",
+        "battery critical",
+        "disk full",
+        "no space left",
+        "authentication required",
+        "backup failed"
+    ]
+
+    readonly property var criticalKeywords: {
+        var s = theme.cfg["notifications"];
+        var v = s ? s["criticalKeywords"] : undefined;
+        // A malformed or missing list falls back rather than silently
+        // disabling every keyword.
+        return Array.isArray(v) ? v : theme.criticalKeywordDefaults;
+    }
+
     readonly property int animFast: 120
     readonly property int animNormal: 220
     readonly property int animPanel: 380

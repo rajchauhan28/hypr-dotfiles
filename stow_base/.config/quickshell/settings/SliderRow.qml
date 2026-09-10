@@ -15,6 +15,10 @@ Item {
     property real step: 1
     property int decimals: 0
     property string suffix: ""
+    // Shown in place of "0<suffix>" when the value is 0, for knobs where zero
+    // means something other than "none of it" -- a timeout of 0 is "never
+    // expire", which "0 s" reads as the exact opposite of.
+    property string zeroLabel: ""
 
     readonly property real value: Config.get(row.section, row.key)
     readonly property bool modified: !Config.isDefault(row.section, row.key)
@@ -60,7 +64,9 @@ Item {
             Item { Layout.fillWidth: true }
 
             Text {
-                text: row.value.toFixed(row.decimals) + row.suffix
+                text: (row.zeroLabel !== "" && row.value === 0)
+                      ? row.zeroLabel
+                      : row.value.toFixed(row.decimals) + row.suffix
                 font.pixelSize: 11
                 font.family: "monospace"
                 color: track.active ? Theme.accent : Theme.textMuted

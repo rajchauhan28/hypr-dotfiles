@@ -10,6 +10,29 @@ ColumnLayout {
 
     spacing: Theme.gap
 
+    // ---- Critical keyword list ----------------------------------------
+    // Config.set replaces the whole array; there is no per-element write, so
+    // both helpers copy, edit, and put the copy back.
+    function addKeyword(raw) {
+        var word = String(raw).trim().toLowerCase();
+        if (word === "")
+            return;
+        var list = (Config.get("notifications", "criticalKeywords") || []).slice();
+        for (var i = 0; i < list.length; i++)
+            if (String(list[i]).toLowerCase() === word)
+                return;
+        list.push(word);
+        Config.set("notifications", "criticalKeywords", list);
+    }
+
+    function removeKeyword(index) {
+        var list = (Config.get("notifications", "criticalKeywords") || []).slice();
+        if (index < 0 || index >= list.length)
+            return;
+        list.splice(index, 1);
+        Config.set("notifications", "criticalKeywords", list);
+    }
+
     Card {
         title: "POPUP SHAPE"
         subtitle: "One card welded to the right screen edge"
@@ -64,6 +87,133 @@ ColumnLayout {
             font.pixelSize: 9
             color: Theme.textFaint
             wrapMode: Text.WordWrap
+        }
+    }
+
+    Card {
+        title: "ALWAYS CRITICAL"
+        subtitle: "Words that pin a notification until you dismiss it"
+        section: "notifications"
+        keys: ["timeoutCritical", "criticalKeywords"]
+
+        SliderRow {
+            section: "notifications"
+            key: "timeoutCritical"
+            label: "App-declared critical stays for"
+            from: 0
+            to: 120
+            step: 5
+            suffix: " s"
+            zeroLabel: "never expires"
+        }
+
+        Text {
+            Layout.fillWidth: true
+            text: "Wifi, bluetooth and browser chat notifications mark themselves critical "
+                  + "for routine messages, which is why they used to sit there until clicked. "
+                  + "The words below override that in the other direction — anything matching "
+                  + "one stays until you dismiss it, whatever the app asked for."
+            font.pixelSize: 9
+            lineHeight: 1.35
+            color: Theme.textFaint
+            wrapMode: Text.WordWrap
+        }
+
+        // Matching is a case-insensitive substring test against the app name,
+        // the summary and the body, so "reboot" also catches "Reboot required".
+        Flow {
+            Layout.fillWidth: true
+            Layout.topMargin: 2
+            spacing: 6
+
+            Repeater {
+                model: Config.get("notifications", "criticalKeywords")
+
+                delegate: Rectangle {
+                    required property var modelData
+                    required property int index
+
+                    width: chipRow.implicitWidth + 16
+                    height: 24
+                    radius: Theme.radiusSmall
+                    color: chipMouse.containsMouse ? Theme.cardHover : Theme.cardAlt
+                    border.color: chipMouse.containsMouse ? Theme.danger : Theme.border
+                    border.width: 1
+                    Behavior on color { ColorAnimation { duration: 120 } }
+
+                    RowLayout {
+                        id: chipRow
+                        anchors.centerIn: parent
+                        spacing: 6
+
+                        Text {
+                            text: modelData
+                            font.pixelSize: 10
+                            color: Theme.textPrimary
+                        }
+
+                        Text {
+                            text: "\u2715"
+                            font.pixelSize: 9
+                            color: chipMouse.containsMouse ? Theme.danger : Theme.textFaint
+                        }
+                    }
+
+                    MouseArea {
+                        id: chipMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: page.removeKeyword(index)
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: 30
+            radius: Theme.radiusSmall
+            color: Theme.cardAlt
+            border.color: keywordInput.activeFocus ? Theme.accent : Theme.border
+            border.width: 1
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 10
+                anchors.rightMargin: 10
+                spacing: 8
+
+                TextInput {
+                    id: keywordInput
+                    Layout.fillWidth: true
+                    verticalAlignment: Text.AlignVCenter
+                    font.pixelSize: 11
+                    color: Theme.textPrimary
+                    selectByMouse: true
+                    clip: true
+                    onAccepted: {
+                        page.addKeyword(keywordInput.text);
+                        keywordInput.text = "";
+                    }
+
+                    Text {
+                        anchors.fill: parent
+                        verticalAlignment: Text.AlignVCenter
+                        text: "Add a word or phrase, then press Enter…"
+                        font: keywordInput.font
+                        color: Theme.textFaint
+                        visible: keywordInput.text === ""
+                    }
+                }
+
+                Text {
+                    text: "Enter"
+                    font.pixelSize: 9
+                    color: Theme.textFaint
+                    visible: keywordInput.text !== ""
+                }
+            }
         }
     }
 

@@ -80,12 +80,52 @@ Item {
         easing.type: Theme.easeOutExpo
     }
 
+    // --- Criticality -------------------------------------------------------
+    // Two ways in. The sender can mark a notification critical over D-Bus, and
+    // the user can name words that promote one here. They are kept apart
+    // because they earn different treatment: an app calling itself critical is
+    // a claim (and a lot of apps overclaim -- wifi, bluetooth and browser chat
+    // notifications all do), while a keyword the user typed is an instruction.
+    readonly property bool senderCritical:
+        notif.urgency === NotificationUrgency.Critical
+
+    // App name is matched too, so "brave" or "networkmanager" pins everything
+    // from one source without naming each message.
+    readonly property string matchText:
+        ((notif.appName || "") + " " + (notif.summary || "")
+         + " " + (notif.body || "")).toLowerCase()
+
+    readonly property bool keywordCritical: {
+        var kw = Theme.criticalKeywords;
+        if (!kw || kw.length === 0)
+            return false;
+        for (var i = 0; i < kw.length; i++) {
+            var k = String(kw[i]).trim().toLowerCase();
+            // A stray empty entry would otherwise match every notification,
+            // since "".indexOf is always 0.
+            if (k !== "" && entry.matchText.indexOf(k) !== -1)
+                return true;
+        }
+        return false;
+    }
+
+    readonly property bool critical: entry.senderCritical || entry.keywordCritical
+
     // --- Auto expiry -------------------------------------------------------
-    // Critical notifications are the caller saying "do not take this away".
-    readonly property bool autoExpires:
-        notif.urgency !== NotificationUrgency.Critical
+    // A keyword match is the user saying "do not take this away", so it always
+    // pins. A sender's own critical flag is honoured for timeoutCritical
+    // seconds, or forever when that is set to 0.
+    readonly property bool pinned:
+        entry.keywordCritical
+        || (entry.senderCritical && Theme.timeoutCritical <= 0)
+
+    readonly property bool autoExpires: !entry.pinned
 
     readonly property int timeoutMs: {
+        // Critical outranks the sender's own requested timeout: an app that
+        // asks to be critical AND to vanish in 2s gets the critical dwell.
+        if (entry.senderCritical)
+            return Theme.timeoutCritical * 1000;
         if (notif.expireTimeout > 0)
             return Math.round(notif.expireTimeout * 1000);
         return (notif.urgency === NotificationUrgency.Low
@@ -196,7 +236,10 @@ Item {
                     spacing: 6
 
                     Rectangle {
-                        visible: entry.notif.urgency === NotificationUrgency.Critical
+                        // Shows for keyword-promoted entries too -- otherwise
+                        // a pinned notification would look identical to one
+                        // that is simply taking its time.
+                        visible: entry.critical
                         Layout.alignment: Qt.AlignVCenter
                         width: 6
                         height: 6
