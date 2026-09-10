@@ -89,7 +89,22 @@ Singleton {
             "maxVisible": 5,
             "bodyMaxLines": 4,
             "timeoutLow": 4,
-            "timeoutNormal": 6
+            "timeoutNormal": 6,
+            "timeoutCritical": 20,
+            "criticalKeywords": [
+                "reboot",
+                "restart required",
+                "system upgrade",
+                "system update",
+                "security update",
+                "updates available",
+                "low battery",
+                "battery critical",
+                "disk full",
+                "no space left",
+                "authentication required",
+                "backup failed"
+            ]
         },
         "lockscreen": {
             "icon": ""
@@ -120,7 +135,14 @@ Singleton {
     }
 
     function isDefault(section, key) {
-        return get(section, key) === cfg.defaults[section][key];
+        var cur = get(section, key);
+        var def = cfg.defaults[section][key];
+        // Lists (the notification keyword list) are values here, not
+        // identities: === on two arrays is always false, which would leave
+        // every card holding one permanently showing its reset link.
+        if (Array.isArray(cur) || Array.isArray(def))
+            return JSON.stringify(cur) === JSON.stringify(def);
+        return cur === def;
     }
 
     // ---- Writes --------------------------------------------------------
