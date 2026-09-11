@@ -157,9 +157,23 @@ Scope {
             top: true
             bottom: true
         }
-        implicitWidth: Theme.barWidth + Theme.cornerFillet
-                       + Math.max(root.bgDrawerOpen ? root.trayDrawerWidth : 0,
-                                  root.powerExpanded ? root.powerDrawerWidth : 0)
+        // The tooltip pill is painted beside the bar, but a Wayland layer
+        // surface cannot draw outside itself: at the bar's own width only the
+        // first ~10px of the pill fell inside the window, so hovering an icon
+        // showed a black stub and no name. The window therefore has to be wide
+        // enough to hold whichever of the three overhangs is showing.
+        //
+        // Widening costs nothing elsewhere: the input mask stays pinned to
+        // barMask unless a drawer is open, so the extra width is transparent
+        // and click-through.
+        readonly property real tooltipWidth:
+            root.activeTooltip !== "" ? tooltipPill.x + tooltipPill.implicitWidth + 8 : 0
+
+        implicitWidth: Math.max(
+            Theme.barWidth + Theme.cornerFillet
+                + Math.max(root.bgDrawerOpen ? root.trayDrawerWidth : 0,
+                           root.powerExpanded ? root.powerDrawerWidth : 0),
+            barWindow.tooltipWidth)
         color: "transparent"
 
         WlrLayershell.layer: WlrLayer.Top
@@ -935,6 +949,7 @@ Scope {
 
         // Floating Side Tooltip Label Pill
         Rectangle {
+            id: tooltipPill
             x: Theme.barWidth + 10
             y: Math.max(10, root.tooltipY - height / 2)
             visible: root.activeTooltip !== "" && !root.bgDrawerOpen && !root.powerExpanded
