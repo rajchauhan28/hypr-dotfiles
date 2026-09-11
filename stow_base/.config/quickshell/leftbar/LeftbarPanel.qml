@@ -160,20 +160,21 @@ Scope {
         // The tooltip pill is painted beside the bar, but a Wayland layer
         // surface cannot draw outside itself: at the bar's own width only the
         // first ~10px of the pill fell inside the window, so hovering an icon
-        // showed a black stub and no name. The window therefore has to be wide
-        // enough to hold whichever of the three overhangs is showing.
+        // showed a black stub and no name.
         //
-        // Widening costs nothing elsewhere: the input mask stays pinned to
-        // barMask unless a drawer is open, so the extra width is transparent
-        // and click-through.
-        readonly property real tooltipWidth:
-            root.activeTooltip !== "" ? tooltipPill.x + tooltipPill.implicitWidth + 8 : 0
-
-        implicitWidth: Math.max(
-            Theme.barWidth + Theme.cornerFillet
-                + Math.max(root.bgDrawerOpen ? root.trayDrawerWidth : 0,
-                           root.powerExpanded ? root.powerDrawerWidth : 0),
-            barWindow.tooltipWidth)
+        // The room for it is reserved permanently rather than grown on hover.
+        // Sizing the surface to the tooltip meant resizing it while the pointer
+        // rested on the icon, and the compositor answers a resize with pointer
+        // leave/enter -- which cleared the hover, which hid the tooltip, which
+        // shrank the surface back. The bar visibly oscillated.
+        //
+        // The reserve costs nothing: the input mask stays pinned to barMask
+        // unless a drawer is open, so the extra width is transparent and
+        // clicks pass straight through to whatever is beside the bar.
+        implicitWidth: Theme.barWidth + Theme.cornerFillet
+                       + Math.max(root.bgDrawerOpen ? root.trayDrawerWidth : 0,
+                                  root.powerExpanded ? root.powerDrawerWidth : 0,
+                                  Theme.tooltipReserve)
         color: "transparent"
 
         WlrLayershell.layer: WlrLayer.Top
@@ -197,7 +198,13 @@ Scope {
             id: fullMask
             x: 0
             y: 0
-            width: barWindow.width
+            // Explicitly the drawer's extent. It used to be barWindow.width,
+            // which was the same thing until the window gained a permanent
+            // tooltip reserve -- after that it would have swallowed clicks in
+            // the empty strip past the open drawer.
+            width: Theme.barWidth + Theme.cornerFillet
+                   + Math.max(root.bgDrawerOpen ? root.trayDrawerWidth : 0,
+                              root.powerExpanded ? root.powerDrawerWidth : 0)
             height: barWindow.height
         }
 
@@ -957,7 +964,8 @@ Scope {
             Behavior on opacity { NumberAnimation { duration: Theme.animFast } }
             Behavior on y { NumberAnimation { duration: 150; easing.type: Theme.easeOutQuint } }
 
-            implicitWidth: tooltipLabel.implicitWidth + 20
+            implicitWidth: Math.min(tooltipLabel.implicitWidth,
+                                    Theme.tooltipReserve - 28) + 20
             implicitHeight: 26
             radius: 6
             color: "#f2121218"
@@ -967,7 +975,9 @@ Scope {
             Text {
                 id: tooltipLabel
                 anchors.centerIn: parent
+                width: Math.min(implicitWidth, Theme.tooltipReserve - 28)
                 text: root.activeTooltip
+                elide: Text.ElideRight
                 font.pixelSize: 11
                 font.bold: true
                 color: Theme.textPrimary
