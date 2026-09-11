@@ -61,6 +61,13 @@ Singleton {
     readonly property int edgeLine: theme.num("leftbar", "edgeLine", 5)
     readonly property int cornerFillet: theme.num("leftbar", "cornerFillet", 20)
 
+    // Width held open beside the bar for the hover tooltip. It is a fixed
+    // reserve rather than a fit-to-text size on purpose: resizing a layer
+    // surface under a resting pointer makes the compositor re-send
+    // pointer leave/enter, which flips the hover that produced the tooltip in
+    // the first place and the panel oscillates. Long labels elide into it.
+    readonly property int tooltipReserve: theme.num("leftbar", "tooltipReserve", 230)
+
     readonly property int animFast: 120
     readonly property int animNormal: 220
     readonly property int animPanel: 380
