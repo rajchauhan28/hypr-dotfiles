@@ -984,4 +984,163 @@ ShellRoot {
             }
         }
     }
+
+    // ---- Floating clock -------------------------------------------------
+    // Clicking the bar's clock puts a clock on top of everything and leaves it
+    // there. `clockPopupOpen` already existed and toggled on that click, but
+    // nothing was ever bound to it -- the click did nothing at all.
+    //
+    // Overlay rather than Top: "always on top" has to mean above fullscreen
+    // windows too, and Top sits below them. The surface spans the screen with
+    // the card positioned inside by plain x/y, and the input mask is pinned to
+    // the card, so the rest of the desktop stays clickable -- an unmasked
+    // fullscreen overlay would swallow every click on the session.
+    PanelWindow {
+        id: clockWin
+
+        visible: root.clockPopupOpen
+
+        anchors { top: true; bottom: true; left: true; right: true }
+        exclusiveZone: 0
+        color: "transparent"
+
+        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.namespace: "quickshell-floating-clock"
+        // Never takes focus: it is a thing you glance at while working in
+        // something else.
+        WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+
+        mask: Region { item: clockCard }
+
+        Rectangle {
+            id: clockCard
+
+            // Position lives on root, not here, so dragging it once and
+            // toggling it off and on again brings it back where you left it.
+            x: root.clockPopupX
+            y: root.clockPopupY
+            width: 210
+            height: 132
+
+            radius: Theme.radiusPanel
+            color: Theme.panelBg
+            border.color: Theme.panelBorder
+            border.width: 1
+
+            // Header doubles as the drag handle. Dragging from the body would
+            // be ambiguous once anything scrollable lands in here.
+            MouseArea {
+                id: clockDrag
+                anchors.top: parent.top
+                anchors.left: parent.left
+                anchors.right: parent.right
+                height: 26
+                hoverEnabled: true
+                cursorShape: pressed ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+
+                property real pressX: 0
+                property real pressY: 0
+
+                onPressed: (mouse) => {
+                    pressX = mouse.x;
+                    pressY = mouse.y;
+                }
+                onPositionChanged: (mouse) => {
+                    if (!pressed)
+                        return;
+                    // Clamped so it cannot be dragged off-screen and stranded
+                    // with no grip left to grab.
+                    root.clockPopupX = Math.max(0, Math.min(clockWin.width - clockCard.width,
+                                                            clockCard.x + mouse.x - pressX));
+                    root.clockPopupY = Math.max(0, Math.min(clockWin.height - clockCard.height,
+                                                            clockCard.y + mouse.y - pressY));
+                }
+            }
+
+            Text {
+                anchors.top: parent.top
+                anchors.right: parent.right
+                anchors.margins: 9
+                text: "✕"
+                font.pixelSize: 10
+                color: clockCloseMouse.containsMouse ? Theme.danger : Theme.textMuted
+                Behavior on color { ColorAnimation { duration: Theme.animFast } }
+
+                MouseArea {
+                    id: clockCloseMouse
+                    anchors.fill: parent
+                    anchors.margins: -6
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.clockPopupOpen = false
+                }
+            }
+
+            ColumnLayout {
+                anchors.centerIn: parent
+                anchors.verticalCenterOffset: 6
+                spacing: 2
+
+                RowLayout {
+                    Layout.alignment: Qt.AlignHCenter
+                    spacing: 4
+
+                    Text {
+                        text: Qt.formatTime(root.now, "hh:mm")
+                        font.pixelSize: 34
+                        font.bold: true
+                        font.family: "JetBrains Mono"
+                        color: Theme.textPrimary
+                    }
+
+                    ColumnLayout {
+                        Layout.alignment: Qt.AlignBottom
+                        Layout.bottomMargin: 5
+                        spacing: 0
+
+                        Text {
+                            text: Qt.formatTime(root.now, "ss")
+                            font.pixelSize: 11
+                            font.bold: true
+                            font.family: "JetBrains Mono"
+                            color: Theme.accent
+                        }
+
+                        Text {
+                            text: Qt.formatTime(root.now, "AP")
+                            font.pixelSize: 9
+                            font.bold: true
+                            color: Theme.textMuted
+                        }
+                    }
+                }
+
+                Text {
+                    Layout.alignment: Qt.AlignHCenter
+                    Layout.topMargin: 2
+                    text: Qt.formatDate(root.now, "dddd").toUpperCase()
+                    font.pixelSize: 9
+                    font.bold: true
+                    font.letterSpacing: 1.6
+                    color: Theme.textSecondary
+                }
+
+                Text {
+                    Layout.alignment: Qt.AlignHCenter
+                    text: Qt.formatDate(root.now, "dd MMMM yyyy")
+                    font.pixelSize: 10
+                    color: Theme.textMuted
+                }
+            }
+        }
+    }
+
+    IpcHandler {
+        target: "clock"
+
+        // open/close rather than show/hide: `qs ipc` owns the name `show`.
+        function open(): void { root.clockPopupOpen = true; }
+        function close(): void { root.clockPopupOpen = false; }
+        function toggle(): void { root.clockPopupOpen = !root.clockPopupOpen; }
+    }
 }
