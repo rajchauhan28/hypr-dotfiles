@@ -50,8 +50,8 @@ Item {
     Rectangle {
         anchors.fill: parent
         gradient: Gradient {
-            GradientStop { position: 0.0; color: "#99101014" }
-            GradientStop { position: 1.0; color: "#e6101014" }
+            GradientStop { position: 0.0; color: Theme.artScrimTop }
+            GradientStop { position: 1.0; color: Theme.artScrimBottom }
         }
     }
 }

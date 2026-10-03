@@ -120,14 +120,14 @@ Item {
                                     implicitWidth: 20
                                     implicitHeight: 20
                                     radius: 6
-                                    color: wsTile.isActive ? Theme.accent : "#12ffffff"
+                                    color: wsTile.isActive ? Theme.accent : Theme.ink(0x12 / 255)
 
                                     Text {
                                         anchors.centerIn: parent
                                         text: wsTile.wsId
                                         font.pixelSize: 10
                                         font.bold: true
-                                        color: wsTile.isActive ? "#0a0a0f" : Theme.textSecondary
+                                        color: wsTile.isActive ? Theme.onAccentText : Theme.textSecondary
                                     }
                                 }
 
@@ -166,7 +166,7 @@ Item {
                                     height: spatial.mapH
                                     radius: 4
                                     color: "transparent"
-                                    border.color: "#0affffff"
+                                    border.color: Theme.ink(0x0a / 255)
                                     border.width: 1
                                 }
 
@@ -181,8 +181,8 @@ Item {
                                         height: Math.max((modelData.size ? modelData.size[1] : 0) * spatial.sy, 6)
 
                                         radius: 3
-                                        color: winMouse.containsMouse ? Theme.cardHover : "#1cffffff"
-                                        border.color: winMouse.containsMouse ? Theme.borderStrong : "#22ffffff"
+                                        color: winMouse.containsMouse ? Theme.cardHover : Theme.ink(0x1c / 255)
+                                        border.color: winMouse.containsMouse ? Theme.borderStrong : Theme.ink(0x22 / 255)
                                         border.width: 1
                                         Behavior on color { ColorAnimation { duration: 120 } }
 

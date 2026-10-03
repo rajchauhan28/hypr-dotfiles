@@ -57,7 +57,7 @@ ColumnLayout {
                 Layout.preferredWidth: 112
                 Layout.preferredHeight: 112
                 radius: 56
-                color: "#18181d"
+                color: Theme.avatarBg
                 border.color: Theme.accent
                 border.width: 2
                 clip: true

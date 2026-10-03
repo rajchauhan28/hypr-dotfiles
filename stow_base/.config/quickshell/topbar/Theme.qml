@@ -36,32 +36,82 @@ Singleton {
         return (typeof v === "number" && isFinite(v)) ? v : def;
     }
 
+    // ---- Light / dark / glass ------------------------------------------
+    // settings.json picks the mode ({"theme": {"mode": ...}}) and
+    // ../themes.json holds the light and glass palettes; both are re-read
+    // live. Dark is every literal below, so a missing or broken themes.json
+    // leaves this panel exactly as it looked before themes existed.
+    property var themes: ({})
+
+    FileView {
+        path: Quickshell.env("HOME") + "/.config/quickshell/themes.json"
+        watchChanges: true
+        onFileChanged: reload()
+        onLoaded: {
+            try {
+                theme.themes = JSON.parse(text()) || ({});
+            } catch (e) {}
+        }
+    }
+
+    readonly property string mode: {
+        var t = theme.cfg.theme;
+        var m = t ? t.mode : "";
+        return (m === "light" || m === "glass") ? m : "dark";
+    }
+    readonly property bool light: theme.mode === "light"
+    readonly property bool glass: theme.mode === "glass"
+
+    // A user override for the ACTIVE mode wins (settings app sections
+    // "palette" = dark, "paletteLight", "paletteGlass"), then themes.json,
+    // then the dark literal passed in.
     function col(key, def) {
-        var p = theme.cfg.palette;
-        if (!p)
-            return def;
-        var v = p[key];
-        return (typeof v === "string" && v !== "") ? v : def;
+        var sec = theme.light ? "paletteLight" : theme.glass ? "paletteGlass" : "palette";
+        var p = theme.cfg[sec];
+        if (p && typeof p[key] === "string" && p[key] !== "")
+            return p[key];
+        var t = theme.themes[theme.mode];
+        if (t && typeof t[key] === "string" && t[key] !== "")
+            return t[key];
+        return def;
+    }
+
+    // Foreground wash at an alpha: white on dark and glass, black on light.
+    // For hover fills, hairlines and tracks that used to be "#xxffffff".
+    function ink(a) {
+        return theme.light ? Qt.rgba(0, 0, 0, a) : Qt.rgba(1, 1, 1, a);
     }
 
     // Matches the Super+Tab overview palette.
     readonly property color panelBg: theme.col("panelBg", "#f2101014")
-    readonly property color panelBorder: "#1cffffff"
-    readonly property color card: "#1a1a22"
-    readonly property color cardAlt: "#15151c"
-    readonly property color cardHover: "#242430"
-    readonly property color border: "#14ffffff"
-    readonly property color borderStrong: "#28ffffff"
+    readonly property color panelBorder: theme.col("panelBorder", "#1cffffff")
+    readonly property color card: theme.col("card", "#1a1a22")
+    readonly property color cardAlt: theme.col("cardAlt", "#15151c")
+    readonly property color cardHover: theme.col("cardHover", "#242430")
+    readonly property color border: theme.col("border", "#14ffffff")
+    readonly property color borderStrong: theme.col("borderStrong", "#28ffffff")
 
-    readonly property color textPrimary: "#f8fafc"
-    readonly property color textSecondary: "#a1a1aa"
-    readonly property color textMuted: "#71717a"
-    readonly property color textFaint: "#3f3f46"
+    readonly property color textPrimary: theme.col("textPrimary", "#f8fafc")
+    readonly property color textSecondary: theme.col("textSecondary", "#a1a1aa")
+    readonly property color textMuted: theme.col("textMuted", "#71717a")
+    readonly property color textFaint: theme.col("textFaint", "#3f3f46")
 
     readonly property color accent: theme.col("accent", "#e4e4e7")
+    readonly property color onAccent: theme.col("onAccent", "#101014")
     readonly property color good: theme.col("good", "#86d9a3")
     readonly property color warn: theme.col("warn", "#e0c26b")
     readonly property color danger: theme.col("danger", "#e06b6b")
+
+    // Topbar one-offs; each dark default is the literal it replaced.
+    readonly property color onAccentText: theme.col("onAccentText", "#0a0a0f")
+    readonly property color accentHover: theme.col("accentHover", "#ffffff")
+    readonly property color onDanger: theme.col("onDanger", "#ffffff")
+    readonly property color discHole: theme.col("discHole", "#0a0a0f")
+    readonly property color artScrimTop: theme.col("artScrimTop", "#99101014")
+    readonly property color artScrimBottom: theme.col("artScrimBottom", "#e6101014")
+    // Text over the dashboard player's black art scrim: light in every mode.
+    readonly property color scrimText: theme.col("scrimText", "#f8fafc")
+    readonly property color scrimTextDim: theme.col("scrimTextDim", "#a1a1aa")
 
     // The dashboard identity card mirrors the lockscreen profile image.  An
     // empty setting means to use the detected distribution logo instead.
@@ -117,6 +167,17 @@ Singleton {
                 } catch (e) {}
             }
         }
+    }
+
+    // Glyph colour for a fill that is not a theme colour: the album-art
+    // accent (pastel when art decoded, Theme.accent when it did not). Light
+    // mode only -- dark and glass keep onAccentText, which is what they drew
+    // before themes existed.
+    function textOn(c) {
+        if (!theme.light)
+            return theme.onAccentText;
+        var l = 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
+        return l > 0.45 ? "#0a0a0f" : "#fafafa";
     }
 
     // Colour ramp for load-style meters.

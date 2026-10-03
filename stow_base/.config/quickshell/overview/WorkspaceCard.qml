@@ -26,8 +26,8 @@ Rectangle {
     implicitWidth: 200
     implicitHeight: 180
     radius: 16
-    color: wsCard.isDropTarget ? "#2a2a35" : (wsCard.isActive ? "#22222c" : (cardMouse.containsMouse ? "#1c1c24" : "#121216"))
-    border.color: wsCard.isDropTarget ? "#80ffffff" : (wsCard.isActive ? "#50ffffff" : (cardMouse.containsMouse ? "#30ffffff" : "#14ffffff"))
+    color: wsCard.isDropTarget ? Theme.overviewDropTarget : (wsCard.isActive ? Theme.activeWorkspaceBg : (cardMouse.containsMouse ? Theme.cardHover : Theme.cardBackground))
+    border.color: wsCard.isDropTarget ? Theme.ink(0x80 / 255) : (wsCard.isActive ? Theme.activeBorder : (cardMouse.containsMouse ? Theme.borderHover : Theme.border))
     border.width: wsCard.isActive || wsCard.isDropTarget ? 2 : 1
 
     scale: cardMouse.pressed ? 0.98 : (cardMouse.containsMouse ? 1.02 : 1.0)
@@ -150,7 +150,7 @@ Rectangle {
                     implicitWidth: Math.max(26, nameText.implicitWidth + 12)
                     implicitHeight: 26
                     radius: 8
-                    color: wsCard.isActive ? "#25ffffff" : "#10ffffff"
+                    color: wsCard.isActive ? Theme.ink(0x25 / 255) : Theme.ink(0x10 / 255)
 
                     Text {
                         id: nameText
@@ -158,14 +158,14 @@ Rectangle {
                         text: wsCard.workspaceName
                         font.pixelSize: 12
                         font.bold: true
-                        color: wsCard.isActive ? "#ffffff" : "#e4e4e7"
+                        color: wsCard.isActive ? Theme.textStrong : Theme.accent
                     }
                 }
 
                 Text {
                     text: (wsCard.windows || []).length > 0 ? ((wsCard.windows || []).length + " window" + ((wsCard.windows || []).length > 1 ? "s" : "")) : "Empty"
                     font.pixelSize: 11
-                    color: (wsCard.windows || []).length > 0 ? "#a1a1aa" : "#71717a"
+                    color: (wsCard.windows || []).length > 0 ? Theme.textSecondary : Theme.textMuted
                     Layout.fillWidth: true
                 }
             }
@@ -201,8 +201,8 @@ Rectangle {
                         width: Math.max((modelData.size ? modelData.size[0] : 0) * scaleX, 10)
                         height: Math.max((modelData.size ? modelData.size[1] : 0) * scaleY, 10)
 
-                        color: isDragging ? "#303040" : (winMouse.containsMouse ? "#282836" : "#1a1a22")
-                        border.color: isDragging ? "#60ffffff" : (winMouse.containsMouse ? "#40ffffff" : "#12ffffff")
+                        color: isDragging ? Theme.overviewWindowDrag : (winMouse.containsMouse ? Theme.overviewWindowHover : Theme.overviewWindow)
+                        border.color: isDragging ? Theme.ink(0x60 / 255) : (winMouse.containsMouse ? Theme.ink(0x40 / 255) : Theme.ink(0x12 / 255))
                         border.width: isDragging ? 2 : 1
                         radius: 6
 
@@ -259,7 +259,7 @@ Rectangle {
                         Text {
                             anchors.centerIn: parent
                             text: wsCard.getAppIconFallback(modelData.class)
-                            color: "white"
+                            color: Theme.textStrong
                             font.pixelSize: Math.max(Math.min(parent.width, parent.height) * 0.5, 10)
                             visible: parent.width >= 16 && parent.height >= 16 && appIcon.status !== Image.Ready
                         }
@@ -325,7 +325,7 @@ Rectangle {
                     text: "Workspace " + wsCard.workspaceName
                     font.pixelSize: 14
                     font.bold: true
-                    color: "#08ffffff"
+                    color: Theme.ink(0x08 / 255)
                 }
             }
         }

@@ -19,6 +19,7 @@
 // an unqualified directory import would collide on those names. Each component
 // still resolves Theme/Card from its own directory internally.
 import Quickshell
+import Quickshell.Io
 
 import "topbar" as TopbarNS
 import "leftbar" as LeftbarNS
@@ -40,4 +41,40 @@ ShellRoot {
     // it survives the dashboard being closed -- which is the whole point of
     // popping it out.
     TopbarNS.LyricsPopout {}
+
+    // Keeps Hyprland's liquid glass (hypr/glass.lua) in step with the theme.
+    // glass.lua reads the mode from settings.json whenever Hyprland evaluates
+    // its config, so a theme change only has to trigger a config reload --
+    // which also re-applies the settings window's glass rule to the open
+    // window. Never on the first read: Hyprland read the same file when it
+    // started, and a shell hot-reload must not reload the compositor.
+    Scope {
+        id: themeSync
+
+        property string mode: ""
+
+        FileView {
+            path: Quickshell.env("HOME") + "/.config/quickshell/settings.json"
+            watchChanges: true
+            onFileChanged: reload()
+            onLoaded: {
+                var m = "dark";
+                try {
+                    var t = JSON.parse(text()).theme;
+                    if (t && (t.mode === "light" || t.mode === "glass"))
+                        m = t.mode;
+                } catch (e) {
+                    return; // mid-write; the next change event re-reads it
+                }
+                if (themeSync.mode !== "" && themeSync.mode !== m)
+                    hyprReload.running = true;
+                themeSync.mode = m;
+            }
+        }
+
+        Process {
+            id: hyprReload
+            command: ["hyprctl", "reload"]
+        }
+    }
 }

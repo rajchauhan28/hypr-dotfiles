@@ -5,8 +5,8 @@ Item {
 
     property real dialRadius: 260
     property real value: 0
-    property color tickColor: "#90f8fafc"
-    property color labelColor: "#b8f8fafc"
+    property color tickColor: Theme.fg(0x90 / 255)
+    property color labelColor: Theme.fg(0xb8 / 255)
     property int labelEvery: 5
     property int labelSize: 13
     property real tickLength: 11

@@ -121,7 +121,7 @@ Rectangle {
                         anchors.centerIn: parent
                         text: modelData.glyph
                         font.pixelSize: 13
-                        color: parent.active ? "#0a0a0f" : (btnMouse.containsMouse && parent.destructive ? Theme.danger : Theme.textSecondary)
+                        color: parent.active ? Theme.onAccentDeep : (btnMouse.containsMouse && parent.destructive ? Theme.danger : Theme.textSecondary)
                     }
 
                     MouseArea {
@@ -225,7 +225,7 @@ Rectangle {
                         text: "Apply"
                         font.pixelSize: 11
                         font.bold: true
-                        color: applyCustomMouse.containsMouse ? "#0a0a0f" : Theme.textPrimary
+                        color: applyCustomMouse.containsMouse ? Theme.onAccentDeep : Theme.textPrimary
                     }
 
                     MouseArea {

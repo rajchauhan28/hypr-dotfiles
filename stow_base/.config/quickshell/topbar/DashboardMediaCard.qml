@@ -89,7 +89,7 @@ ColumnLayout {
                     text: MediaService.hasPlayer ? MediaService.title : "Nothing playing"
                     font.pixelSize: 12
                     font.bold: true
-                    color: Theme.textPrimary
+                    color: Theme.scrimText
                     elide: Text.ElideRight
                 }
 
@@ -97,7 +97,7 @@ ColumnLayout {
                     width: parent.width
                     text: MediaService.hasPlayer ? MediaService.artist : "Start a player to listen"
                     font.pixelSize: 9
-                    color: Theme.textSecondary
+                    color: Theme.scrimTextDim
                     elide: Text.ElideRight
                 }
             }
@@ -187,7 +187,7 @@ ColumnLayout {
                 anchors.centerIn: parent
                 text: MediaService.playing ? "󰏤" : "󰐊"
                 font.pixelSize: 19
-                color: "#0a0a0f"
+                color: Theme.textOn(MediaService.accent)
             }
 
             MouseArea {

@@ -5,6 +5,8 @@ Item {
     id: ui
 
     required property var controller
+    // The wallpaper item the lock paints; glass cards frost a copy of it.
+    property Item backdrop: null
 
     property date now: new Date()
     readonly property real hubX: 0
@@ -39,8 +41,8 @@ Item {
         x: ui.hubX - dialRadius
         y: ui.hubY - dialRadius
         value: ui.smoothSeconds
-        tickColor: "#8af8fafc"
-        labelColor: "#aef8fafc"
+        tickColor: Theme.fg(0x8a / 255)
+        labelColor: Theme.fg(0xae / 255)
         tickLength: 13
         majorTickLength: 23
         labelSize: 16
@@ -54,8 +56,8 @@ Item {
         x: ui.hubX - dialRadius
         y: ui.hubY - dialRadius
         value: ui.smoothMinutes
-        tickColor: "#62f8fafc"
-        labelColor: "#78f8fafc"
+        tickColor: Theme.fg(0x62 / 255)
+        labelColor: Theme.fg(0x78 / 255)
         tickLength: 8
         majorTickLength: 16
         labelSize: 13
@@ -69,7 +71,7 @@ Item {
         x: ui.clockContentX - width / 2
         y: ui.hubY - height / 2 + 3
         text: Qt.formatTime(ui.now, "HH")
-        color: "#f8fafc"
+        color: Theme.textPrimary
         font.family: "Audiowide"
         font.pixelSize: Math.min(104, ui.height * 0.095)
         font.weight: Font.Black
@@ -78,20 +80,20 @@ Item {
 
     // Watch-style windows sit on the three-o'clock axis of their rings.
     // The dials continue moving underneath them.
-    Rectangle {
+    LockCard {
         x: ui.hubX + ui.outerRadius - width / 2
         y: ui.hubY - height / 2
         width: 78
         height: 46
         radius: 18
-        color: "#d21a191d"
-        border.width: 1
-        border.color: "#30ffffff"
+        backdrop: ui.backdrop
+        fill: Theme.lockWindow
+        rim: Theme.ink(0x30 / 255)
 
         Text {
             anchors.centerIn: parent
             text: Qt.formatTime(ui.now, "ss")
-            color: "#f8fafc"
+            color: Theme.textPrimary
             font.family: "Audiowide"
             font.pixelSize: 21
             font.weight: Font.Black
@@ -99,20 +101,20 @@ Item {
         }
     }
 
-    Rectangle {
+    LockCard {
         x: ui.hubX + ui.innerRadius - width / 2
         y: ui.hubY - height / 2
         width: 72
         height: 42
         radius: 16
-        color: "#d21a191d"
-        border.width: 1
-        border.color: "#30ffffff"
+        backdrop: ui.backdrop
+        fill: Theme.lockWindow
+        rim: Theme.ink(0x30 / 255)
 
         Text {
             anchors.centerIn: parent
             text: Qt.formatTime(ui.now, "mm")
-            color: "#f8fafc"
+            color: Theme.textPrimary
             font.family: "Audiowide"
             font.pixelSize: 19
             font.weight: Font.Black
@@ -120,7 +122,7 @@ Item {
         }
     }
 
-    Rectangle {
+    LockCard {
         id: passwordPill
 
         x: profileRail.x + (profileRail.width - width) / 2
@@ -129,11 +131,10 @@ Item {
         height: 64
         radius: height / 2
         visible: ui.controller.selectedUser === ui.controller.sessionUser
-        color: "#a3141418"
-        border.width: 1
-        border.color: ui.controller.authFailed
-                      ? Theme.danger
-                      : (passwordInput.activeFocus ? "#28ffffff" : "#12ffffff")
+        backdrop: ui.backdrop
+        fill: Theme.lockField
+        rim: passwordInput.activeFocus ? Theme.ink(0x28 / 255) : Theme.ink(0x12 / 255)
+        alert: ui.controller.authFailed
 
         Behavior on border.color { ColorAnimation { duration: 160 } }
 
@@ -188,7 +189,7 @@ Item {
             Text {
                 anchors.centerIn: parent
                 text: "󰫣"
-                color: "#58f8fafc"
+                color: Theme.fg(0x58 / 255)
                 font.pixelSize: 15
                 opacity: passwordGlyphs.glyphCount === 0 ? 1 : 0
                 scale: passwordGlyphs.glyphCount === 0 ? 1 : 0.65
@@ -213,7 +214,7 @@ Item {
                     height: 20
                     text: "󰫣"
                     font.pixelSize: 13
-                    color: "#f8fafc"
+                    color: Theme.textPrimary
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
                     x: passwordGlyphs.width / 2
@@ -254,7 +255,7 @@ Item {
             width: parent.width
             horizontalAlignment: Text.AlignHCenter
             text: Qt.formatDate(ui.now, "dd MMM yyyy").toUpperCase()
-            color: "#bdf8fafc"
+            color: Theme.fg(0xbd / 255)
             font.family: "Audiowide"
             font.pixelSize: 12
             font.bold: true
@@ -266,7 +267,7 @@ Item {
             width: parent.width
             horizontalAlignment: Text.AlignHCenter
             text: Qt.formatDate(ui.now, "dddd").toUpperCase()
-            color: "#f8fafc"
+            color: Theme.textPrimary
             font.family: "Anurati"
             font.pixelSize: 17
             font.bold: true
@@ -284,7 +285,7 @@ Item {
         Text {
             anchors.verticalCenter: parent.verticalCenter
             text: Theme.osName.toUpperCase()
-            color: "#76f8fafc"
+            color: Theme.fg(0x76 / 255)
             font.pixelSize: 10
             font.bold: true
             font.letterSpacing: 3
@@ -294,7 +295,7 @@ Item {
             id: rebootLabel
             anchors.verticalCenter: parent.verticalCenter
             text: "REBOOT"
-            color: rebootMouse.containsMouse ? "#f8fafc" : "#76f8fafc"
+            color: rebootMouse.containsMouse ? Theme.textPrimary : Theme.fg(0x76 / 255)
             font.pixelSize: 10
             font.bold: true
             font.letterSpacing: 3
@@ -313,7 +314,7 @@ Item {
             id: shutdownLabel
             anchors.verticalCenter: parent.verticalCenter
             text: "SHUTDOWN"
-            color: shutdownMouse.containsMouse ? "#f8fafc" : "#76f8fafc"
+            color: shutdownMouse.containsMouse ? Theme.textPrimary : Theme.fg(0x76 / 255)
             font.pixelSize: 10
             font.bold: true
             font.letterSpacing: 3
@@ -400,9 +401,9 @@ Item {
                     width: 76
                     height: 76
                     radius: 38
-                    color: "#5c101014"
+                    color: Theme.lockAvatar
                     border.width: profileDelegate.active ? 2 : 1
-                    border.color: profileDelegate.active ? "#f8fafc" : "#4affffff"
+                    border.color: profileDelegate.active ? Theme.textPrimary : Theme.ink(0x4a / 255)
                     clip: true
 
                     Image {
@@ -418,7 +419,7 @@ Item {
                     Text {
                         anchors.centerIn: parent
                         text: "󰌾"
-                        color: "#d8f8fafc"
+                        color: Theme.fg(0xd8 / 255)
                         font.pixelSize: 36
                         visible: ui.controller.profileIcon(profileDelegate.modelData) === ""
                     }
@@ -429,7 +430,7 @@ Item {
                     anchors.topMargin: 88
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: profileDelegate.modelData.name.toUpperCase()
-                    color: profileDelegate.active ? "#f8fafc" : "#80f8fafc"
+                    color: profileDelegate.active ? Theme.textPrimary : Theme.fg(0x80 / 255)
                     font.pixelSize: profileDelegate.active ? 11 : 9
                     font.bold: true
                     font.letterSpacing: 2
@@ -452,7 +453,7 @@ Item {
         anchors.horizontalCenter: profileRail.horizontalCenter
         y: passwordPill.y + passwordPill.height + 14
         text: "󰫣"
-        color: "#bdf8fafc"
+        color: Theme.fg(0xbd / 255)
         font.pixelSize: 17
         visible: ui.controller.selectedUser === ui.controller.sessionUser
     }
@@ -461,14 +462,14 @@ Item {
         anchors.horizontalCenter: profileRail.horizontalCenter
         y: passwordPill.y + passwordPill.height + 42
         text: ui.controller.authInProgress ? "AUTHENTICATING" : "WAITING FOR KEY"
-        color: "#68f8fafc"
+        color: Theme.fg(0x68 / 255)
         font.pixelSize: 9
         font.bold: true
         font.letterSpacing: 3.3
         visible: ui.controller.selectedUser === ui.controller.sessionUser
     }
 
-    Rectangle {
+    LockCard {
         id: switchButton
 
         anchors.horizontalCenter: profileRail.horizontalCenter
@@ -477,16 +478,17 @@ Item {
         height: 42
         radius: 21
         visible: ui.controller.selectedUser !== ui.controller.sessionUser
-        color: switchMouse.containsMouse ? "#9918181d" : "#77101014"
-        border.width: 1
-        border.color: "#55ffffff"
+        backdrop: ui.backdrop
+        fill: switchMouse.containsMouse ? Theme.lockButtonHover : Theme.lockButton
+        rim: Theme.ink(0x55 / 255)
+        hovered: switchMouse.containsMouse
 
         Text {
             anchors.centerIn: parent
             text: ui.controller.authInProgress
                   ? "OPENING SWITCHER"
                   : "SWITCH TO " + ui.controller.selectedProfile.name.toUpperCase()
-            color: "#e8f8fafc"
+            color: Theme.fg(0xe8 / 255)
             font.pixelSize: 10
             font.bold: true
             font.letterSpacing: 1.5

@@ -36,8 +36,8 @@ Item {
     Rectangle {
         anchors.fill: parent
         visible: viz.vertical
-        color: "#0dffffff"
-        border.color: "#18ffffff"
+        color: Theme.ink(0x0d / 255)
+        border.color: Theme.ink(0x18 / 255)
         border.width: 1
         radius: 12
     }
@@ -71,7 +71,7 @@ Item {
                     var gV = ctx.createLinearGradient(0, height, 0, yV);
                     gV.addColorStop(0.0, Qt.rgba(viz.tint.r, viz.tint.g, viz.tint.b, 0.2));
                     gV.addColorStop(0.7, viz.tint);
-                    gV.addColorStop(1.0, "#ffffff");
+                    gV.addColorStop(1.0, Theme.ink(1));
                     ctx.fillStyle = gV;
 
                     var rV = Math.min(bwV / 2, hV / 2);
@@ -82,7 +82,7 @@ Item {
                     var pkV = viz.peaks[v] || 0;
                     if (pkV > 4) {
                         var pyV = Math.max((pkV / 100) * maxHV, hV + 3);
-                        ctx.fillStyle = "#ffffff";
+                        ctx.fillStyle = Theme.ink(1);
                         ctx.globalAlpha = 0.85;
                         ctx.beginPath();
                         ctx.roundedRect(xV, height - pyV - 3, bwV, 2, bwV / 2, bwV / 2);
@@ -115,7 +115,7 @@ Item {
                     var pk = viz.peaks[i] || 0;
                     if (pk > 4) {
                         var py = Math.max((pk / 100) * maxH, h + 2);
-                        ctx.fillStyle = Qt.rgba(1, 1, 1, 0.55);
+                        ctx.fillStyle = Theme.ink(0.55);
                         ctx.beginPath();
                         ctx.roundedRect(x, mid - py - 1.5, bw, 1.5, 1, 1);
                         ctx.roundedRect(x, mid + py, bw, 1.5, 1, 1);

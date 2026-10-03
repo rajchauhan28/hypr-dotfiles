@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
+import "../common" as Common
 import "search.js" as Search
 
 // Replacement for `walker` + `elephant`.
@@ -557,13 +558,23 @@ Scope {
             radius: Theme.radiusPanel
             color: Theme.panelBg
             border.color: Theme.panelBorder
-            border.width: 1
+            // Glass draws its own lit rim (below) instead of the flat outline.
+            border.width: Theme.glass ? 0 : 1
             clip: true
 
             height: searchRow.height + (list.count > 0 ? Math.min(list.contentHeight, Theme.maxListHeight) + Theme.cardPadding : 0)
 
             Behavior on height {
                 NumberAnimation { duration: Theme.animNormal; easing.type: Theme.easeOutExpo }
+            }
+
+            // Glass theme: the soft lit rim of a floating glass card
+            // (common/GlassRim.qml). First child, so it paints over the fill
+            // but under the search well and the rows.
+            Common.GlassRim {
+                anchors.fill: parent
+                radius: parent.radius
+                visible: Theme.glass
             }
 
             // Swallow clicks so the dismiss MouseArea behind only fires
@@ -645,7 +656,7 @@ Scope {
                     color: Theme.textPrimary
                     font.pixelSize: 15
                     selectionColor: Theme.accent
-                    selectedTextColor: "#101014"
+                    selectedTextColor: Theme.onAccent
                     clip: true
 
                     // Focus is (re)taken in the window's onVisibleChanged;

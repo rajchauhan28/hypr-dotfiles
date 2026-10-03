@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Wayland
 import Quickshell.Io
 import QtQuick.Shapes
+import "../common" as Common
 
 Scope {
     id: root
@@ -258,6 +259,7 @@ Scope {
         // rail down the right edge flaring out into the body beside it.
         Shape {
             anchors.fill: parent
+            visible: !Theme.glass
             preferredRendererType: Shape.CurveRenderer
             antialiasing: true
 
@@ -312,6 +314,45 @@ Scope {
 
                 PathLine { x: win.railX; y: 0 }
                 PathLine { x: win.width; y: 0 }
+            }
+        }
+
+        // --- Glass theme: a floating card instead of the rail silhouette ---
+        // Frosted, the full-height rail above read as a hard bright line down
+        // the screen edge. In glass the body floats a rail's width off the
+        // edge, all four corners rounded, with its own lit rim
+        // (common/GlassRim.qml), and the rail shrinks to a small handle.
+        // Geometry and animation are the silhouette's own.
+        Item {
+            anchors.fill: parent
+            visible: Theme.glass
+
+            // what is left of the rail while the body is closed
+            Rectangle {
+                width: Math.max(3, Theme.edgeLine - 1)
+                height: 120
+                radius: width / 2
+                anchors.right: parent.right
+                anchors.rightMargin: 1
+                y: win.bodyTop + Math.round((Theme.panelHeight - height) / 2)
+                color: Theme.ink(0.55)
+                opacity: win.bodyWidth < 1 ? 1 : 0
+                Behavior on opacity { NumberAnimation { duration: Theme.animFast } }
+            }
+
+            Rectangle {
+                x: win.bodyLeft
+                y: win.bodyTop
+                width: win.bodyWidth
+                height: Theme.panelHeight
+                visible: width > 1 && height > 1
+                radius: win.cornerR
+                color: Theme.panelBg
+
+                Common.GlassRim {
+                    anchors.fill: parent
+                    radius: parent.radius
+                }
             }
         }
 

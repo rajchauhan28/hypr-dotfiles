@@ -376,7 +376,7 @@ Item {
                                     radius: width / 2
                                     color: cell.isToday ? Theme.accent
                                          : (cell.isSelected ? Theme.cardHover
-                                         : (dayMouse.containsMouse ? "#14ffffff" : "transparent"))
+                                         : (dayMouse.containsMouse ? Theme.ink(0x14 / 255) : "transparent"))
                                     border.color: cell.isSelected && !cell.isToday
                                                   ? Theme.borderStrong : "transparent"
                                     border.width: 1
@@ -388,7 +388,7 @@ Item {
                                     text: modelData.day
                                     font.pixelSize: 12
                                     font.bold: cell.isToday || cell.holiday !== ""
-                                    color: cell.isToday ? "#0a0a0f"
+                                    color: cell.isToday ? Theme.onAccentText
                                          : (!modelData.current ? Theme.textFaint
                                          : (cell.holiday !== "" ? Theme.danger : Theme.textSecondary))
                                 }
@@ -403,12 +403,12 @@ Item {
                                     Rectangle {
                                         visible: cell.holiday !== ""
                                         width: 4; height: 4; radius: 2
-                                        color: cell.isToday ? "#0a0a0f" : Theme.danger
+                                        color: cell.isToday ? Theme.onAccentText : Theme.danger
                                     }
                                     Rectangle {
                                         visible: cell.noteCount > 0
                                         width: 4; height: 4; radius: 2
-                                        color: cell.isToday ? "#0a0a0f" : Theme.good
+                                        color: cell.isToday ? Theme.onAccentText : Theme.good
                                     }
                                 }
 
@@ -484,7 +484,7 @@ Item {
                                         anchors.centerIn: parent
                                         text: "\u00d7"
                                         font.pixelSize: 11
-                                        color: delMouse.containsMouse ? "#ffffff" : Theme.textFaint
+                                        color: delMouse.containsMouse ? Theme.onDanger : Theme.textFaint
                                     }
 
                                     MouseArea {
@@ -548,7 +548,7 @@ Item {
                                         text: "+"
                                         font.pixelSize: 14
                                         font.bold: true
-                                        color: addMouse.containsMouse ? "#0a0a0f" : Theme.textSecondary
+                                        color: addMouse.containsMouse ? Theme.onAccentText : Theme.textSecondary
                                     }
 
                                     MouseArea {
@@ -888,7 +888,7 @@ Item {
                             Layout.fillWidth: true
                             implicitHeight: 32
                             radius: Theme.radiusSmall
-                            color: updMouse.containsMouse ? "#ffffff" : Theme.accent
+                            color: updMouse.containsMouse ? Theme.accentHover : Theme.accent
                             Behavior on color { ColorAnimation { duration: 120 } }
 
                             Text {
@@ -896,7 +896,7 @@ Item {
                                 text: "󰚰  Update"
                                 font.pixelSize: 11
                                 font.bold: true
-                                color: "#0a0a0f"
+                                color: Theme.onAccentText
                             }
 
                             MouseArea {

@@ -163,11 +163,11 @@ ShellRoot {
         locked: false
 
         WlSessionLockSurface {
-            color: "#101014"
+            color: Theme.lockBase
 
             Rectangle {
                 anchors.fill: parent
-                color: "#101014"
+                color: Theme.lockBase
 
                 Item {
                     id: liveBackground
@@ -239,7 +239,7 @@ ShellRoot {
 
                 Rectangle {
                     anchors.fill: parent
-                    color: "#42000000"
+                    color: Theme.lockScrim
                 }
 
                 // Kept as an uninstantiated fallback while this theme is
@@ -544,6 +544,7 @@ ShellRoot {
                 FuturisticLock {
                     anchors.fill: parent
                     controller: root
+                    backdrop: liveBackground
                 }
             }
         }

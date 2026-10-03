@@ -244,8 +244,8 @@ Singleton {
     // Drives the tab's tint. `artPath` is the local copy, so a remote cover
     // (a browser tab's art) can also be used as the blurred backdrop.
     property string artPath: ""
-    property color accent: "#e4e4e7"
-    property color glow: "#3f3f46"
+    property color accent: Theme.accent
+    property color glow: Theme.textFaint
 
     onArtUrlChanged: artTimer.restart()
 
@@ -257,8 +257,8 @@ Singleton {
         onTriggered: {
             if (svc.artUrl === "") {
                 svc.artPath = "";
-                svc.accent = "#e4e4e7";
-                svc.glow = "#3f3f46";
+                svc.accent = Qt.binding(() => Theme.accent);
+                svc.glow = Qt.binding(() => Theme.textFaint);
                 return;
             }
             artProc.running = false;
@@ -275,8 +275,16 @@ Singleton {
                 try {
                     var d = JSON.parse(data.trim());
                     svc.artPath = d.path || "";
-                    svc.accent = d.accent || "#e4e4e7";
-                    svc.glow = d.glow || "#3f3f46";
+                    if (svc.artPath === "") {
+                        // artcolor.py's no-art fallback: its #e4e4e7 is the
+                        // dark theme's accent, which vanishes on a light
+                        // panel. Follow the live theme instead.
+                        svc.accent = Qt.binding(() => Theme.accent);
+                        svc.glow = Qt.binding(() => Theme.textFaint);
+                    } else {
+                        svc.accent = d.accent || Theme.accent;
+                        svc.glow = d.glow || Theme.textFaint;
+                    }
                 } catch (e) {}
             }
         }
