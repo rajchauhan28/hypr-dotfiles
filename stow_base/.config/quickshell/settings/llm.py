@@ -4,7 +4,7 @@
     llm.py status                       -> one JSON object on stdout
     llm.py start <model> [--no-webui]   -> stops any llama-server, starts <model>, waits for /health
     llm.py stop
-    llm.py opencode on|off              -> offer / hide the local providers in opencode
+    llm.py opencode on|off              -> offer opencode the running model only / hide them all
 
 The model table below is the single source of truth for how each model is run.
 Every flag in it was validated on this laptop (RTX 4050 6 GB, 15 GB RAM); see
@@ -14,6 +14,7 @@ Only one model fits the GPU at a time, so start always stops whatever runs.
 
 import json
 import os
+import shutil
 import signal
 import subprocess
 import sys
@@ -22,6 +23,9 @@ import time
 import urllib.request
 
 HOME = os.path.expanduser("~")
+# Absolute, not PATH-relative: the settings app is launched from a Hyprland
+# keybind, and Hyprland's environment has no ~/.local/bin, where the build lives.
+LLAMA_SERVER = shutil.which("llama-server") or os.path.join(HOME, ".local", "bin", "llama-server")
 LOG_DIR = os.path.join(HOME, ".cache", "llama-server")
 STATE = os.path.join(HOME, ".local", "state", "llm-server.json")
 OPENCODE = os.path.join(HOME, ".config", "opencode", "opencode.json")
@@ -118,9 +122,53 @@ def write_json(path, obj):
     os.replace(tmp, path)
 
 
-def opencode_enabled():
-    disabled = read_json(OPENCODE, {}).get("disabled_providers", [])
-    return all(m["provider"] not in disabled for m in MODELS.values())
+def load_state():
+    s = read_json(STATE, {})
+    if "opencode" not in s:
+        # Before the preference was stored, the toggle was read off opencode.json.
+        disabled = read_json(OPENCODE, {}).get("disabled_providers", [])
+        s["opencode"] = not all(m["provider"] in disabled for m in MODELS.values())
+    s.setdefault("model", "e4b")
+    s.setdefault("webui", True)
+    return s
+
+
+def running_model():
+    for pid in server_pids():
+        path = arg_after(cmdline(pid), "-m")
+        return next((k for k, m in MODELS.items() if m["model"] == path), None)
+    return None
+
+
+def offered_model(state):
+    # The running model, else the one Start would launch. Offering any other
+    # local provider would point opencode at a port nothing listens on.
+    if not state["opencode"]:
+        return None
+    return running_model() or state["model"]
+
+
+def sync_opencode(state):
+    if not os.path.exists(OPENCODE):
+        print(f"{OPENCODE} not found", file=sys.stderr)
+        return False
+    cfg = read_json(OPENCODE, None)
+    if cfg is None:
+        print(f"{OPENCODE} is not valid JSON; not touching it", file=sys.stderr)
+        return False
+    offered = offered_model(state)
+    keep = MODELS[offered]["provider"] if offered in MODELS else None
+    ours = [m["provider"] for m in MODELS.values()]
+    old = cfg.get("disabled_providers", [])
+    new = [p for p in old if p not in ours] + [p for p in ours if p != keep]
+    if new == old:
+        return True
+    if new:
+        cfg["disabled_providers"] = new
+    else:
+        cfg.pop("disabled_providers", None)
+    write_json(OPENCODE, cfg)
+    return True
 
 
 def status():
@@ -141,12 +189,14 @@ def status():
         }
         break
     used, total = vram() if running else (None, None)
+    state = load_state()
     print(json.dumps({
         "running": running,
         "vramUsed": used,
         "vramTotal": total,
-        "opencode": opencode_enabled(),
-        "last": read_json(STATE, {"model": "e4b", "webui": True}),
+        "opencode": state["opencode"],
+        "opencodeModel": offered_model(state),
+        "last": {"model": state["model"], "webui": state["webui"]},
         "models": [{"key": k, "label": m["label"], "detail": m["detail"], "port": m["port"],
                     "present": os.path.exists(m["model"])} for k, m in MODELS.items()],
     }))
@@ -177,11 +227,14 @@ def start(key, webui):
     if not os.path.exists(m["model"]):
         print(f"model file missing: {m['model']}", file=sys.stderr)
         return 1
+    if not os.access(LLAMA_SERVER, os.X_OK):
+        print(f"llama-server not found (looked on PATH and at {LLAMA_SERVER})", file=sys.stderr)
+        return 1
     if server_pids():
         stop()
     os.makedirs(LOG_DIR, exist_ok=True)
     log_path = os.path.join(LOG_DIR, f"{key}.log")
-    cmd = ["llama-server", "-m", m["model"], *m["args"], "--host", "127.0.0.1", "--port", str(m["port"])]
+    cmd = [LLAMA_SERVER, "-m", m["model"], *m["args"], "--host", "127.0.0.1", "--port", str(m["port"])]
     if not webui:
         cmd.append("--no-webui")
     with open(log_path, "w") as log:
@@ -189,8 +242,12 @@ def start(key, webui):
         # server must outlive it.
         proc = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT,
                                 stdin=subprocess.DEVNULL, start_new_session=True)
-    write_json(STATE, {"model": key, "webui": webui})
+    state = load_state()
+    state.update(model=key, webui=webui)
+    write_json(STATE, state)
     print(f"starting {m['label']} on :{m['port']} (log {log_path})", flush=True)
+    if state["opencode"] and sync_opencode(state):
+        print(f"opencode now offers {m['label']} (new sessions)", flush=True)
     deadline = time.time() + 300
     while time.time() < deadline:
         if healthy(m["port"]):
@@ -208,23 +265,14 @@ def start(key, webui):
 
 
 def set_opencode(on):
-    if not os.path.exists(OPENCODE):
-        print(f"{OPENCODE} not found", file=sys.stderr)
+    state = load_state()
+    state["opencode"] = on
+    if not sync_opencode(state):
         return 1
-    cfg = read_json(OPENCODE, None)
-    if cfg is None:
-        print(f"{OPENCODE} is not valid JSON; not touching it", file=sys.stderr)
-        return 1
-    ours = [m["provider"] for m in MODELS.values()]
-    disabled = [p for p in cfg.get("disabled_providers", []) if p not in ours]
-    if not on:
-        disabled += ours
-    if disabled:
-        cfg["disabled_providers"] = disabled
-    else:
-        cfg.pop("disabled_providers", None)
-    write_json(OPENCODE, cfg)
-    print("local models " + ("offered in" if on else "hidden from") + " opencode")
+    write_json(STATE, state)
+    offered = offered_model(state)
+    print(f"opencode offers {MODELS[offered]['label']} (new sessions)" if offered
+          else "local models hidden from opencode")
     return 0
 
 
