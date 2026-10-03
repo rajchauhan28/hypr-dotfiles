@@ -168,12 +168,18 @@ ShellRoot {
                 width: 1070
                 height: 720
                 anchors.centerIn: parent
-                color: "#0a0a0f"
-                border.color: "#18ffffff"
-                border.width: 1
+                color: Theme.overviewPanel
+                border.color: Theme.ink(0x18 / 255)
+                border.width: Theme.glass ? 0 : 1
                 radius: 20
                 scale: 1.0
                 opacity: 0.0
+
+                GlassRim {
+                    anchors.fill: parent
+                    radius: parent.radius
+                    visible: Theme.glass
+                }
 
                 ParallelAnimation {
                     running: true
@@ -198,15 +204,15 @@ ShellRoot {
                             text: "✦ OVERVIEW"
                             font.pixelSize: 14
                             font.bold: true
-                            color: "#ffffff"
+                            color: Theme.textStrong
                         }
 
                         Rectangle {
                             Layout.fillWidth: true
                             implicitHeight: 40
                             radius: 8
-                            color: "#0cffffff"
-                            border.color: "#15ffffff"
+                            color: Theme.ink(0x0c / 255)
+                            border.color: Theme.ink(0x15 / 255)
                             border.width: 1
 
                             RowLayout {
@@ -214,18 +220,18 @@ ShellRoot {
                                 anchors.margins: 12
                                 spacing: 8
 
-                                Text { text: "🔍"; font.pixelSize: 14; color: "#71717a" }
+                                Text { text: "🔍"; font.pixelSize: 14; color: Theme.textMuted }
 
                                 TextInput {
                                     id: searchInput
                                     Layout.fillWidth: true
                                     font.pixelSize: 14
-                                    color: "#ffffff"
+                                    color: Theme.textStrong
                                     clip: true
                                     focus: true
                                     Text {
                                         text: "Search open windows or apps..."
-                                        color: "#52525b"
+                                        color: Theme.textFaint
                                         visible: searchInput.text === ""
                                         font.pixelSize: 14
                                     }
@@ -240,12 +246,12 @@ ShellRoot {
                             implicitWidth: 32
                             implicitHeight: 32
                             radius: 6
-                            color: closeMouse.containsMouse ? "#20ffffff" : "#0cffffff"
+                            color: closeMouse.containsMouse ? Theme.ink(0x20 / 255) : Theme.ink(0x0c / 255)
                             Text {
                                 anchors.centerIn: parent
                                 text: "×"
                                 font.pixelSize: 18
-                                color: "#a1a1aa"
+                                color: Theme.textSecondary
                             }
                             MouseArea {
                                 id: closeMouse
@@ -311,7 +317,7 @@ ShellRoot {
                             Rectangle {
                                 Layout.fillWidth: true
                                 implicitHeight: 1
-                                color: "#15ffffff"
+                                color: Theme.ink(0x15 / 255)
                                 Layout.topMargin: 4
                                 Layout.bottomMargin: 4
                             }
@@ -354,7 +360,7 @@ ShellRoot {
                                 Rectangle {
                                     Layout.fillHeight: true
                                     implicitWidth: 1
-                                    color: "#15ffffff"
+                                    color: Theme.ink(0x15 / 255)
                                 }
 
                                 WorkspaceCard {
@@ -397,14 +403,14 @@ ShellRoot {
                         Text {
                             text: "Press Esc or click outside to dismiss  •  Middle-click window to close"
                             font.pixelSize: 11
-                            color: "#71717a"
+                            color: Theme.textMuted
                         }
                         Item { Layout.fillWidth: true }
                         Text {
                             text: root.allClients.length + " Total Windows Active"
                             font.pixelSize: 11
                             font.bold: true
-                            color: "#a1a1aa"
+                            color: Theme.textSecondary
                         }
                     }
                 }

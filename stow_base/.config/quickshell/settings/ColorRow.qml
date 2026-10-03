@@ -11,8 +11,8 @@ Item {
     property string label: ""
     property var presets: []
 
-    readonly property string value: Config.get("palette", row.key)
-    readonly property bool modified: !Config.isDefault("palette", row.key)
+    readonly property string value: Config.get(Config.paletteSection, row.key)
+    readonly property bool modified: !Config.isDefault(Config.paletteSection, row.key)
 
     Layout.fillWidth: true
     implicitHeight: 62
@@ -27,7 +27,7 @@ Item {
         // panel background). Anything else would silently become black.
         if (!/^#([0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(v))
             return false;
-        Config.set("palette", row.key, v.toLowerCase());
+        Config.set(Config.paletteSection, row.key, v.toLowerCase());
         return true;
     }
 
@@ -83,7 +83,7 @@ Item {
                     font.family: "monospace"
                     color: Theme.textPrimary
                     selectionColor: Theme.accent
-                    selectedTextColor: "#0a0a0f"
+                    selectedTextColor: Theme.onAccentDeep
                     selectByMouse: true
 
                     // Only follow the store while the field is idle, or typing

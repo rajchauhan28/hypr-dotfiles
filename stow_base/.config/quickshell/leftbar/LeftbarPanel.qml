@@ -8,6 +8,7 @@ import Quickshell.Io
 import Quickshell.Hyprland
 import QtQuick.Shapes
 import Quickshell.Services.SystemTray
+import "../common" as Common
 
 Scope {
     id: root
@@ -215,6 +216,7 @@ Scope {
 
             Shape {
                 anchors.fill: parent
+                visible: !Theme.glass
                 preferredRendererType: Shape.CurveRenderer
                 antialiasing: true
 
@@ -250,6 +252,37 @@ Scope {
                     PathLine { x: 0; y: 0 }
                 }
             }
+
+            // --- Glass theme: a floating card instead of the edge silhouette ---
+            // Frosted, the silhouette's stroke read as a hard bright line down
+            // the screen edge. In glass the bar floats just off the edges as a
+            // rounded card with its own lit rim (common/GlassRim.qml). It is
+            // the strip's own width inset equally on both sides, so the
+            // content -- centred on barWidth / 2 -- stays where it was; the
+            // side gap is smaller than the top/bottom one because the clock
+            // island is only 6 px narrower than the bar.
+            Item {
+                anchors.fill: parent
+                visible: Theme.glass
+
+                Rectangle {
+                    readonly property int sideGap: 4
+                    readonly property int endGap: 6
+
+                    x: sideGap
+                    y: endGap
+                    width: Theme.barWidth - sideGap * 2
+                    height: parent.height - endGap * 2
+                    visible: width > 1 && height > 1
+                    radius: Theme.radiusPanel
+                    color: Theme.panelBg
+
+                    Common.GlassRim {
+                        anchors.fill: parent
+                        radius: parent.radius
+                    }
+                }
+            }
         }
 
         // Horizontal Background Apps Drawer (System Tray)
@@ -267,7 +300,13 @@ Scope {
 
             color: Theme.panelBg
             border.color: Theme.panelBorder
-            border.width: 1
+            border.width: Theme.glass ? 0 : 1
+
+            Common.GlassRim {
+                anchors.fill: parent
+                radius: parent.radius
+                visible: Theme.glass
+            }
 
             Behavior on width {
                 NumberAnimation { duration: Theme.animPanel; easing.type: Theme.easeOutExpo }
@@ -426,7 +465,13 @@ Scope {
 
             color: Theme.panelBg
             border.color: Theme.panelBorder
-            border.width: 1
+            border.width: Theme.glass ? 0 : 1
+
+            Common.GlassRim {
+                anchors.fill: parent
+                radius: parent.radius
+                visible: Theme.glass
+            }
 
             Behavior on width {
                 NumberAnimation { duration: Theme.animPanel; easing.type: Theme.easeOutExpo }
@@ -591,7 +636,10 @@ Scope {
                 // ---- 1. Dynamic Clock Island (Stacked HH / MM / AP) ----
                 Rectangle {
                     Layout.alignment: Qt.AlignHCenter
-                    implicitWidth: Math.max(34, Theme.barWidth - 12)
+                    // Glass: the same width as the app buttons below, so the
+                    // island keeps their margins inside the bar's glass card
+                    // instead of crowding its rim.
+                    implicitWidth: Theme.glass ? Theme.iconSlot : Math.max(34, Theme.barWidth - 12)
                     implicitHeight: 56
                     radius: Theme.radiusSmall
                     color: clockMouse.containsMouse ? Theme.cardHover : Theme.card
@@ -647,15 +695,18 @@ Scope {
                     implicitWidth: Theme.iconSlot
                     implicitHeight: 5 * 34
 
+                    // Glass: styled as a hovered app button (card fill +
+                    // strong hairline, full button width) rather than a flat
+                    // accent wash, so it matches the buttons it sits above.
                     Rectangle {
-                        width: Theme.iconSlot - 4
+                        width: Theme.glass ? Theme.iconSlot : Theme.iconSlot - 4
                         height: 30
                         radius: Theme.radiusSmall
-                        color: Theme.accent
-                        opacity: 0.25
-                        border.color: Theme.accent
+                        color: Theme.glass ? Theme.cardHover : Theme.accent
+                        opacity: Theme.glass ? 1.0 : 0.25
+                        border.color: Theme.glass ? Theme.borderStrong : Theme.accent
                         border.width: 1
-                        x: 2
+                        x: Theme.glass ? 0 : 2
                         y: Math.max(0, Math.min(4, root.activeWs - 1)) * 34 + 2
 
                         Behavior on y {
@@ -901,7 +952,7 @@ Scope {
                         implicitHeight: Theme.iconSlot
                         radius: Theme.radiusSmall
                         color: (root.armedPower === "shutdown" || pwrMouse.containsMouse || root.powerExpanded)
-                               ? Qt.rgba(0.93, 0.26, 0.26, 0.25) : Theme.card
+                               ? Theme.dangerWash : Theme.card
                         border.color: (root.armedPower === "shutdown" || pwrMouse.containsMouse || root.powerExpanded)
                                       ? Theme.danger : Theme.border
                         border.width: (root.armedPower === "shutdown" || root.powerExpanded) ? 2 : 1
@@ -968,9 +1019,15 @@ Scope {
                                     Theme.tooltipReserve - 28) + 20
             implicitHeight: 26
             radius: 6
-            color: "#f2121218"
+            color: Theme.tooltipBg
             border.color: Theme.panelBorder
-            border.width: 1
+            border.width: Theme.glass ? 0 : 1
+
+            Common.GlassRim {
+                anchors.fill: parent
+                radius: parent.radius
+                visible: Theme.glass
+            }
 
             Text {
                 id: tooltipLabel
@@ -1025,7 +1082,13 @@ Scope {
             radius: Theme.radiusPanel
             color: Theme.panelBg
             border.color: Theme.panelBorder
-            border.width: 1
+            border.width: Theme.glass ? 0 : 1
+
+            Common.GlassRim {
+                anchors.fill: parent
+                radius: parent.radius
+                visible: Theme.glass
+            }
 
             // Header doubles as the drag handle. Dragging from the body would
             // be ambiguous once anything scrollable lands in here.

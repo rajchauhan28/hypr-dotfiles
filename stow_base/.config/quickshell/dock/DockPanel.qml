@@ -4,6 +4,7 @@ import Quickshell.Wayland
 import Quickshell.Io
 import QtQuick.Shapes
 import QtQuick.Effects
+import "../common" as Common
 
 Scope {
     id: root
@@ -376,6 +377,7 @@ Scope {
         // rail along the bottom flaring up into the centred body.
         Shape {
             anchors.fill: parent
+            visible: !Theme.glass
             preferredRendererType: Shape.CurveRenderer
             antialiasing: true
 
@@ -433,6 +435,43 @@ Scope {
             }
         }
 
+        // --- Glass theme: a floating card instead of the rail silhouette ---
+        // Frosted, the full-width rail read as a hard bright line along the
+        // bottom screen edge. In glass the body floats just above the edge
+        // (the rail height is kept as the gap) with all four corners rounded
+        // and its own lit rim (common/GlassRim.qml); the rail shrinks to a
+        // small handle. Geometry and animation are the silhouette's own.
+        Item {
+            anchors.fill: parent
+            visible: Theme.glass
+
+            Rectangle {
+                width: 120
+                height: Math.max(3, Theme.edgeLine - 1)
+                radius: height / 2
+                anchors.horizontalCenter: parent.horizontalCenter
+                y: parent.height - height - 1
+                color: Theme.ink(0.55)
+                opacity: win.bodyHeight < 1 ? 1 : 0
+                Behavior on opacity { NumberAnimation { duration: Theme.animFast } }
+            }
+
+            Rectangle {
+                x: win.bodyLeft
+                y: win.bodyTop
+                width: win.bodyW
+                height: win.bodyHeight
+                visible: width > 1 && height > 1
+                radius: win.cornerR
+                color: Theme.panelBg
+
+                Common.GlassRim {
+                    anchors.fill: parent
+                    radius: parent.radius
+                }
+            }
+        }
+
         // --- Live preview card ---
         // One tile per window of the hovered app. Capture is only live while
         // the card is up: a ScreencopyView with live:true is a real per-frame
@@ -472,7 +511,8 @@ Scope {
             radius: Theme.radiusPanel
             color: Theme.panelBg
             border.color: Theme.panelBorder
-            border.width: 1
+            // Glass draws its own lit rim below instead of the flat border.
+            border.width: Theme.glass ? 0 : 1
 
             visible: opacity > 0.01
             opacity: root.previewOn ? 1.0 : 0.0
@@ -483,6 +523,13 @@ Scope {
             Behavior on opacity { NumberAnimation { duration: Theme.animFast; easing.type: Theme.easeOutQuint } }
             Behavior on scale {
                 NumberAnimation { duration: Theme.animNormal; easing.type: Theme.easeOutBack; easing.overshoot: 0.9 }
+            }
+
+            // First child, so the tiles paint over the rim's top sheen.
+            Common.GlassRim {
+                anchors.fill: parent
+                radius: parent.radius
+                visible: Theme.glass
             }
 
             Row {
@@ -501,7 +548,7 @@ Scope {
                             width: Theme.previewTileW
                             height: Theme.previewTileH
                             radius: Theme.radiusSmall
-                            color: "#0c0c10"
+                            color: Theme.previewBg
                             border.color: tileMouse.containsMouse ? Theme.accent : Theme.panelBorder
                             border.width: 1
                             clip: true

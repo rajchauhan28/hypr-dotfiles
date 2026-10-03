@@ -82,7 +82,7 @@ ColumnLayout {
                         font.pixelSize: 12
                         color: Theme.textPrimary
                         selectionColor: Theme.accent
-                        selectedTextColor: "#0a0a0f"
+                        selectedTextColor: Theme.onAccentDeep
                         selectByMouse: true
                         clip: true
 

@@ -91,7 +91,7 @@ ColumnLayout {
                 implicitHeight: 16
                 radius: 5
                 color: modelData
-                border.color: "#22ffffff"
+                border.color: Theme.ink(0x22 / 255)
                 border.width: 1
             }
         }

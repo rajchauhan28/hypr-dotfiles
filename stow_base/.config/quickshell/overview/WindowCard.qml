@@ -11,8 +11,8 @@ Rectangle {
 
     implicitHeight: 40
     radius: 10
-    color: winMouse.containsMouse ? "#282836" : "#1a1a22"
-    border.color: winMouse.containsMouse ? "#ffffff40" : "#ffffff12"
+    color: winMouse.containsMouse ? Theme.overviewWindowHover : Theme.overviewWindow
+    border.color: winMouse.containsMouse ? Theme.ink(0x40 / 255) : Theme.ink(0x12 / 255)
     border.width: 1
 
     scale: winMouse.pressed ? 0.97 : (winMouse.containsMouse ? 1.03 : 1.0)
@@ -68,7 +68,7 @@ Rectangle {
                 text: winCard.winData.title || winCard.winData.class || "Window"
                 font.pixelSize: 11
                 font.bold: true
-                color: "#f8fafc"
+                color: Theme.textPrimary
                 elide: Text.ElideRight
                 Layout.fillWidth: true
             }
@@ -77,13 +77,13 @@ Rectangle {
                 implicitWidth: 20
                 implicitHeight: 20
                 radius: 6
-                color: closeMouse.containsMouse ? "#ef4444" : "#ffffff10"
+                color: closeMouse.containsMouse ? Theme.danger : Theme.ink(0x10 / 255)
 
                 Text {
                     anchors.centerIn: parent
                     text: "✕"
                     font.pixelSize: 10
-                    color: closeMouse.containsMouse ? "#ffffff" : "#a1a1aa"
+                    color: closeMouse.containsMouse ? Theme.onDanger : Theme.textSecondary
                 }
 
                 MouseArea {

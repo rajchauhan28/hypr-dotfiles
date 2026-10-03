@@ -218,20 +218,35 @@ hl.config({
         inactive_opacity = 0.7,
         fullscreen_opacity = 1.0,
 
+        -- Tuned for the Alder Lake iGPU, which drives everything here (the
+        -- RTX 4050 sits idle). Blur cost is per-pass, per-frame, and every
+        -- window on this setup is translucent, so the old settings had the
+        -- compositor re-blurring the full screen 165 times a second and the
+        -- GPU pinned at its 1500 MHz ceiling.
+        --
+        -- xray is the big one: with it off, the blur behind a window has to
+        -- composite every window BEHIND it too, so cost grew with the stack
+        -- depth. On it, windows blur the desktop only.
         blur = {
             enabled = true,
-            size = 5,
-            passes = 2,
+            size = 4,
+            passes = 1,
             new_optimizations = true,
-            ignore_opacity = true,
-            xray = false,
-            popups = true,
+            -- Off so a window that is already opaque is not blurred behind
+            -- for nothing.
+            ignore_opacity = false,
+            xray = true,
+            -- Menus and tooltips are small, short-lived, and constantly
+            -- re-created; blurring them buys very little.
+            popups = false,
         },
 
         shadow = {
             enabled = true,
             range = 15,
-            render_power = 3,
+            -- render_power is an exponent on the shadow falloff; 2 is
+            -- visually near-identical here and noticeably cheaper.
+            render_power = 2,
             color = "rgba(0,0,0,0.5)",
         },
     },
@@ -272,6 +287,13 @@ hl.config({
         force_default_wallpaper = -1,
         disable_hyprland_logo   = true,
         focus_on_activate       = true,
+    },
+    render = {
+        -- Let a fullscreen window hand its buffer straight to the display
+        -- controller instead of going through composition. hyprctl monitors
+        -- was reporting directScanoutBlockedBy: ["USER", ...] -- USER being
+        -- this option sitting at its default of off.
+        direct_scanout = true,
     },
 })
 
@@ -374,3 +396,17 @@ hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd("wlogout -b 2"))
 hl.bind("ALT + Escape",        hl.dsp.exec_cmd("wlogout -b 2"))
 hl.bind(mainMod .. " + M",       hl.dsp.exit())
+
+-------------------------
+---- LIQUID GLASS -------
+-------------------------
+-- Compositor-side glass for the Quickshell "glass" theme (hyprglass plugin).
+-- glass.lua loads the plugin behind a crash sentinel and reads the theme
+-- from quickshell/settings.json. A Lua error in it must not take the rest of
+-- this config with it, hence pcall.
+do
+    local ok, err = pcall(dofile, HOME .. "/.config/hypr/glass.lua")
+    if not ok then
+        hl.notification.create({ text = "glass.lua: " .. tostring(err), duration = 10000 })
+    end
+end

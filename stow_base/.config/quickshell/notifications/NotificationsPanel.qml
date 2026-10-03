@@ -7,6 +7,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Services.Notifications
+import "../common" as Common
 
 Scope {
     id: root
@@ -68,6 +69,10 @@ Scope {
         readonly property real bodyBottom: height - Theme.bottomMargin
         readonly property real bodyTop: bodyBottom - bodyHeight
         readonly property real bodyLeft: edgeX - Theme.panelWidth
+        // Glass floats the card clear of the screen edge (see the glass card
+        // below); dark and light keep it welded on, so both are 0 / full width.
+        readonly property real edgeGap: Theme.glass ? 10 : 0
+        readonly property real bodyWidth: Theme.panelWidth - edgeGap
 
         // Both radii collapse with the card so the path stays well-formed at
         // height 0 instead of self-intersecting on the way out.
@@ -92,7 +97,7 @@ Scope {
             id: cardMask
             x: win.bodyLeft + win.slideX
             y: win.bodyTop
-            width: Theme.panelWidth
+            width: win.bodyWidth
             height: win.bodyHeight
         }
 
@@ -105,7 +110,7 @@ Scope {
             anchors.fill: parent
             preferredRendererType: Shape.CurveRenderer
             antialiasing: true
-            visible: win.bodyHeight > 0.5
+            visible: !Theme.glass && win.bodyHeight > 0.5
             transform: Translate { x: win.slideX }
 
             ShapePath {
@@ -158,11 +163,36 @@ Scope {
             }
         }
 
+        // --- Glass theme: a floating card instead of the welded silhouette ---
+        // Frosted, the silhouette's run down the screen edge read as a hard
+        // bright line. In glass the stack floats edgeGap clear of the edge
+        // with every corner rounded and its own lit rim (common/GlassRim.qml).
+        // Height, slide and radius are the silhouette's own.
+        Item {
+            anchors.fill: parent
+            visible: Theme.glass && win.bodyHeight > 0.5
+            transform: Translate { x: win.slideX }
+
+            Rectangle {
+                x: win.bodyLeft
+                y: win.bodyTop
+                width: win.bodyWidth
+                height: win.bodyHeight
+                radius: win.cornerR
+                color: Theme.panelBg
+
+                Common.GlassRim {
+                    anchors.fill: parent
+                    radius: parent.radius
+                }
+            }
+        }
+
         // --- Rows ----------------------------------------------------------
         Item {
             x: win.bodyLeft
             y: win.bodyTop
-            width: Theme.panelWidth
+            width: win.bodyWidth
             height: win.bodyHeight
             clip: true
             transform: Translate { x: win.slideX }

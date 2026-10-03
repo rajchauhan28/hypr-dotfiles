@@ -88,7 +88,7 @@ ColumnLayout {
                 var bands = MediaService.bands;
                 var numBands = bands ? bands.length : 0;
                 var bass = MediaService.bass || 0;
-                var glowCol = MediaService.glow ? MediaService.glow.toString() : "#e4e4e7";
+                var glowCol = MediaService.glow ? MediaService.glow.toString() : Theme.accent.toString();
 
                 ctx.save();
 
@@ -133,7 +133,7 @@ ColumnLayout {
                     else ctx.lineTo(x2, y2);
                 }
                 ctx.closePath();
-                ctx.strokeStyle = "#ffffff";
+                ctx.strokeStyle = Theme.ink(1).toString();
                 ctx.lineWidth = pane.compact ? 1.0 : 1.5;
                 ctx.globalAlpha = MediaService.playing ? 0.55 : 0.25;
                 ctx.stroke();
@@ -207,8 +207,8 @@ ColumnLayout {
             width: parent.width * 0.13
             height: width
             radius: width / 2
-            color: "#0a0a0f"
-            border.color: "#33ffffff"
+            color: Theme.discHole
+            border.color: Theme.ink(0x33 / 255)
             border.width: 1
         }
     }
@@ -359,7 +359,7 @@ ColumnLayout {
                           ? (MediaService.playing ? "󰏤" : "󰐊")
                           : modelData.glyph
                     font.pixelSize: parent.primary ? (pane.compact ? 16 : 20) : (pane.compact ? 13 : 16)
-                    color: parent.primary ? "#0a0a0f" : Theme.textPrimary
+                    color: parent.primary ? Theme.textOn(MediaService.accent) : Theme.textPrimary
                 }
 
                 MouseArea {

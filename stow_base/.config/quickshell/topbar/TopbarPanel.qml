@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Wayland
 import Quickshell.Io
 import QtQuick.Shapes
+import "../common" as Common
 
 Scope {
     id: root
@@ -681,6 +682,7 @@ Scope {
         // into the panel body below it.
         Shape {
             anchors.fill: parent
+            visible: !Theme.glass
             preferredRendererType: Shape.CurveRenderer
             antialiasing: true
             opacity: win.chromeOpacity
@@ -740,6 +742,44 @@ Scope {
 
                 PathLine { x: 0; y: Theme.edgeLine }
                 PathLine { x: 0; y: 0 }
+            }
+        }
+
+        // --- Glass theme: a floating card instead of the rail silhouette ---
+        // Frosted, the full-width rail above read as a hard bright line along
+        // the screen edge. In glass the body floats just under the edge with
+        // its own lit rim (common/GlassRim.qml), and the rail shrinks to a
+        // small handle. Geometry and animation are the silhouette's own.
+        Item {
+            anchors.fill: parent
+            visible: Theme.glass
+            opacity: win.chromeOpacity
+            transform: Translate { y: win.railOffset }
+
+            Rectangle {
+                width: 120
+                height: Math.max(3, Theme.edgeLine - 1)
+                radius: height / 2
+                anchors.horizontalCenter: parent.horizontalCenter
+                y: 1
+                color: Theme.ink(0.55)
+                opacity: win.bodyHeight < 1 ? 1 : 0
+                Behavior on opacity { NumberAnimation { duration: Theme.animFast } }
+            }
+
+            Rectangle {
+                x: win.bodyLeft
+                y: Theme.edgeLine
+                width: win.currentBodyWidth
+                height: win.bodyHeight
+                visible: width > 1 && height > 1
+                radius: win.bottomR
+                color: Theme.panelBg
+
+                Common.GlassRim {
+                    anchors.fill: parent
+                    radius: parent.radius
+                }
             }
         }
 
@@ -805,8 +845,8 @@ Scope {
                                 anchors.fill: parent
                                 anchors.bottomMargin: 4
                                 radius: Theme.radiusSmall
-                                color: parent.selected ? "#14ffffff"
-                                                       : (tabMouse.containsMouse ? "#0affffff" : "transparent")
+                                color: parent.selected ? Theme.ink(0x14 / 255)
+                                                       : (tabMouse.containsMouse ? Theme.ink(0x0a / 255) : "transparent")
                                 Behavior on color { ColorAnimation { duration: Theme.animFast } }
                             }
 

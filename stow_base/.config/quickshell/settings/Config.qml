@@ -27,13 +27,12 @@ Singleton {
     // page. Panels carry the same defaults independently, so that a deleted
     // settings.json leaves them looking exactly like this.
     readonly property var defaults: ({
-        "palette": {
-            "accent": "#e4e4e7",
-            "good": "#86d9a3",
-            "warn": "#e0c26b",
-            "danger": "#e06b6b",
-            "panelBg": "#f2101014"
+        "theme": {
+            "mode": "dark"
         },
+        "palette": cfg.darkPalette,
+        "paletteLight": cfg.themePalette("light"),
+        "paletteGlass": cfg.themePalette("glass"),
         "dock": {
             "iconSlot": 52,
             "iconSize": 34,
@@ -110,6 +109,42 @@ Singleton {
             "icon": ""
         }
     })
+
+    // ---- Themes --------------------------------------------------------
+    // "dark" | "light" | "glass". Each mode keeps its own colour overrides, so
+    // an accent picked for dark does not turn up unreadable on light:
+    //   palette (dark, the original section) / paletteLight / paletteGlass.
+    readonly property var darkPalette: ({
+        "accent": "#e4e4e7",
+        "good": "#86d9a3",
+        "warn": "#e0c26b",
+        "danger": "#e06b6b",
+        "panelBg": "#f2101014"
+    })
+
+    // The light and glass palettes, from ../themes.json -- the same file every
+    // panel reads, so the defaults shown here are what the panels draw.
+    property var themes: ({})
+
+    readonly property string themeMode: {
+        var t = cfg.data.theme;
+        var m = t ? t.mode : "";
+        return (m === "light" || m === "glass") ? m : "dark";
+    }
+    readonly property string paletteSection: cfg.themeMode === "light" ? "paletteLight"
+                                           : cfg.themeMode === "glass" ? "paletteGlass" : "palette"
+
+    function themePalette(mode) {
+        var t = cfg.themes[mode] || {};
+        var out = {};
+        for (var k in cfg.darkPalette)
+            out[k] = (typeof t[k] === "string" && t[k] !== "") ? t[k] : cfg.darkPalette[k];
+        return out;
+    }
+
+    function setThemeMode(mode) {
+        cfg.set("theme", "mode", mode);
+    }
 
     property var data: ({})
     property var pinned: []
@@ -341,6 +376,17 @@ Singleton {
         onLoaded: {
             try {
                 cfg.data = JSON.parse(text()) || ({});
+            } catch (e) {}
+        }
+    }
+
+    FileView {
+        path: Quickshell.env("HOME") + "/.config/quickshell/themes.json"
+        watchChanges: true
+        onFileChanged: reload()
+        onLoaded: {
+            try {
+                cfg.themes = JSON.parse(text()) || ({});
             } catch (e) {}
         }
     }
