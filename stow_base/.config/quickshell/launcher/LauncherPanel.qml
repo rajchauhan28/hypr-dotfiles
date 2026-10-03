@@ -86,11 +86,33 @@ Scope {
     // Apps come straight from Quickshell -- no elephant, no socket, no cache
     // to go stale. noDisplay entries are the ones .desktop files explicitly
     // mark as not-for-menus, so honouring it is what keeps the list clean.
+    //
+    // The long-running shell's DesktopEntries list can hold the same entry
+    // more than once: after a few hours every app showed up two or three times,
+    // while a fresh instance scanning the same files listed each once
+    // (2026-10-03). Keyed by desktop id, the last copy wins -- it is the
+    // newest scan.
     function appEntries() {
         var out = [];
-        var apps = DesktopEntries.applications.values;
-        for (var i = 0; i < apps.length; i++) {
-            var a = apps[i];
+        var byId = {};
+        var order = [];
+        var all = DesktopEntries.applications.values;
+        for (var k = 0; k < all.length; k++) {
+            if (!(all[k].id in byId))
+                order.push(all[k].id);
+            byId[all[k].id] = all[k];
+        }
+        // Logged once per change: if apps show up twice again with no such
+        // line in the log, the copies carry different ids and this is not
+        // the fix.
+        if (all.length - order.length !== root.appDupDropped) {
+            root.appDupDropped = all.length - order.length;
+            if (root.appDupDropped > 0)
+                console.warn("launcher: dropped " + root.appDupDropped + " same-id DesktopEntries copies ("
+                             + all.length + " -> " + order.length + ")");
+        }
+        for (var i = 0; i < order.length; i++) {
+            var a = byId[order[i]];
             if (a.noDisplay)
                 continue;
             out.push({
@@ -114,6 +136,7 @@ Scope {
 
     property var clipboardEntries: []
     property var dmenuEntries: []
+    property int appDupDropped: 0
 
     // files mode keeps the two stages apart so the instant half can paint
     // while the live walk is still running. Each carries the query it was
