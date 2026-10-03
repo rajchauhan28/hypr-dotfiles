@@ -127,7 +127,7 @@ Item {
         if (entry.senderCritical)
             return Theme.timeoutCritical * 1000;
         if (notif.expireTimeout > 0)
-            return Math.round(notif.expireTimeout * 1000);
+            return Math.round(notif.expireTimeout);
         return (notif.urgency === NotificationUrgency.Low
                 ? Theme.timeoutLow : Theme.timeoutNormal) * 1000;
     }
