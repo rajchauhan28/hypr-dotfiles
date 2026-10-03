@@ -129,7 +129,12 @@ function rank(entries, needle, stats, nowMs) {
             continue;
         }
 
-        var m = scoreFields(e.fields, needle);
+        // An entry may omit `fields` entirely: its label is then the only
+        // thing worth matching on. Synthesising the list here, rather than
+        // storing it on every entry, keeps nested containers out of the
+        // objects that become QML model data -- see the note in
+        // LauncherPanel.qml's dmenu loader.
+        var m = scoreFields(e.fields || [{ text: e.label, weight: 1.0 }], needle);
         if (m < 0)
             continue;
         out.push({ entry: e, score: m + Math.min(fr, 20) * 25 + (e.bias || 0) });

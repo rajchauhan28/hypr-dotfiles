@@ -488,8 +488,16 @@ Scope {
                     payload: l,
                     // Scripts build these lists in a deliberate order; with no
                     // query typed it must survive intact.
-                    bias: (lines.length - i) * 1000,
-                    fields: [{ text: l, weight: 1.0 }]
+                    bias: (lines.length - i) * 1000
+                    // Deliberately no `fields`. It was [{ text: l, weight: 1 }]
+                    // -- an array of maps nested inside the entry map. Only
+                    // search.js reads it, in plain JS, and for a dmenu row it
+                    // just restated `label`; but the entry goes on to become
+                    // QML model data, so Qt converted that nested container
+                    // per delegate. Qt 6.11 crashed doing exactly that
+                    // (SEGV in VariantAssociationPrototype::fromQVariantMap
+                    // during delegate incubation, 2026-09-15). search.js now
+                    // synthesises the field list from the label instead.
                 });
             }
             root.dmenuEntries = out;
