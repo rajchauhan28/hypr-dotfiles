@@ -1,3 +1,5 @@
 require("config.options")
 require("config.lazy")
+require("config.pywal").setup()
 require("config.keymaps")
+require("config.env_detect").setup()
