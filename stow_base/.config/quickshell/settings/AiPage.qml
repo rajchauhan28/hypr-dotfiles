@@ -333,7 +333,11 @@ ColumnLayout {
 
     Card {
         title: "OPENCODE"
-        subtitle: "Applies to new opencode sessions"
+        // Only one local model is ever offered -- the running one, else the one
+        // Start launches -- so opencode can never pick a port nothing serves.
+        subtitle: page.st && page.st.opencodeModel
+                  ? "Offers " + page.modelLabel(page.st.opencodeModel) + " only · new opencode sessions"
+                  : "Applies to new opencode sessions"
 
         RowLayout {
             Layout.fillWidth: true
@@ -341,7 +345,7 @@ ColumnLayout {
 
             Text {
                 Layout.fillWidth: true
-                text: "Offer the local models in opencode"
+                text: "Offer the running model in opencode"
                 color: Theme.textPrimary
                 font.pixelSize: 11
             }
