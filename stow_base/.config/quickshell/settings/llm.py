@@ -2,7 +2,9 @@
 """Local LLM server control for the settings app's AI page.
 
     llm.py status                       -> one JSON object on stdout
-    llm.py start <model> [--no-webui]   -> stops any llama-server, starts <model>, waits for /health
+    llm.py start <model> [--no-webui] [--thinking|--no-thinking]
+                                        -> stops any llama-server, starts <model>, waits for /health
+                                           (thinking defaults to the last choice)
     llm.py stop
     llm.py opencode on|off              -> offer opencode the running model only / hide them all
 
@@ -31,6 +33,10 @@ STATE = os.path.join(HOME, ".local", "state", "llm-server.json")
 OPENCODE = os.path.join(HOME, ".config", "opencode", "opencode.json")
 E4B_DIR = os.path.join(HOME, "ddrive", "GenAI", "models")
 BIG_DIR = os.path.join(HOME, "edrive", "models")
+# Google's updated Gemma 4 template. The heretic GGUF embeds the April one,
+# which llama.cpp flags as outdated (and patches around) and whose tool
+# definitions are formatted the old way.
+GEMMA4_TEMPLATE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "gemma4-chat-template.jinja")
 
 MODELS = {
     "e4b": {
@@ -45,6 +51,7 @@ MODELS = {
                  "-c", "131072", "-ctk", "q8_0", "-ctv", "turbo4", "-ub", "256",
                  "--spec-type", "draft-mtp", "-md", os.path.join(E4B_DIR, "mtp-gemma-4-E4B-it.gguf"),
                  "-ngld", "99"],
+        "thinking": {"on": ["--reasoning", "on"], "off": ["--reasoning", "off"]},
     },
     "26b": {
         "label": "Gemma 4 26B heretic",
@@ -52,11 +59,15 @@ MODELS = {
         "port": 8082,
         "provider": "llamacpp-26b",
         "model": os.path.join(BIG_DIR, "gemma-4-26B-A4B-it-ultra-uncensored-heretic.i1-IQ3_XXS.gguf"),
-        # Thinking off (garbled <|channel> markers -> HTTP 500), q8_0 KV (turbo4 V
-        # loops on long prompts), n-cpu-moe 22 + -ub 256 (20 OOMs mid-prompt),
-        # no MTP (slower on this MoE). 128K never fits.
+        # q8_0 KV (turbo4 V loops on long prompts), n-cpu-moe 22 + -ub 256 (20
+        # OOMs mid-prompt), no MTP (slower on this MoE). 128K never fits.
         "args": ["-ngl", "99", "--n-cpu-moe", "22", "-fa", "on", "-c", "65536", "-ub", "256",
-                 "-ctk", "q8_0", "-ctv", "q8_0", "-t", "6", "--reasoning", "off", "--cache-ram", "2048"],
+                 "-ctk", "q8_0", "-ctv", "q8_0", "-t", "6", "--cache-ram", "2048"],
+        # Thinking off is the validated mode. On with the embedded template the
+        # model sometimes garbles its own <|channel> marker (HTTP 500, or the
+        # thought leaking into the answer), so thinking uses the official one.
+        "thinking": {"on": ["--reasoning", "on", "--chat-template-file", GEMMA4_TEMPLATE],
+                     "off": ["--reasoning", "off"]},
     },
 }
 
@@ -130,6 +141,7 @@ def load_state():
         s["opencode"] = not all(m["provider"] in disabled for m in MODELS.values())
     s.setdefault("model", "e4b")
     s.setdefault("webui", True)
+    s.setdefault("thinking", True)
     return s
 
 
@@ -184,6 +196,7 @@ def status():
             "label": MODELS[key]["label"] if key else os.path.basename(path or "unknown"),
             "port": port,
             "webui": "--no-webui" not in args,
+            "thinking": arg_after(args, "--reasoning") != "off",
             "url": f"http://127.0.0.1:{port}",
             "healthy": healthy(port),
         }
@@ -196,7 +209,7 @@ def status():
         "vramTotal": total,
         "opencode": state["opencode"],
         "opencodeModel": offered_model(state),
-        "last": {"model": state["model"], "webui": state["webui"]},
+        "last": {"model": state["model"], "webui": state["webui"], "thinking": state["thinking"]},
         "models": [{"key": k, "label": m["label"], "detail": m["detail"], "port": m["port"],
                     "present": os.path.exists(m["model"])} for k, m in MODELS.items()],
     }))
@@ -219,7 +232,7 @@ def stop():
     return 0
 
 
-def start(key, webui):
+def start(key, webui, thinking=None):
     m = MODELS.get(key)
     if not m:
         print(f"unknown model {key!r}; known: {', '.join(MODELS)}", file=sys.stderr)
@@ -234,7 +247,11 @@ def start(key, webui):
         stop()
     os.makedirs(LOG_DIR, exist_ok=True)
     log_path = os.path.join(LOG_DIR, f"{key}.log")
-    cmd = [LLAMA_SERVER, "-m", m["model"], *m["args"], "--host", "127.0.0.1", "--port", str(m["port"])]
+    state = load_state()
+    if thinking is None:
+        thinking = state["thinking"]
+    cmd = [LLAMA_SERVER, "-m", m["model"], *m["args"], *m["thinking"]["on" if thinking else "off"],
+           "--host", "127.0.0.1", "--port", str(m["port"])]
     if not webui:
         cmd.append("--no-webui")
     with open(log_path, "w") as log:
@@ -242,10 +259,9 @@ def start(key, webui):
         # server must outlive it.
         proc = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT,
                                 stdin=subprocess.DEVNULL, start_new_session=True)
-    state = load_state()
-    state.update(model=key, webui=webui)
+    state.update(model=key, webui=webui, thinking=thinking)
     write_json(STATE, state)
-    print(f"starting {m['label']} on :{m['port']} (log {log_path})", flush=True)
+    print(f"starting {m['label']} on :{m['port']}, thinking {'on' if thinking else 'off'} (log {log_path})", flush=True)
     if state["opencode"] and sync_opencode(state):
         print(f"opencode now offers {m['label']} (new sessions)", flush=True)
     deadline = time.time() + 300
@@ -282,11 +298,16 @@ def main():
         return status()
     if a == ["stop"]:
         return stop()
-    if len(a) in (2, 3) and a[0] == "start" and (len(a) == 2 or a[2] == "--no-webui"):
-        return start(a[1], webui=len(a) == 2)
+    if len(a) >= 2 and a[0] == "start":
+        flags = set(a[2:])
+        if not flags - {"--no-webui", "--thinking", "--no-thinking"} and len(flags) == len(a) - 2 \
+                and not {"--thinking", "--no-thinking"} <= flags:
+            thinking = True if "--thinking" in flags else (False if "--no-thinking" in flags else None)
+            return start(a[1], webui="--no-webui" not in flags, thinking=thinking)
     if len(a) == 2 and a[0] == "opencode" and a[1] in ("on", "off"):
         return set_opencode(a[1] == "on")
-    print("usage: llm.py status | start <model> [--no-webui] | stop | opencode on|off", file=sys.stderr)
+    print("usage: llm.py status | start <model> [--no-webui] [--thinking|--no-thinking] | stop | opencode on|off",
+          file=sys.stderr)
     return 2
 
 

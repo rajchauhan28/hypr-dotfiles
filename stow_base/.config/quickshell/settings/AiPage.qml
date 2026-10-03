@@ -23,6 +23,7 @@ ColumnLayout {
     // else the last one started, until the user picks something.
     property string chosenModel: "e4b"
     property bool chosenWebui: true
+    property bool chosenThinking: true
     property bool seeded: false
 
     readonly property var running: page.st ? page.st.running : null
@@ -51,10 +52,12 @@ ColumnLayout {
         actionProc.running = true;
     }
 
-    function startModel(key, webui) {
+    function startModel(key, webui, thinking) {
         page.chosenModel = key;
         page.chosenWebui = webui;
-        page.act(["start", key].concat(webui ? [] : ["--no-webui"]), "Starting " + page.modelLabel(key));
+        page.chosenThinking = thinking;
+        page.act(["start", key].concat(webui ? [] : ["--no-webui"], thinking ? ["--thinking"] : ["--no-thinking"]),
+                 "Starting " + page.modelLabel(key));
     }
 
     Component.onCompleted: refresh()
@@ -80,9 +83,11 @@ ColumnLayout {
                 if (page.running) {
                     page.chosenModel = page.running.model || page.chosenModel;
                     page.chosenWebui = page.running.webui;
+                    page.chosenThinking = page.running.thinking;
                 } else if (!page.seeded) {
                     page.chosenModel = page.st.last.model;
                     page.chosenWebui = page.st.last.webui;
+                    page.chosenThinking = page.st.last.thinking;
                 }
                 page.seeded = true;
             }
@@ -209,7 +214,7 @@ ColumnLayout {
                 text: page.busy ? "Working..." : "Start " + page.modelLabel(page.chosenModel)
                 edge: Theme.accent
                 active: !page.busy && page.st !== null
-                onClicked: page.startModel(page.chosenModel, page.chosenWebui)
+                onClicked: page.startModel(page.chosenModel, page.chosenWebui, page.chosenThinking)
             }
         }
     }
@@ -288,7 +293,7 @@ ColumnLayout {
                     cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                     onClicked: {
                         if (page.running)
-                            page.startModel(modelData.key, page.chosenWebui);
+                            page.startModel(modelData.key, page.chosenWebui, page.chosenThinking);
                         else
                             page.chosenModel = modelData.key;
                     }
@@ -323,9 +328,38 @@ ColumnLayout {
                 active: !page.busy && page.st !== null
                 onToggled: {
                     if (page.running && page.running.model)
-                        page.startModel(page.running.model, !page.chosenWebui);
+                        page.startModel(page.running.model, !page.chosenWebui, page.chosenThinking);
                     else
                         page.chosenWebui = !page.chosenWebui;
+                }
+            }
+        }
+    }
+
+    Card {
+        title: "THINKING"
+        subtitle: page.running ? "Changing this restarts the server" : "Used by Start"
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 12
+
+            Text {
+                Layout.fillWidth: true
+                text: "Think before answering -- better at multi-step work, much slower per reply"
+                color: Theme.textPrimary
+                font.pixelSize: 11
+                wrapMode: Text.WordWrap
+            }
+
+            Toggle {
+                checked: page.chosenThinking
+                active: !page.busy && page.st !== null
+                onToggled: {
+                    if (page.running && page.running.model)
+                        page.startModel(page.running.model, page.chosenWebui, !page.chosenThinking);
+                    else
+                        page.chosenThinking = !page.chosenThinking;
                 }
             }
         }
