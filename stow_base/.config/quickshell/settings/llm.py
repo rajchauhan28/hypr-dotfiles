@@ -81,6 +81,22 @@ MODELS = {
                  "--temp", "0.6", "--top-p", "0.95", "--top-k", "20", "--cache-ram", "2048"],
         "thinking": {"on": ["--reasoning", "on"], "off": ["--reasoning", "off"]},
     },
+    "ornith-heretic": {
+        "label": "Ornith 1.5 9B heretic",
+        "detail": "Uncensored agentic coder (0/100 refusals, KL 0.04), 64K, images. ~40 tok/s",
+        "port": 8084,
+        "provider": "llamacpp-ornith-heretic",
+        "model": os.path.join(E4B_DIR, "Ornith-1.5-9B-heretic.i1-IQ3_XS.gguf"),
+        # Same settings as Ornith 1.0: 64K q8_0 measured 5.4 GB VRAM, stable through a 55K prompt.
+        # Vision runs on the CPU (the GPU has no room beside 64K); at the default token count it
+        # misread small text ("H2O NaOH" for "INVOICE 7419"), at 512+ it reads it exactly.
+        # 512-1024 tokens = ~10-25 s to encode an image, cached for follow-up turns.
+        "args": ["-ngl", "99", "-fa", "on", "-c", "65536", "-ctk", "q8_0", "-ctv", "q8_0", "-t", "6",
+                 "--temp", "0.6", "--top-p", "0.95", "--top-k", "20", "--cache-ram", "2048",
+                 "--mmproj", os.path.join(E4B_DIR, "Ornith-1.5-9B-heretic.mmproj-Q8_0.gguf"),
+                 "--no-mmproj-offload", "--image-min-tokens", "512", "--image-max-tokens", "1024"],
+        "thinking": {"on": ["--reasoning", "on"], "off": ["--reasoning", "off"]},
+    },
 }
 
 
