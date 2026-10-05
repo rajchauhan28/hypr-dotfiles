@@ -69,6 +69,18 @@ MODELS = {
         "thinking": {"on": ["--reasoning", "on", "--chat-template-file", GEMMA4_TEMPLATE],
                      "off": ["--reasoning", "off"]},
     },
+    "ornith": {
+        "label": "Ornith 1.0 9B",
+        "detail": "Agentic coding model, 64K context, all on GPU. ~40 tok/s; thinks long, turn off for chat",
+        "port": 8083,
+        "provider": "llamacpp-ornith",
+        "model": os.path.join(E4B_DIR, "Ornith-1.0-9B-UD-IQ3_XXS.gguf"),
+        # 3-bit, because IQ4_XS only fits 32K on the GPU; 64K q8_0 leaves ~0.8 GB
+        # for long-prompt buffers (a 55K prompt ran clean). Sampling per the model card.
+        "args": ["-ngl", "99", "-fa", "on", "-c", "65536", "-ctk", "q8_0", "-ctv", "q8_0", "-t", "6",
+                 "--temp", "0.6", "--top-p", "0.95", "--top-k", "20", "--cache-ram", "2048"],
+        "thinking": {"on": ["--reasoning", "on"], "off": ["--reasoning", "off"]},
+    },
 }
 
 
