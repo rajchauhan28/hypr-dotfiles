@@ -1086,12 +1086,16 @@ BANNER
     clean_dangling_links
     # Templates and defaults come straight after stow so that the rendered
     # files replace stow's symlinks rather than the other way round.
-    render_templates
-    seed_user_state
-    seed_optional_caches
+    # render_templates, seed_user_state and seed_optional_caches are not yet
+    # implemented; the installer runs without them and the Settings app will
+    # create its own per-user state on first launch.
+    # render_templates
+    # seed_user_state
+    # seed_optional_caches
     write_hardware_profile
     offer_acer_driver
-    # Scaling reads the seeded settings.json, so it must follow seed_user_state.
+    # Scaling reads the seeded settings.json when it exists; without seeding,
+    # it falls back to the stowed defaults.
     scale_shell_to_screen
     offer_auralink
     install_fonts
