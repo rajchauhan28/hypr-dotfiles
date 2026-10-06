@@ -4,18 +4,77 @@ import Quickshell.Io
 import Quickshell.Wayland
 import "../common" as Common
 
-// Bottom-centre OSD pill for volume, brightness and mute toggles. Takes no
-// input, so the layer surface sits on Overlay with no keyboard focus and no
-// exclusive zone. State is driven over IPC (target "osd") so hyprland.conf
-// binds call this directly rather than going through the sidepanel.
+// Bottom-centre OSD pill for volume, brightness, mute toggles and the platform
+// (performance) profile. Takes no input, so the layer surface sits on Overlay
+// with no keyboard focus and no exclusive zone. Volume/brightness are driven
+// over IPC (target "osd") from the Hyprland binds; the profile is watched
+// directly, because the Predator mode key never reaches Hyprland -- the
+// linuwu_sense driver handles it in the kernel and only moves the profile.
 Scope {
     id: root
 
-    // kind: "volume" | "brightness" | "mic"
+    // kind: "volume" | "brightness" | "mic" | "profile"
     property string kind: "volume"
     property int value: 0
     property bool muted: false
     property bool shown: false
+
+    // ---- Platform profile ---------------------------------------------
+    property var profileChoices: []
+    property string profileVendor: ""
+    property string profileName: ""
+    property string profileLabel: ""
+    readonly property int profileIndex: root.profileChoices.indexOf(root.profileName)
+
+    // PredatorSense's names for what linuwu_sense maps onto each profile.
+    readonly property var acerNames: ({
+        "low-power": "Eco", "quiet": "Quiet", "balanced": "Balanced",
+        "balanced-performance": "Performance", "performance": "Turbo"
+    })
+    readonly property var genericNames: ({
+        "low-power": "Power saver", "cool": "Cool", "quiet": "Quiet", "balanced": "Balanced",
+        "balanced-performance": "Balanced+", "performance": "Performance", "max-power": "Max power"
+    })
+
+    function profileIcon(name) {
+        switch (name) {
+        case "low-power": return String.fromCodePoint(0xF032A);            // leaf
+        case "cool": return String.fromCodePoint(0xF0717);                 // snowflake
+        case "quiet": return String.fromCodePoint(0xF0F86);                // speedometer-slow
+        case "balanced": return String.fromCodePoint(0xF0F85);             // speedometer-medium
+        case "balanced-performance": return String.fromCodePoint(0xF04C5); // speedometer
+        default: return String.fromCodePoint(0xF140B);                     // lightning
+        }
+    }
+
+    function popProfile(name) {
+        if (!name)
+            return;
+        var names = root.profileVendor === "acer-wmi" ? root.acerNames : root.genericNames;
+        root.profileName = name;
+        root.profileLabel = names[name] || name;
+        root.kind = "profile";
+        root.muted = false;
+        root.shown = true;
+        hideTimer.restart();
+    }
+
+    FileView {
+        path: "/sys/firmware/acpi/platform_profile_choices"
+        onLoaded: root.profileChoices = text().trim().split(/\s+/)
+    }
+    FileView {
+        path: "/sys/class/platform-profile/platform-profile-0/name"
+        onLoaded: root.profileVendor = text().trim()
+    }
+
+    Process {
+        command: ["python3", "-I", Quickshell.env("HOME") + "/.config/quickshell/osd/profile_watch.py"]
+        running: true
+        stdout: SplitParser {
+            onRead: (line) => root.popProfile(line.trim())
+        }
+    }
 
     Timer {
         id: hideTimer
@@ -169,6 +228,7 @@ Scope {
                     font.pixelSize: Theme.iconSize
                     color: Theme.textPrimary
                     text: {
+                        if (root.kind === "profile")    return root.profileIcon(root.profileName);
                         if (root.kind === "brightness") return "󰃞";
                         if (root.kind === "mic")        return root.muted ? "󰍭" : "󰍬";
                         return root.muted ? "󰝟" : (root.value > 50 ? "󰕾" : root.value > 0 ? "󰖀" : "󰸈");
@@ -181,6 +241,7 @@ Scope {
                     anchors.verticalCenter: parent.verticalCenter
 
                     Rectangle {
+                        visible: root.kind !== "profile"
                         anchors.verticalCenter: parent.verticalCenter
                         width: parent.width
                         height: Theme.trackHeight
@@ -195,15 +256,41 @@ Scope {
                             Behavior on width { NumberAnimation { duration: 120 } }
                         }
                     }
+
+                    // Profile: one segment per available mode, lit up to the
+                    // current one, so Eco..Turbo reads as a level.
+                    Row {
+                        id: steps
+                        visible: root.kind === "profile"
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: parent.width
+                        spacing: 4
+                        readonly property int count: Math.max(1, root.profileChoices.length)
+
+                        Repeater {
+                            model: steps.count
+                            delegate: Rectangle {
+                                required property int index
+                                width: (steps.width - steps.spacing * (steps.count - 1)) / steps.count
+                                height: Theme.trackHeight
+                                radius: height / 2
+                                color: index > root.profileIndex ? Theme.trackBg
+                                     : root.profileName === "performance" ? Theme.warn : Theme.accent
+                                Behavior on color { ColorAnimation { duration: 120 } }
+                            }
+                        }
+                    }
                 }
 
                 Text {
                     id: percent
                     anchors.verticalCenter: parent.verticalCenter
-                    text: root.muted && root.kind !== "brightness" ? "mute" : (root.value + "%")
+                    text: root.kind === "profile" ? root.profileLabel
+                        : root.muted && root.kind !== "brightness" ? "mute" : (root.value + "%")
                     font.pixelSize: 14
+                    font.weight: root.kind === "profile" ? Font.DemiBold : Font.Normal
                     color: Theme.textPrimary
-                    width: 48
+                    width: root.kind === "profile" ? implicitWidth : 48
                     horizontalAlignment: Text.AlignRight
                 }
             }

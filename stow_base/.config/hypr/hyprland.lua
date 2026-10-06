@@ -305,6 +305,7 @@ hl.bind(mainMod .. " + Q", hl.dsp.window.close())
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd(browser))
 hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd(wallpaperSwitcher))
+hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("qs ipc call wallpaper toggle"))
 hl.bind(mainMod .. " + TAB", hl.dsp.exec_cmd(HOME .. "/.config/hypr/toggle_overview.sh"))
 -- Quick settings, for when reaching the right-edge hotspot is inconvenient.
 hl.bind(mainMod .. " + I", hl.dsp.exec_cmd("qs ipc call sidepanel toggle"))
@@ -315,6 +316,7 @@ hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd(HOME .. "/.config/quickshell/
 hl.bind(mainMod .. " + O", hl.dsp.exec_cmd(HOME .. "/.config/quickshell/reload.sh"))
 hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("qs ipc call launcher clipboard"))
+hl.bind(mainMod .. " + SHIFT + V", hl.dsp.exec_cmd("qs ipc call clipboard toggle"))
 hl.bind(mainMod .. " + SHIFT + E", hl.dsp.exec_cmd("qs ipc call launcher files"))
 hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
@@ -342,7 +344,7 @@ hl.bind(mainMod .. " + SHIFT + bracketright", hl.dsp.window.move({ monitor = "ri
 hl.bind(mainMod .. " + bracketleft",  hl.dsp.focus({ monitor = "left" }))
 hl.bind(mainMod .. " + bracketright", hl.dsp.focus({ monitor = "right" }))
 
-hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("qs ipc call notifications dismissAll"))
+hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("qs ipc call notifications toggleCenter"))
 
 -- Workspaces
 for i = 1, 10 do
@@ -352,12 +354,14 @@ for i = 1, 10 do
 end
 
 -- Media & Brightness (locked = true, repeating = true)
-hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("qs ipc call sidepanel volume 1"), { locked = true, repeating = true })
-hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("qs ipc call sidepanel volume -1"), { locked = true, repeating = true })
-hl.bind("XF86AudioMute",        hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"), { locked = true, repeating = true })
-hl.bind("XF86AudioMicMute",     hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"), { locked = true, repeating = true })
-hl.bind("XF86MonBrightnessUp",  hl.dsp.exec_cmd("qs ipc call sidepanel brightness 1"), { locked = true, repeating = true })
-hl.bind("XF86MonBrightnessDown",hl.dsp.exec_cmd("qs ipc call sidepanel brightness -1"), { locked = true, repeating = true })
+-- The OSD pill (quickshell/osd/) applies the change and shows the result.
+-- Mute toggles are not repeating: holding the key would flap mute on and off.
+hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("qs ipc call osd volume 1"), { locked = true, repeating = true })
+hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("qs ipc call osd volume -1"), { locked = true, repeating = true })
+hl.bind("XF86AudioMute",        hl.dsp.exec_cmd("qs ipc call osd muteSink"), { locked = true })
+hl.bind("XF86AudioMicMute",     hl.dsp.exec_cmd("qs ipc call osd muteSource"), { locked = true })
+hl.bind("XF86MonBrightnessUp",  hl.dsp.exec_cmd("qs ipc call osd brightness 1"), { locked = true, repeating = true })
+hl.bind("XF86MonBrightnessDown",hl.dsp.exec_cmd("qs ipc call osd brightness -1"), { locked = true, repeating = true })
 
 -- Media Controls (locked = true)
 hl.bind("XF86AudioNext",  hl.dsp.exec_cmd("playerctl next"), { locked = true })

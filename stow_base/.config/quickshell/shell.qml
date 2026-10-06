@@ -30,6 +30,7 @@ import "widgets/desktop_clock" as DesktopClockNS
 import "launcher" as LauncherNS
 import "osd" as OsdNS
 import "clipboard" as ClipboardNS
+import "wallpaper" as WallpaperNS
 
 ShellRoot {
     TopbarNS.TopbarPanel {}
@@ -41,6 +42,7 @@ ShellRoot {
     LauncherNS.LauncherPanel {}
     OsdNS.OsdPanel {}
     ClipboardNS.ClipboardPanel {}
+    WallpaperNS.WallpaperCarousel {}
     // Floating lyrics window. Lives at shell scope, not inside the topbar, so
     // it survives the dashboard being closed -- which is the whole point of
     // popping it out.
