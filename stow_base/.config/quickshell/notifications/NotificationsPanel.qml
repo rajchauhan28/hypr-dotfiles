@@ -33,8 +33,11 @@ Scope {
         // once its exit animation has landed, so nothing pops out abruptly.
         onNotification: (notif) => {
             notif.tracked = true;
+            NotifStore.record(notif);
         }
     }
+
+    NotificationCenter {}
 
     PanelWindow {
         id: win
@@ -47,6 +50,9 @@ Scope {
         exclusiveZone: 0
         implicitWidth: Theme.panelWidth
         color: "transparent"
+        // The center lists everything already; popups would only sit on top
+        // of it. They keep expiring while hidden.
+        visible: !NotifStore.centerOpen
 
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
@@ -228,10 +234,14 @@ Scope {
         }
     }
 
-    // Super+N used to open swaync's panel. There is no history panel yet, so
-    // the bind now clears whatever is on screen.
+    // Super+N toggles the center (NotificationCenter.qml).
     IpcHandler {
         target: "notifications"
+
+        function toggleCenter(): void { NotifStore.centerOpen = !NotifStore.centerOpen; }
+        function openCenter(): void   { NotifStore.centerOpen = true; }
+        function closeCenter(): void  { NotifStore.centerOpen = false; }
+        function clearHistory(): void { NotifStore.clear(); }
 
         function dismissAll(): void {
             var items = server.trackedNotifications.values.slice();

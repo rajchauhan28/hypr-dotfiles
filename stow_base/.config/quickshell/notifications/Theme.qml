@@ -146,6 +146,11 @@ Singleton {
         return Array.isArray(v) ? v : theme.criticalKeywordDefaults;
     }
 
+    // Notification center (Super+N) and its SQLite history.
+    readonly property int historyMax: theme.num("notifications", "historyMax", 500)
+    readonly property int centerWidth: theme.num("notifications", "centerWidth", 420)
+    readonly property int centerMargin: theme.num("notifications", "centerMargin", 12)
+
     readonly property int animFast: 120
     readonly property int animNormal: 220
     readonly property int animPanel: 380

@@ -62,6 +62,7 @@ Singleton {
     readonly property color panelBorder: theme.col("panelBorder", "#1cffffff")
     readonly property color textPrimary: theme.col("textPrimary", "#f8fafc")
     readonly property color accent: theme.col("accent", "#e4e4e7")
+    readonly property color warn: theme.col("warn", "#e0c26b")
     readonly property color trackBg: Qt.rgba(1, 1, 1, 0.12)
 
     // The osd section is new. panelWidth here is the whole pill width; the
