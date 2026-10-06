@@ -362,6 +362,34 @@ install_packages() {
     fi
 }
 
+# wallust: the AUR package currently fails sha256 validation (upstream's 3.5.2
+# tarball on crates.io/github was re-rolled), so makepkg aborts. Fall back to
+# `cargo install` which pulls straight from crates.io and does not care about
+# the stale PKGBUILD hash. rustup is already in the package list.
+install_wallust_from_cargo() {
+    if command -v wallust &>/dev/null; then
+        msg "$C_GREEN" "✅ wallust is already installed."
+        return
+    fi
+    if ! command -v cargo &>/dev/null; then
+        if command -v rustup &>/dev/null; then
+            msg "$C_BLUE" "  -> Setting up a stable Rust toolchain for the wallust build..."
+            rustup default stable &>/dev/null || true
+        fi
+    fi
+    if ! command -v cargo &>/dev/null; then
+        msg "$C_YELLOW" "⚠️  cargo not available; skipping wallust. Install rustup then:"
+        msg "$C_BLUE"   "     cargo install wallust"
+        return
+    fi
+    msg "$C_CYAN" "🎨 Installing wallust via cargo (AUR PKGBUILD hash is stale)..."
+    if cargo install wallust --locked; then
+        msg "$C_GREEN" "✅ wallust installed to ~/.cargo/bin."
+    else
+        msg "$C_YELLOW" "⚠️  cargo install wallust failed; the rest of the shell is unaffected."
+    fi
+}
+
 # Function to setup Hyprland plugins using hyprpm
 setup_hyprpm() {
     msg "$C_CYAN" "🔌 Setting up Hyprland plugins..."
@@ -447,7 +475,23 @@ stow_configs() {
     if [ -e "$HOME/.zshrc" ] && [ ! -L "$HOME/.zshrc" ]; then
         mv "$HOME/.zshrc" "$BACKUP_DIR/"
     fi
-    
+
+    # Catch-all: for every file stow is about to lay down, if the target exists
+    # as a regular file (not a symlink into this repo), move it aside. The
+    # per-directory loop above handles whole dirs like ~/.config/hypr; this
+    # covers loose files that live beside them, e.g. ~/.config/mimeapps.list,
+    # which otherwise abort stow with a "neither a link nor a directory" error.
+    local rel target
+    while IFS= read -r -d '' rel; do
+        rel="${rel#./}"
+        target="$HOME/$rel"
+        if [ -e "$target" ] && [ ! -L "$target" ] && [ ! -d "$target" ]; then
+            msg "$C_YELLOW" "  -> Backing up conflicting file '$rel'..."
+            mkdir -p "$BACKUP_DIR/$(dirname "$rel")"
+            mv "$target" "$BACKUP_DIR/$rel"
+        fi
+    done < <(cd "$REPO_DIR/stow_base" && find . -type f -print0)
+
     msg "$C_BLUE" "  -> Applying GNU Stow from stow_base..."
     # Absolute, so this keeps working wherever an earlier step left the cwd.
     ( cd "$REPO_DIR/stow_base" && stow -t "$HOME" . )
@@ -1035,6 +1079,7 @@ BANNER
     detect_legacy_shell_components
     check_aur_helper
     install_packages
+    install_wallust_from_cargo
     stow_configs
     # Upgrades first: clear links to files an older version stowed but this
     # one no longer ships, before anything tries to write through them.
