@@ -29,6 +29,7 @@ ShellRoot {
         { key: "maintenance", glyph: "󰒓", label: "Maintenance", hint: "DAMX driver and kernel hook", source: "MaintenancePage.qml" },
         { key: "ai", glyph: "󰚩", label: "Local AI", hint: "llama.cpp model, web UI, opencode", source: "AiPage.qml" },
         { key: "appearance", glyph: "󰸌", label: "Appearance", hint: "Shared palette", source: "AppearancePage.qml" },
+        { key: "wallpaper", glyph: "󰸉", label: "Wallpaper", hint: "Pick from ~/Pictures/wallpapers", source: "WallpaperPage.qml" },
         { key: "lockscreen", glyph: "󰌾", label: "Lockscreen", hint: "User icon and assets", source: "LockscreenPage.qml" }
     ]
 
