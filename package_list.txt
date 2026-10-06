@@ -98,8 +98,9 @@ strace
 sudo
 thunar
 tigervnc
-timeshift
-timeshift-autosnap
+# timeshift/timeshift-autosnap conflict with CachyOS's cachyos-snapper-support.
+# CachyOS already snapshots on every pacman transaction via snapper; keep that.
+# If you want timeshift instead, remove cachyos-snapper-support first.
 tree
 ttf-firacode-nerd
 ttf-jetbrains-mono-nerd
@@ -108,7 +109,8 @@ unzip
 vi
 visual-studio-code-bin
 walker
-wallust
+# wallust: the AUR 3.5.2 PKGBUILD's sha256 no longer matches upstream's tarball,
+# so makepkg aborts. Install.sh falls back to `cargo install wallust` instead.
 wget
 wireguard-tools
 wireplumber
