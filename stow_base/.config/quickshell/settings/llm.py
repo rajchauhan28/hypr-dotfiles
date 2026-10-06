@@ -32,11 +32,6 @@ LOG_DIR = os.path.join(HOME, ".cache", "llama-server")
 STATE = os.path.join(HOME, ".local", "state", "llm-server.json")
 OPENCODE = os.path.join(HOME, ".config", "opencode", "opencode.json")
 E4B_DIR = os.path.join(HOME, "ddrive", "GenAI", "models")
-BIG_DIR = os.path.join(HOME, "edrive", "models")
-# Google's updated Gemma 4 template. The heretic GGUF embeds the April one,
-# which llama.cpp flags as outdated (and patches around) and whose tool
-# definitions are formatted the old way.
-GEMMA4_TEMPLATE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "gemma4-chat-template.jinja")
 
 MODELS = {
     "e4b": {
@@ -53,41 +48,14 @@ MODELS = {
                  "-ngld", "99"],
         "thinking": {"on": ["--reasoning", "on"], "off": ["--reasoning", "off"]},
     },
-    "26b": {
-        "label": "Gemma 4 26B heretic",
-        "detail": "Uncensored MoE, 64K context, text only. ~20-29 tok/s, needs ~6 GB free RAM",
-        "port": 8082,
-        "provider": "llamacpp-26b",
-        "model": os.path.join(BIG_DIR, "gemma-4-26B-A4B-it-ultra-uncensored-heretic.i1-IQ3_XXS.gguf"),
-        # q8_0 KV (turbo4 V loops on long prompts), n-cpu-moe 22 + -ub 256 (20
-        # OOMs mid-prompt), no MTP (slower on this MoE). 128K never fits.
-        "args": ["-ngl", "99", "--n-cpu-moe", "22", "-fa", "on", "-c", "65536", "-ub", "256",
-                 "-ctk", "q8_0", "-ctv", "q8_0", "-t", "6", "--cache-ram", "2048"],
-        # Thinking off is the validated mode. On with the embedded template the
-        # model sometimes garbles its own <|channel> marker (HTTP 500, or the
-        # thought leaking into the answer), so thinking uses the official one.
-        "thinking": {"on": ["--reasoning", "on", "--chat-template-file", GEMMA4_TEMPLATE],
-                     "off": ["--reasoning", "off"]},
-    },
-    "ornith": {
-        "label": "Ornith 1.0 9B",
-        "detail": "Agentic coding model, 64K context, all on GPU. ~40 tok/s; thinks long, turn off for chat",
-        "port": 8083,
-        "provider": "llamacpp-ornith",
-        "model": os.path.join(E4B_DIR, "Ornith-1.0-9B-UD-IQ3_XXS.gguf"),
-        # 3-bit, because IQ4_XS only fits 32K on the GPU; 64K q8_0 leaves ~0.8 GB
-        # for long-prompt buffers (a 55K prompt ran clean). Sampling per the model card.
-        "args": ["-ngl", "99", "-fa", "on", "-c", "65536", "-ctk", "q8_0", "-ctv", "q8_0", "-t", "6",
-                 "--temp", "0.6", "--top-p", "0.95", "--top-k", "20", "--cache-ram", "2048"],
-        "thinking": {"on": ["--reasoning", "on"], "off": ["--reasoning", "off"]},
-    },
     "ornith-heretic": {
         "label": "Ornith 1.5 9B heretic",
         "detail": "Uncensored agentic coder (0/100 refusals, KL 0.04), 64K, images. ~40 tok/s",
         "port": 8084,
         "provider": "llamacpp-ornith-heretic",
         "model": os.path.join(E4B_DIR, "Ornith-1.5-9B-heretic.i1-IQ3_XS.gguf"),
-        # Same settings as Ornith 1.0: 64K q8_0 measured 5.4 GB VRAM, stable through a 55K prompt.
+        # 3-bit, because a 4-bit 9B only fits 32K on the GPU; 64K q8_0 measured 5.4 GB VRAM,
+        # stable through a 55K prompt. Sampling per the model card.
         # Vision runs on the CPU (the GPU has no room beside 64K); at the default token count it
         # misread small text ("H2O NaOH" for "INVOICE 7419"), at 512+ it reads it exactly.
         # 512-1024 tokens = ~10-25 s to encode an image, cached for follow-up turns.
