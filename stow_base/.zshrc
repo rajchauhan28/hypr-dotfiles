@@ -239,6 +239,6 @@ export CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
 # for anything real; /from-stdin is the version that keeps a password out of argv.
 # KRB5_CONFIG points at a dead realm: without it FreeRDP burns ~46s on ATHENA.MIT.EDU
 # before falling back to NTLM.
-alias wb='KRB5_CONFIG=~/.config/krb5-null.conf xfreerdp3 /v:127.0.0.1:47300 /u:reign /p:Omaewamoshindeiru28 /cert:ignore /dynamic-resolution +clipboard'
+alias wb='KRB5_CONFIG=~/.config/krb5-null.conf sdl-freerdp3 /v:127.0.0.1:47300 /u:reign /p:"$(<$HOME/.config/winboat/rdp.pass)" /cert:ignore /dynamic-resolution +clipboard'
 # Same, plus a shared folder that appears in the guest as \\tsclient\wb
 
