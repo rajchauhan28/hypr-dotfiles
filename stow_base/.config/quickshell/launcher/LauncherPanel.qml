@@ -392,9 +392,9 @@ Scope {
         if (entry.kind === "app") {
             entry.payload.execute();
         } else if (entry.kind === "clip") {
-            // decode | wl-copy keeps binary payloads intact; routing the bytes
-            // through QML would corrupt anything non-UTF-8.
-            Quickshell.execDetached(["sh", "-c", "cliphist decode \"$1\" | wl-copy", "sh", entry.payload]);
+            // Bytes stay in the shell (QML would corrupt non-UTF-8 payloads);
+            // the helper also pins text to text/plain.
+            Quickshell.execDetached([Quickshell.env("HOME") + "/.config/quickshell/common/clip-restore.sh", entry.payload]);
         } else if (entry.kind === "file") {
             Quickshell.execDetached(["xdg-open", entry.payload]);
         }

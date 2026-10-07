@@ -41,7 +41,7 @@ Scope {
     }
 
     function paste(id) {
-        Quickshell.execDetached(["sh", "-c", "cliphist decode \"$1\" | wl-copy", "sh", id]);
+        Quickshell.execDetached([Quickshell.env("HOME") + "/.config/quickshell/common/clip-restore.sh", id]);
         root.close();
     }
 
