@@ -304,7 +304,9 @@ hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd(terminal))
 hl.bind(mainMod .. " + Q", hl.dsp.window.close())
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd(browser))
-hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd(wallpaperSwitcher))
+-- Wallpaper carousel; picking one runs `walllust-cli set`, the same call
+-- wallpaper_switcher.sh makes (which still runs once at login).
+hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("qs ipc call wallpaper toggle"))
 hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("qs ipc call wallpaper toggle"))
 hl.bind(mainMod .. " + TAB", hl.dsp.exec_cmd(HOME .. "/.config/hypr/toggle_overview.sh"))
 -- Quick settings, for when reaching the right-edge hotspot is inconvenient.
