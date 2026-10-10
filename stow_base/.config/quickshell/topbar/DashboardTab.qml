@@ -607,7 +607,7 @@ Item {
                             fillMode: Theme.hasCustomProfileIcon
                                       ? Image.PreserveAspectCrop
                                       : Image.PreserveAspectFit
-                            asynchronous: true
+                            asynchronous: false  // icon-provider sources load via QIcon/QPixmap, which abort qs off the GUI thread
                             sourceSize: Qt.size(128, 128)
                             visible: source.toString() !== "" && status !== Image.Error
                         }

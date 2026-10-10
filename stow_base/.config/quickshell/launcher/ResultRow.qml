@@ -159,7 +159,7 @@ Item {
                 anchors.fill: parent
                 visible: mediaSlot.isIcon
                 source: mediaSlot.isIcon ? row.resolveIcon(row.previewPath) : ""
-                asynchronous: true
+                asynchronous: false  // icon-provider sources load via QIcon/QPixmap, which abort qs off the GUI thread
             }
 
             // Plain (non-preview) rows: apps, files, dmenu.
@@ -167,7 +167,7 @@ Item {
                 anchors.fill: parent
                 visible: row.previewKind === "" && row.iconName !== ""
                 source: row.iconName
-                asynchronous: true
+                asynchronous: false  // icon-provider sources load via QIcon/QPixmap, which abort qs off the GUI thread
             }
 
             // Fallback glyph so a missing icon still leaves the row aligned.

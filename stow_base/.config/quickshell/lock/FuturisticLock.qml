@@ -413,7 +413,7 @@ Item {
                         source: ui.controller.profileIcon(profileDelegate.modelData)
                         fillMode: ui.controller.profileHasPhoto(profileDelegate.modelData)
                                   ? Image.PreserveAspectCrop : Image.PreserveAspectFit
-                        asynchronous: true
+                        asynchronous: false  // icon-provider sources load via QIcon/QPixmap, which abort qs off the GUI thread
                     }
 
                     Text {

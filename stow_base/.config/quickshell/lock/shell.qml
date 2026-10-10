@@ -342,7 +342,7 @@ ShellRoot {
                                         fillMode: root.profileHasPhoto(profileDelegate.modelData)
                                                   ? Image.PreserveAspectCrop
                                                   : Image.PreserveAspectFit
-                                        asynchronous: true
+                                        asynchronous: false  // icon-provider sources load via QIcon/QPixmap, which abort qs off the GUI thread
                                         visible: source.toString() !== ""
                                     }
 

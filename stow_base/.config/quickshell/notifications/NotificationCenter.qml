@@ -208,7 +208,7 @@ Scope {
                                     source: center.iconSource(row.modelData.icon)
                                     sourceSize: Qt.size(64, 64)
                                     fillMode: Image.PreserveAspectFit
-                                    asynchronous: true
+                                    asynchronous: false  // icon-provider sources load via QIcon/QPixmap, which abort qs off the GUI thread
                                     smooth: true
                                     visible: status === Image.Ready
                                 }
