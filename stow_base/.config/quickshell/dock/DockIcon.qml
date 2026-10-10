@@ -46,7 +46,7 @@ Item {
         }
         sourceSize.width: 64
         sourceSize.height: 64
-        asynchronous: true
+        asynchronous: false  // icon-provider sources load via QIcon/QPixmap, which abort qs off the GUI thread
         visible: status === Image.Ready
 
         scale: mouse.pressed ? 0.92 : (mouse.containsMouse ? 1.18 : 1.0)

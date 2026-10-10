@@ -114,8 +114,8 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("hypridle")
     -- Consolidated shell: topbar + leftbar + sidepanel + dock + desktop_clock
     -- + notifications all live in ~/.config/quickshell/shell.qml (one process).
-    -- `qs -d` with no -c launches that default config.
-    hl.exec_cmd("qs -d &")
+    -- start.sh runs `qs -d` (the default config) and retries if it dies on startup.
+    hl.exec_cmd(HOME .. "/.config/quickshell/start.sh &")
     -- The lockscreen stays its OWN process on purpose: reloading the bars must
     -- not be able to drop an active lock. See quickshell/lock/lock.sh.
     hl.exec_cmd("qs -d -p " .. HOME .. "/.config/quickshell/lock &")
