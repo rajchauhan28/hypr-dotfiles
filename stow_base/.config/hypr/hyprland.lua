@@ -198,6 +198,11 @@ end)
 -----------------------
 ---- LOOK AND FEEL ----
 -----------------------
+-- Blur and shadow as configured. smart_gpu.py's Max Battery mode switches both
+-- off at runtime and restores these values when it leaves, so this table is
+-- the one place to change them. Global on purpose: `hyprctl eval` reads it.
+POWER_BASE = { blur = true, shadow = true }
+
 hl.config({
     general = {
         gaps_in  = 2,
@@ -228,7 +233,7 @@ hl.config({
         -- composite every window BEHIND it too, so cost grew with the stack
         -- depth. On it, windows blur the desktop only.
         blur = {
-            enabled = true,
+            enabled = POWER_BASE.blur,
             size = 4,
             passes = 1,
             new_optimizations = true,
@@ -242,7 +247,7 @@ hl.config({
         },
 
         shadow = {
-            enabled = true,
+            enabled = POWER_BASE.shadow,
             range = 15,
             -- render_power is an exponent on the shadow falloff; 2 is
             -- visually near-identical here and noticeably cheaper.
@@ -414,5 +419,25 @@ do
     local ok, err = pcall(dofile, HOME .. "/.config/hypr/glass.lua")
     if not ok then
         hl.notification.create({ text = "glass.lua: " .. tostring(err), duration = 10000 })
+    end
+end
+
+-------------------------
+---- POWER MODE ---------
+-------------------------
+-- smart_gpu.py writes the active power mode's refresh rate and blur/shadow to
+-- this file. Loading it last means a config reload keeps Max Battery instead
+-- of snapping back to the full refresh rate with blur on. It does not exist
+-- until the daemon has run once in this login.
+do
+    local runtime = os.getenv("XDG_RUNTIME_DIR")
+    local path = runtime and (runtime .. "/power-mode/overrides.lua")
+    local f = path and io.open(path, "r")
+    if f then
+        f:close()
+        local ok, err = pcall(dofile, path)
+        if not ok then
+            hl.notification.create({ text = "power mode: " .. tostring(err), duration = 10000 })
+        end
     end
 end
