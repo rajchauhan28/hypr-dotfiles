@@ -67,6 +67,11 @@ end
 if hl.plugin.hyprglass then
     local hg = hl.plugin.hyprglass
     local glass = theme_mode() == "glass"
+    -- Max Battery (smart_gpu.py) switches layer glass off at runtime and hands
+    -- this value back when it leaves; POWER_BASE lives in hyprland.lua.
+    if type(POWER_BASE) == "table" then
+        POWER_BASE.glass = glass
+    end
 
     hg.config({
         -- App windows never get glass; only the shell's own layers do.
