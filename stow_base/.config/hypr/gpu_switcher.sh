@@ -156,7 +156,7 @@ if [ "$BATTERY" = true ]; then
     [ -n "$AUTO_TARGET" ] && auto_now=" (now $(pretty "$AUTO_TARGET"))"
     add "Power: Auto - follows the charger${auto_now}$(mark auto "$active_power")" "power:auto"
 fi
-add "Power: Max Battery - $(hz "$RATE_LOW")no blur, power-saver, dimmed$(mark battery "$active_power")" "power:battery"
+add "Power: Max Battery - $(hz "$RATE_LOW")no blur or glass, power-saver, dimmed$(mark battery "$active_power")" "power:battery"
 add "Power: Balanced - $(hz "$RATE_HIGH")effects on, balanced CPU$(mark balanced "$active_power")" "power:balanced"
 add "Power: Performance - $(hz "$RATE_HIGH")effects on, ${perf_note}$(mark performance "$active_power")" "power:performance"
 

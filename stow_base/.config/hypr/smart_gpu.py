@@ -193,14 +193,25 @@ def refresh_bounds(monitor):
 
 
 def decoration_lua(effects):
+    """Blur, shadow and the hyprglass layer glass, as one Lua chunk.
+
+    Layer glass re-samples the screen behind every shell panel 30 times a
+    second while the Glass theme is on, so it goes with blur on battery. With
+    any other theme glass.lua leaves it off and this changes nothing.
+    """
     if effects:
-        # Hand blur/shadow back to whatever hyprland.lua configured; it records
-        # those values in POWER_BASE. An older config without it gets "on".
+        # Hand everything back to what the config set: hyprland.lua records
+        # blur/shadow in POWER_BASE and glass.lua adds the theme's glass. An
+        # older config without it gets blur/shadow on, glass untouched.
         return ("local base = POWER_BASE or { blur = true, shadow = true }\n"
                 "hl.config({ decoration = { blur = { enabled = base.blur }, "
-                "shadow = { enabled = base.shadow } } })")
+                "shadow = { enabled = base.shadow } } })\n"
+                "if hl.plugin.hyprglass and base.glass ~= nil then "
+                "hl.plugin.hyprglass.config({ layers = { enabled = base.glass } }) end")
     return ("hl.config({ decoration = { blur = { enabled = false }, "
-            "shadow = { enabled = false } } })")
+            "shadow = { enabled = false } } })\n"
+            "if hl.plugin.hyprglass then "
+            "hl.plugin.hyprglass.config({ layers = { enabled = false } }) end")
 
 
 def monitor_lua(panel, rate):
@@ -317,7 +328,7 @@ def apply(mode, manual, plugged, note=""):
     details = []
     if rate:
         details.append(f"{rate} Hz")
-    details.append("effects on" if spec["effects"] else "no blur/shadow")
+    details.append("effects on" if spec["effects"] else "no blur/shadow/glass")
     if profile:
         details.append(f"CPU {profile}")
     if dimmed:
