@@ -19,11 +19,16 @@ fi
 mapfile -t externals < <(mon_json | jq -r --arg int "$internal" \
     '.[] | select(.name != $int) | .name')
 
+errors=""
 if [ "${#externals[@]}" -gt 0 ]; then
     for name in "${externals[@]}"; do
         mon_remember "$name"
-        hyprctl keyword monitor "$name, disable"
+        err="$(mon_disable "$name" 2>&1)" || errors+="$err"$'\n'
     done
+    if [ -n "$errors" ]; then
+        notify-send -u critical "Game Mode" "Failed: $errors"
+        exit 1
+    fi
     notify-send "Game Mode" "Enabled: ${#externals[@]} external monitor(s) disabled"
     exit 0
 fi
@@ -36,13 +41,19 @@ if [ -d "$MON_STATE_DIR" ]; then
         [ -e "$state" ] || continue
         name="$(basename "$state")"
         [ "$name" = "$internal" ] && continue
-        hyprctl keyword monitor "$name, $(mon_recall "$name")"
-        rm -f "$state"
-        restored=$((restored + 1))
+        read -r mode scale <<<"$(mon_recall "$name")"
+        if err="$(mon_apply "$name" "$mode" auto "$scale" 2>&1)"; then
+            rm -f "$state"
+            restored=$((restored + 1))
+        else
+            errors+="$err"$'\n'
+        fi
     done
 fi
 
-if [ "$restored" -gt 0 ]; then
+if [ -n "$errors" ]; then
+    notify-send -u critical "Game Mode" "Failed to restore: $errors"
+elif [ "$restored" -gt 0 ]; then
     notify-send "Game Mode" "Disabled: $restored monitor(s) restored"
 else
     notify-send "Game Mode" "No external monitor to toggle."

@@ -38,8 +38,31 @@ mon_external() {
         map(select(.name != $int)) | first | .name // empty'
 }
 
+# mon_apply <name> <mode> <position> <scale> [<mirror-of>] -- set a monitor
+# live. Hyprland 0.55+ on a Lua config rejects `hyprctl keyword` outright
+# ("keyword can't work with non-legacy parsers"), so this goes through
+# `hyprctl eval` and hl.monitor(). disabled = false is explicit so the same
+# call re-enables a monitor mon_disable switched off. Prints Hyprland's error
+# and returns non-zero on failure -- keyword failed silently.
+mon_apply() {
+    local lua out
+    lua="hl.monitor({ output = \"$1\", mode = \"$2\", position = \"$3\", scale = $4, disabled = false"
+    [ -n "${5:-}" ] && lua+=", mirror = \"$5\""
+    lua+=" })"
+    out="$(hyprctl eval "$lua" 2>&1)"
+    [ "$out" = "ok" ] || { printf '%s: %s\n' "$1" "${out:-hyprctl eval failed}" >&2; return 1; }
+}
+
+# mon_disable <name> -- switch a monitor off. Its windows and workspaces move
+# to the remaining outputs.
+mon_disable() {
+    local out
+    out="$(hyprctl eval "hl.monitor({ output = \"$1\", disabled = true })" 2>&1)"
+    [ "$out" = "ok" ] || { printf '%s: %s\n' "$1" "${out:-hyprctl eval failed}" >&2; return 1; }
+}
+
 # mon_mode <name> -- the monitor's current mode as "WIDTHxHEIGHT@REFRESH",
-# ready to paste into a `hyprctl keyword monitor` line.
+# ready to pass to mon_apply.
 mon_mode() {
     mon_json | jq -r --arg n "$1" '
         map(select(.name == $n)) | first
@@ -81,14 +104,14 @@ mon_remember() {
     printf '%s,%s\n' "$mode" "$scale" > "$MON_STATE_DIR/$name"
 }
 
-# mon_recall <name> -- the remembered "mode,scale" pair, or "preferred,auto,1"
-# when nothing was stored. Both forms slot straight into `monitor =`.
+# mon_recall <name> -- the remembered mode and scale as "MODE SCALE", or
+# "preferred 1" when nothing was stored. Read it with `read -r mode scale`.
 mon_recall() {
     local name="$1" saved
     if [ -r "$MON_STATE_DIR/$name" ]; then
         saved="$(cat "$MON_STATE_DIR/$name")"
-        printf '%s, auto, %s\n' "${saved%%,*}" "${saved##*,}"
+        printf '%s %s\n' "${saved%%,*}" "${saved##*,}"
     else
-        printf 'preferred, auto, 1\n'
+        printf 'preferred 1\n'
     fi
 }

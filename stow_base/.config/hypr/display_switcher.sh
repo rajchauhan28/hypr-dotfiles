@@ -53,32 +53,43 @@ OPT_INT_ONLY="Laptop Only ($INTERNAL)"
 CHOICE=$(printf '%s\n' "$OPT_EXTEND_R" "$OPT_EXTEND_L" "$OPT_MIRROR" \
     "$OPT_EXT_ONLY" "$OPT_INT_ONLY" | "$HOME/.local/bin/qs-dmenu" --dmenu -p "Display Mode")
 
+# Run one monitor change, collecting Hyprland's error instead of dropping it.
+errors=""
+try() { local err; err="$("$@" 2>&1)" || errors+="${err:-$1 failed}"$'\n'; }
+report() {
+    if [ -n "$errors" ]; then
+        notify-send -u critical "Display" "$1 failed: $errors"
+    else
+        notify-send "Display" "$1"
+    fi
+}
+
 case "$CHOICE" in
     "$OPT_EXTEND_R")
-        hyprctl keyword monitor "$INTERNAL, $int_mode, 0x0, $int_scale"
-        hyprctl keyword monitor "$EXTERNAL, $ext_mode, ${int_logical_w}x0, $ext_scale"
-        notify-send "Display" "Extended Right"
+        try mon_apply "$INTERNAL" "$int_mode" 0x0 "$int_scale"
+        try mon_apply "$EXTERNAL" "$ext_mode" "${int_logical_w}x0" "$ext_scale"
+        report "Extended Right"
         ;;
     "$OPT_EXTEND_L")
-        hyprctl keyword monitor "$EXTERNAL, $ext_mode, 0x0, $ext_scale"
-        hyprctl keyword monitor "$INTERNAL, $int_mode, ${ext_logical_w}x0, $int_scale"
-        notify-send "Display" "Extended Left"
+        try mon_apply "$EXTERNAL" "$ext_mode" 0x0 "$ext_scale"
+        try mon_apply "$INTERNAL" "$int_mode" "${ext_logical_w}x0" "$int_scale"
+        report "Extended Left"
         ;;
     "$OPT_MIRROR")
-        hyprctl keyword monitor "$INTERNAL, $int_mode, 0x0, $int_scale"
-        hyprctl keyword monitor "$EXTERNAL, $ext_mode, 0x0, $ext_scale, mirror, $INTERNAL"
-        notify-send "Display" "Mirrored"
+        try mon_apply "$INTERNAL" "$int_mode" 0x0 "$int_scale"
+        try mon_apply "$EXTERNAL" "$ext_mode" 0x0 "$ext_scale" "$INTERNAL"
+        report "Mirrored"
         ;;
     "$OPT_EXT_ONLY")
         mon_remember "$INTERNAL"
-        hyprctl keyword monitor "$EXTERNAL, $ext_mode, 0x0, $ext_scale"
-        hyprctl keyword monitor "$INTERNAL, disable"
-        notify-send "Display" "External Only"
+        try mon_apply "$EXTERNAL" "$ext_mode" 0x0 "$ext_scale"
+        try mon_disable "$INTERNAL"
+        report "External Only"
         ;;
     "$OPT_INT_ONLY")
         mon_remember "$EXTERNAL"
-        hyprctl keyword monitor "$INTERNAL, $int_mode, 0x0, $int_scale"
-        hyprctl keyword monitor "$EXTERNAL, disable"
-        notify-send "Display" "Laptop Only"
+        try mon_apply "$INTERNAL" "$int_mode" 0x0 "$int_scale"
+        try mon_disable "$EXTERNAL"
+        report "Laptop Only"
         ;;
 esac
