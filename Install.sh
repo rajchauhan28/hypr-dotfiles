@@ -963,6 +963,47 @@ offer_auralink() {
     fi
 }
 
+# Some Intel xHCI controllers stop detecting hotplug after a resume: a wireless
+# mouse receiver drops off the bus and replugging it does nothing until the
+# controller is rebound. scripts/usb-resume-reset is a systemd-sleep hook that
+# rebinds only a controller that lost a device over suspend, so it is a no-op
+# on machines without the bug -- but it lives under /usr/lib and needs root,
+# so it is still an explicit opt-in.
+offer_usb_resume_hook() {
+    local hook="$REPO_DIR/scripts/usb-resume-reset"
+    local target="/usr/lib/systemd/system-sleep/usb-resume-reset"
+
+    if cmp -s "$hook" "$target"; then
+        msg "$C_GREEN" "✅ USB resume hook is already installed."
+        return
+    fi
+
+    if [ -e "$target" ]; then
+        msg "$C_CYAN" "🖱️  USB resume hook (recovers receivers lost after suspend) is outdated."
+    else
+        msg "$C_CYAN" "🖱️  USB resume hook (recovers receivers lost after suspend) is not installed."
+    fi
+
+    if [ ! -t 0 ]; then
+        msg "$C_YELLOW" "  -> Not an interactive terminal; skipping. Run this later:"
+        msg "$C_BLUE"   "     sudo install -m755 $hook ${target%/*}/"
+        return
+    fi
+
+    local answer
+    read -rp "  Install the USB resume hook into ${target%/*}? [y/N] " answer
+    if [[ ! "$answer" =~ ^[Yy]$ ]]; then
+        msg "$C_BLUE" "  -> Skipped. The README's 'USB Receiver Lost After Suspend' section has the manual fix."
+        return
+    fi
+
+    if sudo install -m755 "$hook" "${target%/*}/"; then
+        msg "$C_GREEN" "✅ USB resume hook installed."
+    else
+        msg "$C_YELLOW" "⚠️  USB resume hook install failed; the rest of the shell is unaffected."
+    fi
+}
+
 # --- SCREEN-AWARE SCALING ---
 #
 # Every pixel value in settings.json was hand-tuned on a 1920x1200 laptop
@@ -1098,6 +1139,7 @@ BANNER
     # it falls back to the stowed defaults.
     scale_shell_to_screen
     offer_auralink
+    offer_usb_resume_hook
     install_fonts
     set_script_permissions
     activate_quickshell_replacements

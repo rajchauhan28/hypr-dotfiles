@@ -112,7 +112,8 @@ sudo sh -c 'echo 0000:00:14.0 > /sys/bus/pci/drivers/xhci_hcd/unbind; sleep 1; e
 `0000:00:14.0` is the usual Intel xHCI address -- check yours with
 `lspci -D | grep -i usb`.
 
-To do this automatically, install the systemd-sleep hook:
+To do this automatically, install the systemd-sleep hook (`Install.sh` offers
+this too):
 
 ```bash
 sudo install -m755 scripts/usb-resume-reset /usr/lib/systemd/system-sleep/
