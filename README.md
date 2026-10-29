@@ -96,6 +96,36 @@ file is missing -- your own tweaks survive every `git pull`.
 
 ---
 
+## 🖱️ USB Receiver Lost After Suspend
+
+On some Intel laptops the xHCI controller stops detecting USB hotplug after a
+resume: a wireless mouse receiver (e.g. the Redragon M693's 2.4G dongle) drops
+off the bus, `lsusb` no longer lists it, and replugging it does nothing.
+
+Rebinding the controller brings it back immediately (this briefly resets every
+USB device, including the webcam and built-in Bluetooth):
+
+```bash
+sudo sh -c 'echo 0000:00:14.0 > /sys/bus/pci/drivers/xhci_hcd/unbind; sleep 1; echo 0000:00:14.0 > /sys/bus/pci/drivers/xhci_hcd/bind'
+```
+
+`0000:00:14.0` is the usual Intel xHCI address -- check yours with
+`lspci -D | grep -i usb`.
+
+To do this automatically, install the systemd-sleep hook:
+
+```bash
+sudo install -m755 scripts/usb-resume-reset /usr/lib/systemd/system-sleep/
+```
+
+It records the connected USB devices before sleep and, if any are still
+missing 10 seconds after resume, rebinds only the controller they were on.
+A device you unplug while the laptop is asleep also counts as missing, so that
+controller gets one harmless reset. See what it did with
+`journalctl -b -u systemd-suspend | grep usb-resume-reset`.
+
+---
+
 ## ⌨️ Keybindings Quick Reference
 
 | Keybinding | Action |

@@ -1,0 +1,44 @@
+#!/bin/sh
+# systemd-sleep hook: after resume, rebind any xHCI controller that lost a USB
+# device it had before sleep. Some Intel xHCI ports stop detecting hotplug
+# after resume (seen with the Redragon M693 2.4G receiver) and replugging does
+# nothing until the controller is rebound.
+#
+# Install: sudo install -m755 usb-resume-reset /usr/lib/systemd/system-sleep/
+
+state=/run/usb-resume-reset.list
+
+# One "vendor:product controller" line per USB device, root hubs excluded.
+snapshot() {
+    for dev in /sys/bus/usb/devices/*; do
+        [ -f "$dev/idVendor" ] || continue
+        id="$(cat "$dev/idVendor"):$(cat "$dev/idProduct")"
+        case $id in 1d6b:*) continue ;; esac
+        ctrl=$(readlink -f "$dev" | sed -n 's#.*/\([0-9a-f]*:[0-9a-f]*:[0-9a-f]*\.[0-9a-f]\)/usb[0-9]*/.*#\1#p')
+        [ -n "$ctrl" ] && echo "$id $ctrl"
+    done | sort -u
+}
+
+case $1 in
+pre)
+    snapshot > "$state"
+    ;;
+post)
+    [ -s "$state" ] || exit 0
+    # Give the bus 10 s to re-enumerate before calling anything lost.
+    for _ in 1 2 3 4 5 6 7 8 9 10; do
+        missing=$(snapshot | comm -23 "$state" -)
+        [ -z "$missing" ] && break
+        sleep 1
+    done
+    rm -f "$state"
+    for ctrl in $(echo "$missing" | awk 'NF {print $2}' | sort -u); do
+        [ -e "/sys/bus/pci/devices/$ctrl/driver" ] || continue
+        drv=$(readlink -f "/sys/bus/pci/devices/$ctrl/driver")
+        echo "usb-resume-reset: lost $(echo "$missing" | awk -v c="$ctrl" '$2 == c {printf "%s ", $1}')- rebinding $ctrl"
+        echo "$ctrl" > "$drv/unbind"
+        sleep 1
+        echo "$ctrl" > "$drv/bind"
+    done
+    ;;
+esac
