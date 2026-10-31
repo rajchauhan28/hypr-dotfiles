@@ -125,6 +125,9 @@ A device you unplug while the laptop is asleep also counts as missing, so that
 controller gets one harmless reset. See what it did with
 `journalctl -b -u systemd-suspend | grep usb-resume-reset`.
 
+If a reboot doesn't bring the receiver back, try another USB port. The hook
+only runs around sleep, so it can't help with a bad port.
+
 ---
 
 ## ⌨️ Keybindings Quick Reference
