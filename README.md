@@ -128,6 +128,11 @@ controller gets one harmless reset. See what it did with
 If a reboot doesn't bring the receiver back, try another USB port. The hook
 only runs around sleep, so it can't help with a bad port.
 
+If `lsusb` still lists the receiver but the mouse won't move, the problem is
+the mouse, not USB. On the M693 its wireless firmware can freeze so clicks
+work but movement doesn't. Switch the mouse off for 5 seconds and back on;
+replugging the receiver won't help.
+
 ---
 
 ## ⌨️ Keybindings Quick Reference
