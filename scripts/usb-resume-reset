@@ -9,11 +9,23 @@
 state=/run/usb-resume-reset.list
 
 # One "vendor:product controller" line per USB device, root hubs excluded.
+# When $1 = "healthy", require the device to be configured and have at least
+# one bound interface driver so zombie sysfs nodes left behind by failed port
+# resets (-71 / -110) do not fool the post-resume check.
 snapshot() {
+    mode=${1:-all}
     for dev in /sys/bus/usb/devices/*; do
         [ -f "$dev/idVendor" ] || continue
         id="$(cat "$dev/idVendor"):$(cat "$dev/idProduct")"
         case $id in 1d6b:*) continue ;; esac
+        if [ "$mode" = "healthy" ]; then
+            [ -s "$dev/bConfigurationValue" ] || continue
+            has_drv=0
+            for intf in "$dev"/*:*; do
+                [ -L "$intf/driver" ] && has_drv=1 && break
+            done
+            [ "$has_drv" = 1 ] || continue
+        fi
         ctrl=$(readlink -f "$dev" | sed -n 's#.*/\([0-9a-f]*:[0-9a-f]*:[0-9a-f]*\.[0-9a-f]\)/usb[0-9]*/.*#\1#p')
         [ -n "$ctrl" ] && echo "$id $ctrl"
     done | sort -u
@@ -21,13 +33,15 @@ snapshot() {
 
 case $1 in
 pre)
-    snapshot > "$state"
+    snapshot all > "$state"
     ;;
 post)
     [ -s "$state" ] || exit 0
-    # Give the bus 10 s to re-enumerate before calling anything lost.
-    for _ in 1 2 3 4 5 6 7 8 9 10; do
-        missing=$(snapshot | comm -23 "$state" -)
+    # Let post-resume xHCI port resets and stale-node disconnects settle first,
+    # then give the bus up to 8 s more to finish re-enumerating.
+    sleep 2
+    for _ in 1 2 3 4 5 6 7 8; do
+        missing=$(snapshot healthy | comm -23 "$state" -)
         [ -z "$missing" ] && break
         sleep 1
     done
