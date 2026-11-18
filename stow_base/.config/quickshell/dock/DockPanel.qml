@@ -136,21 +136,19 @@ Scope {
     function launch(cmd) {
         // setsid so the app outlives this shell -- a Quickshell Process is a
         // child, and restarting the dock would otherwise kill the window.
-        var p = Qt.createQmlObject('import Quickshell.Io; Process {}', root);
-        p.command = ["sh", "-c", "setsid " + cmd + " >/dev/null 2>&1 &"];
-        p.running = true;
+        // Detached: a Qt.createQmlObject Process was never freed.
+        Quickshell.execDetached(["sh", "-c", "setsid " + cmd + " >/dev/null 2>&1 &"]);
     }
 
     function focusAddress(address) {
         if (!address)
             return;
-        var p = Qt.createQmlObject('import Quickshell.Io; Process {}', root);
         // NOT `hyprctl dispatch focuswindow ...`: this Hyprland is configured
         // in Lua, so dispatch arguments are parsed as Lua and the bare
         // `address:0x...` is a syntax error. `eval` takes the real Lua call.
-        p.command = ["hyprctl", "eval",
-                     'hl.dispatch(hl.dsp.focus({ window = "address:' + address + '" }))'];
-        p.running = true;
+        // Detached: a Qt.createQmlObject Process was never freed.
+        Quickshell.execDetached(["hyprctl", "eval",
+                     'hl.dispatch(hl.dsp.focus({ window = "address:' + address + '" }))']);
     }
 
     function activate(e) {

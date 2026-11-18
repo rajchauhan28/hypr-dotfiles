@@ -113,9 +113,8 @@ Scope {
     }
 
     function dispatchHypr(cmd, arg) {
-        var p = Qt.createQmlObject('import Quickshell.Io; Process {}', root);
-        p.command = [Quickshell.env("HOME") + "/.config/quickshell/overview/hyprctl-compat.sh", cmd, arg];
-        p.running = true;
+        // Detached: a Qt.createQmlObject Process was never freed.
+        Quickshell.execDetached([Quickshell.env("HOME") + "/.config/quickshell/overview/hyprctl-compat.sh", cmd, arg]);
     }
 
     Timer {
@@ -138,9 +137,8 @@ Scope {
     }
 
     function launchApp(cmd) {
-        var p = Qt.createQmlObject('import Quickshell.Io; Process {}', root);
-        p.command = ["sh", "-c", "setsid " + cmd + " >/dev/null 2>&1 &"];
-        p.running = true;
+        // Detached: a Qt.createQmlObject Process was never freed.
+        Quickshell.execDetached(["sh", "-c", "setsid " + cmd + " >/dev/null 2>&1 &"]);
     }
 
     // The sidebar's pinned apps. The settings app writes this same file, so a

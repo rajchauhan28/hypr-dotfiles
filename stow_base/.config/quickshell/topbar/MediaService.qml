@@ -110,9 +110,8 @@ Singleton {
     }
 
     function run(args) {
-        var p = Qt.createQmlObject('import Quickshell.Io; Process {}', svc);
-        p.command = args;
-        p.running = true;
+        // Detached: a Qt.createQmlObject Process was never freed.
+        Quickshell.execDetached(args);
     }
 
     function playPause() { if (svc.player) svc.player.togglePlaying(); }

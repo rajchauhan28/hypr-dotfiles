@@ -132,9 +132,8 @@ Scope {
     function launch(cmd) {
         // setsid so the app outlives this shell -- a Quickshell Process is a
         // child, and restarting the panel would otherwise kill the window.
-        var p = Qt.createQmlObject('import Quickshell.Io; Process {}', root);
-        p.command = ["sh", "-c", "setsid " + cmd + " >/dev/null 2>&1 &"];
-        p.running = true;
+        // Detached: a Qt.createQmlObject Process was never freed.
+        Quickshell.execDetached(["sh", "-c", "setsid " + cmd + " >/dev/null 2>&1 &"]);
     }
 
     // Only polls while open; a hidden strip costs nothing.

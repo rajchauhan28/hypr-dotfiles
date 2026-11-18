@@ -109,10 +109,9 @@ Scope {
     }
 
     function launchTerminal(cmd) {
-        var p = Qt.createQmlObject('import Quickshell.Io; Process {}', root);
-        p.command = cmd ? ["ghostty", "-e", "bash", "-c", cmd]
-                        : ["ghostty"];
-        p.running = true;
+        // Detached: a Qt.createQmlObject Process was never freed.
+        Quickshell.execDetached(cmd ? ["ghostty", "-e", "bash", "-c", cmd]
+                        : ["ghostty"]);
     }
 
     // checkupdates syncs a temp pacman db over the network, so this runs on a
@@ -384,9 +383,8 @@ Scope {
     // Reuses the overview's compatibility shim so both agree on how to talk
     // to this Hyprland's Lua dispatch API.
     function dispatchHypr(cmd, arg) {
-        var p = Qt.createQmlObject('import Quickshell.Io; Process {}', root);
-        p.command = [Quickshell.env("HOME") + "/.config/quickshell/overview/hyprctl-compat.sh", cmd, arg];
-        p.running = true;
+        // Detached: a Qt.createQmlObject Process was never freed.
+        Quickshell.execDetached([Quickshell.env("HOME") + "/.config/quickshell/overview/hyprctl-compat.sh", cmd, arg]);
     }
 
     // Lets a keybind pin the panel open without using the hotspot:

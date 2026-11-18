@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import Quickshell.Io
 
 // Session controls. Every action here is disruptive and the panel opens on
@@ -59,9 +60,8 @@ Item {
     ]
 
     function run(cmd) {
-        var p = Qt.createQmlObject('import Quickshell.Io; Process {}', power);
-        p.command = cmd;
-        p.running = true;
+        // Detached: a Qt.createQmlObject Process was never freed.
+        Quickshell.execDetached(cmd);
     }
 
     function trigger(a) {

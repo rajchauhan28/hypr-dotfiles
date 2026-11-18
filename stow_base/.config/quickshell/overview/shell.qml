@@ -77,13 +77,11 @@ ShellRoot {
     }
 
     function runCmd(args) {
-        var p = Qt.createQmlObject('import Quickshell.Io; Process {}', root);
-        p.command = args;
-        p.running = true;
+        // Detached: a Qt.createQmlObject Process was never freed.
+        Quickshell.execDetached(args);
     }
 
     function dispatchHypr(cmdStr) {
-        console.log("dispatchHypr called with:", cmdStr);
         var firstSpace = cmdStr.indexOf(" ");
         var cmd = [ Quickshell.env("HOME") + "/.config/quickshell/overview/hyprctl-compat.sh" ];
         if (firstSpace !== -1) {
@@ -92,9 +90,8 @@ ShellRoot {
         } else {
             cmd.push(cmdStr);
         }
-        var p = Qt.createQmlObject('import Quickshell.Io; Process {}', root);
-        p.command = cmd;
-        p.running = true;
+        // Detached: a Qt.createQmlObject Process was never freed.
+        Quickshell.execDetached(cmd);
     }
 
     function getWindowsForWorkspace(wsId) {
