@@ -128,9 +128,10 @@ Scope {
 
     Process {
         id: clientsProc
-        command: ["bash", "-c", "hyprctl -j clients | tr -d '\\n'"]
-        stdout: SplitParser {
-            onRead: data => {
+        command: ["hyprctl", "-j", "clients"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var data = text;
                 try {
                     root.clients = JSON.parse(data.trim());
                 } catch (e) {}

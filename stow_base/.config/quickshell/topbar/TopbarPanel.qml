@@ -326,9 +326,10 @@ Scope {
 
     Process {
         id: clientsProc
-        command: ["bash", "-c", "hyprctl -j clients | tr -d '\\n'"]
-        stdout: SplitParser {
-            onRead: data => {
+        command: ["hyprctl", "-j", "clients"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var data = text;
                 var txt = data.trim();
                 if (txt === root.lastClientsJson)
                     return;
@@ -349,9 +350,10 @@ Scope {
     Process {
         id: monitorsProc
         running: true
-        command: ["bash", "-c", "hyprctl -j monitors | tr -d '\\n'"]
-        stdout: SplitParser {
-            onRead: data => {
+        command: ["hyprctl", "-j", "monitors"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var data = text;
                 try {
                     var mons = JSON.parse(data.trim());
                     for (var i = 0; i < mons.length; i++) {
@@ -369,9 +371,10 @@ Scope {
 
     Process {
         id: activeWsProc
-        command: ["bash", "-c", "hyprctl -j activeworkspace | tr -d '\\n'"]
-        stdout: SplitParser {
-            onRead: data => {
+        command: ["hyprctl", "-j", "activeworkspace"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var data = text;
                 try {
                     var p = JSON.parse(data.trim());
                     root.activeWs = p.id || 1;

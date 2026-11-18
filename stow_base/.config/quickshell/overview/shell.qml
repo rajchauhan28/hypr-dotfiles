@@ -46,9 +46,10 @@ ShellRoot {
 
     Process {
         id: clientsProc
-        command: ["bash", "-c", "hyprctl -j clients | tr -d '\\n'"]
-        stdout: SplitParser {
-            onRead: data => {
+        command: ["hyprctl", "-j", "clients"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var data = text;
                 var txt = data.trim();
                 // Only rebuild the models when something actually changed,
                 // otherwise the Repeaters churn once a second for nothing.
@@ -65,9 +66,10 @@ ShellRoot {
 
     Process {
         id: activeWsProc
-        command: ["bash", "-c", "hyprctl -j activeworkspace | tr -d '\\n'"]
-        stdout: SplitParser {
-            onRead: data => {
+        command: ["hyprctl", "-j", "activeworkspace"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var data = text;
                 try {
                     var parsed = JSON.parse(data.trim());
                     root.activeWsId = parsed.id || 1;

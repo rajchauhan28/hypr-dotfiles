@@ -81,21 +81,52 @@ Scope {
         onTriggered: root.now = new Date()
     }
 
-    // Window occupancy is polled; activeWs above updates immediately from
-    // Hyprland's event socket when the focused workspace changes.
+    // Window occupancy follows Hyprland's event socket, like activeWs above:
+    // re-read only when a window opens, closes or changes workspace. The old
+    // 1.5 s poll left the dots up to 1.5 s stale and spawned a process
+    // forever.
+    Connections {
+        target: Hyprland
+        function onRawEvent(event) {
+            switch (event.name) {
+            case "openwindow":
+            case "closewindow":
+            case "movewindow":
+            case "movewindowv2":
+                clientsDebounce.restart();
+            }
+        }
+    }
+
+    // Coalesces a burst of events (a workspace of windows closing) into one
+    // read. Starting a Process that is still running is a silent no-op, so a
+    // busy read retries instead of dropping the change.
     Timer {
-        interval: 1500
+        id: clientsDebounce
+        interval: 50
+        onTriggered: {
+            if (clientsProc.running)
+                restart();
+            else
+                clientsProc.running = true;
+        }
+    }
+
+    // Startup read, plus a slow safety net in case an event is ever missed.
+    Timer {
+        interval: 30000
         repeat: true
         running: true
         triggeredOnStart: true
-        onTriggered: clientsProc.running = true
+        onTriggered: clientsDebounce.restart()
     }
 
     Process {
         id: clientsProc
-        command: ["bash", "-c", "hyprctl -j clients | tr -d '\\n'"]
-        stdout: SplitParser {
-            onRead: data => {
+        command: ["hyprctl", "-j", "clients"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var data = text;
                 try {
                     var cls = JSON.parse(data.trim());
                     root.clients = cls;
