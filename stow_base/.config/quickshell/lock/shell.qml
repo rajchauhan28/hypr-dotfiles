@@ -154,6 +154,9 @@ ShellRoot {
             root.authFailed = false;
             root.authInProgress = false;
             root.selectedProfileIndex = 0;
+            // Pick up a wallpaper changed since the last lock. Asynchronous on
+            // purpose: locking must never wait on a helper script.
+            Theme.refreshBackground();
             sessionLock.locked = true;
         }
     }

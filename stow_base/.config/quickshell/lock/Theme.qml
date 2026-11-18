@@ -133,7 +133,16 @@ Singleton {
         }
     }
 
+    // The lock daemon lives for the whole session, so reading the wallpaper
+    // once at startup left the lock screen on the login-time wallpaper
+    // forever. shell.qml's lock() calls this on every lock.
+    function refreshBackground() {
+        if (!backgroundProc.running)
+            backgroundProc.running = true;
+    }
+
     Process {
+        id: backgroundProc
         running: true
         command: ["python3", Quickshell.env("HOME") + "/.config/quickshell/lock/background.py"]
         stdout: SplitParser {
