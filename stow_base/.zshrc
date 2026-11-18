@@ -87,7 +87,7 @@ source /usr/share/zsh-theme-powerlevel10k/powerlevel10k.zsh-theme
 export HISTFILE="$HOME/.zsh_history"
 export HISTSIZE=50000
 export SAVEHIST=50000
-export HISTCONTROL=ignoreboth
+# (HISTCONTROL is bash-only; zsh's HIST_IGNORE_SPACE/HIST_IGNORE_DUPS below do that job.)
 export HISTORY_IGNORE="(\&|[bf]g|c|clear|history|exit|q|pwd|* --help)"
 
 setopt EXTENDED_HISTORY          # Store timestamp and runtime of commands
@@ -143,22 +143,29 @@ fi
 # =============================================================================
 # USER WORKFLOW & ENVIRONMENT CONFIGURATION
 # =============================================================================
-export TERMINAL=wezterm
+# ghostty is the terminal this setup ships and binds (hyprland.lua). wezterm is
+# not installed, so anything that honours $TERMINAL (yazi openers, scripts,
+# xdg-terminal-exec fallbacks) failed to open a terminal at all.
+export TERMINAL=ghostty
 
-# >>> conda initialize >>>
-# !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('/run/media/gaffer/Sid/conda_env/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
-if [ $? -eq 0 ]; then
-    eval "$__conda_setup"
-else
-    if [ -f "/run/media/gaffer/Sid/conda_env/etc/profile.d/conda.sh" ]; then
-        . "/run/media/gaffer/Sid/conda_env/etc/profile.d/conda.sh"
+# conda lives on a removable drive migrated from another machine. Only hook it
+# in when that drive is actually mounted: the unconditional version prepended a
+# nonexistent directory to PATH in every shell.
+__conda_root="/run/media/gaffer/Sid/conda_env"
+if [[ -x "$__conda_root/bin/conda" ]]; then
+    # >>> conda initialize >>>
+    __conda_setup="$("$__conda_root/bin/conda" 'shell.zsh' 'hook' 2> /dev/null)"
+    if [ $? -eq 0 ]; then
+        eval "$__conda_setup"
+    elif [ -f "$__conda_root/etc/profile.d/conda.sh" ]; then
+        . "$__conda_root/etc/profile.d/conda.sh"
     else
-        export PATH="/run/media/gaffer/Sid/conda_env/bin:$PATH"
+        export PATH="$__conda_root/bin:$PATH"
     fi
+    unset __conda_setup
+    # <<< conda initialize <<<
 fi
-unset __conda_setup
-# <<< conda initialize <<<
+unset __conda_root
 
 # Aliases
 alias make="make -j$(nproc)"
@@ -226,19 +233,21 @@ export PATH="$HOME/.local/bin:$PATH"
 # --- Migrated Env Vars from old archlinux ---
 export BROWSER=brave
 export HF_HOME="$HOME/ddrive/GenAI/huggingface_cache"
-export GROQ_API_KEY=""
-export CEREBRAS_API_KEY=""
+# API keys and other secrets: NOT here -- this file is public. Put them in
+# ~/.config/zsh/secrets.zsh (untracked, chmod 600). The old
+# `export GROQ_API_KEY=""` lines also clobbered any key already in the
+# environment with an empty string, which most SDKs treat as "set but invalid".
+[[ -r "$HOME/.config/zsh/secrets.zsh" ]] && source "$HOME/.config/zsh/secrets.zsh"
 export PATH="$PATH:$HOME/.lmstudio/bin"
 export PATH=$HOME/.opencode/bin:$PATH
 export ANDROID_HOME=/opt/android-sdk
 export JAVA_HOME=/usr/lib/jvm/default
 export PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/cmdline-tools/latest/bin
 export CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)
-# WinBoat: local throwaway Windows VM in Docker. Password is inline deliberately --
-# it is a disposable test VM on loopback with no data in it. Do NOT copy this shape
-# for anything real; /from-stdin is the version that keeps a password out of argv.
+# WinBoat: local throwaway Windows VM in Docker. The password is read from
+# ~/.config/winboat/rdp.pass (outside the repo) at run time; it still ends up in
+# argv while the client runs, so /from-stdin is the shape for anything real.
 # KRB5_CONFIG points at a dead realm: without it FreeRDP burns ~46s on ATHENA.MIT.EDU
 # before falling back to NTLM.
 alias wb='SDL_VIDEODRIVER=x11 KRB5_CONFIG=~/.config/krb5-null.conf sdl-freerdp3 /v:127.0.0.1:47300 /u:reign /p:"$(<$HOME/.config/winboat/rdp.pass)" /cert:ignore /dynamic-resolution'
-# Same, plus a shared folder that appears in the guest as \\tsclient\wb
 
