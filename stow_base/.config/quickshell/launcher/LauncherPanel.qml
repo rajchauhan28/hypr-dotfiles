@@ -49,6 +49,12 @@ Scope {
             return "Clipboard";
         if (root.mode === "files")
             return "Files";
+        if (root.mode === "apps") {
+            var p = root.query.charAt(0);
+            if (p === "=") return "Calc";
+            if (p === ">") return "Run";
+            if (p === "?") return "Google";
+        }
         return "Search";
     }
 
@@ -365,7 +371,101 @@ Scope {
         return root.appEntries();
     }
 
+    // ------------------------------------------------------------------
+    // Prefix modes, apps mode only (a dmenu caller's items are never
+    // reinterpreted):  =expr  calculator (qalc), Enter copies the result
+    //                  >cmd   run a shell command, detached or in a terminal
+    //                  ?text  Google search in the default browser
+    property string calcExpr: ""     // expression calcResult belongs to
+    property string calcResult: ""
+
+    function icon(names) {
+        for (var i = 0; i < names.length; i++) {
+            var p = Quickshell.iconPath(names[i], true);
+            if (p) return p;
+        }
+        return "";
+    }
+
+    function prefixEntries(q) {
+        var p = q.charAt(0);
+        var rest = q.substring(1).trim();
+        if (p === "=") {
+            if (rest === "")
+                return [{ id: "calc:", kind: "info", label: "Type an expression",
+                          sublabel: "qalc: 2^10, sqrt(2), 5 km to mi, 20% of 340 …",
+                          icon: root.icon(["accessories-calculator", "calc"]), payload: "" }];
+            var ready = root.calcExpr === rest && root.calcResult !== "";
+            return [{ id: "calc:" + rest, kind: ready ? "calc" : "info",
+                      label: ready ? root.calcResult : "…",
+                      sublabel: ready ? rest + "  ·  Enter copies the result" : rest,
+                      icon: root.icon(["accessories-calculator", "calc"]),
+                      payload: ready ? root.calcResult : "" }];
+        }
+        if (p === ">") {
+            if (rest === "")
+                return [{ id: "run:", kind: "info", label: "Type a command",
+                          sublabel: "Enter runs it in the background; the second row runs it in a terminal",
+                          icon: root.icon(["utilities-terminal", "terminal"]), payload: "" }];
+            return [
+                { id: "run:" + rest, kind: "run", label: "Run  " + rest,
+                  sublabel: "in the background (output discarded)",
+                  icon: root.icon(["system-run", "utilities-terminal"]), payload: rest },
+                { id: "runterm:" + rest, kind: "runterm", label: "Run in terminal  " + rest,
+                  sublabel: "ghostty, stays open afterwards",
+                  icon: root.icon(["utilities-terminal", "terminal"]), payload: rest }
+            ];
+        }
+        if (p === "?") {
+            if (rest === "")
+                return [{ id: "web:", kind: "info", label: "Type something to search Google for",
+                          sublabel: "opens in your default browser",
+                          icon: root.icon(["web-browser", "brave-browser", "internet-web-browser"]), payload: "" }];
+            return [{ id: "web:" + rest, kind: "web", label: "Search Google for “" + rest + "”",
+                      sublabel: "google.com",
+                      icon: root.icon(["web-browser", "brave-browser", "internet-web-browser"]),
+                      payload: "https://www.google.com/search?q=" + encodeURIComponent(rest) }];
+        }
+        return null;
+    }
+
+    Timer {
+        id: calcDebounce
+        interval: 90
+        repeat: false
+        onTriggered: {
+            var expr = root.query.substring(1).trim();
+            if (expr === "" || root.query.charAt(0) !== "=")
+                return;
+            calcProc.expr = expr;
+            calcProc.running = false;
+            calcProc.command = ["qalc", "-t", expr];
+            calcProc.running = true;
+        }
+    }
+
+    Process {
+        id: calcProc
+        property string expr: ""
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.calcExpr = calcProc.expr;
+                root.calcResult = (text || "").trim().split("\n").pop();
+                if (root.mode === "apps" && root.query.charAt(0) === "=")
+                    root.rebuild();
+            }
+        }
+    }
+
     function rebuild() {
+        if (root.mode === "apps") {
+            var pe = root.prefixEntries(root.query);
+            if (pe) {
+                root.results = pe;
+                root.selected = 0;
+                return;
+            }
+        }
         var ranked = Search.rank(currentEntries(), root.query, root.stats, Date.now());
         var out = [];
         for (var i = 0; i < ranked.length && i < Theme.maxResults; i++)
@@ -375,10 +475,13 @@ Scope {
     }
 
     onQueryChanged: {
-        if (root.mode === "files")
+        if (root.mode === "files") {
             fileDebounce.restart();
-        else
+        } else {
+            if (root.mode === "apps" && root.query.charAt(0) === "=")
+                calcDebounce.restart();
             rebuild();
+        }
     }
 
     // ------------------------------------------------------------------
@@ -396,7 +499,11 @@ Scope {
         // Clipboard rows are ordered by recency, not use count, and each clip
         // id is single-use: bumping them buried new clips under old restored
         // ones and filled frecency.json with hundreds of dead clip:<id> keys.
-        if (entry.kind !== "clip")
+        // Prefix-mode rows (calc/run/web) are one-off too: their ids are the
+        // typed text.
+        if (entry.kind === "info")
+            return;
+        if (entry.kind === "app" || entry.kind === "file")
             bumpFrecency(entry.id);
 
         if (entry.kind === "app") {
@@ -406,6 +513,17 @@ Scope {
             // the helper also pins text to text/plain.
             Quickshell.execDetached([Quickshell.env("HOME") + "/.config/quickshell/common/clip-restore.sh", entry.payload]);
         } else if (entry.kind === "file") {
+            Quickshell.execDetached(["xdg-open", entry.payload]);
+        } else if (entry.kind === "calc") {
+            Quickshell.execDetached(["wl-copy", "--", entry.payload]);
+        } else if (entry.kind === "run") {
+            Quickshell.execDetached(["sh", "-c", entry.payload]);
+        } else if (entry.kind === "runterm") {
+            // The command is $1, never spliced into the script text.
+            Quickshell.execDetached(["ghostty", "-e", "sh", "-c",
+                "eval \"$1\"; printf '\\n[exit %s] Press Enter to close.' \"$?\"; read _",
+                "sh", entry.payload]);
+        } else if (entry.kind === "web") {
             Quickshell.execDetached(["xdg-open", entry.payload]);
         }
         close();
@@ -682,7 +800,9 @@ Scope {
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
                         visible: input.text === ""
-                        text: root.mode === "files" ? "type at least 2 characters…" : "type to search…"
+                        text: root.mode === "files" ? "type at least 2 characters…"
+                            : root.mode === "apps" ? "search apps   ·   = calc   ·   > run   ·   ? Google"
+                            : "type to search…"
                         color: Theme.textFaint
                         font.pixelSize: 14
                     }
