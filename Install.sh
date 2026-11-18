@@ -190,14 +190,17 @@ detect_legacy_shell_components() {
 
     # Even an unknown/custom locker is covered when it is wired through the
     # Hyprland or hypridle configuration: stow_configs() replaces that config
-    # with this repository's `qs -c lock` command.
+    # with this repository's quickshell/lock/lock.sh. (Our own lock command is
+    # recognised by that path; the old `qs -c lock` form stopped resolving when
+    # the panels were consolidated, so a re-run used to flag this repo's own
+    # hypridle.conf as a "custom-lock-command".)
     local lock_config
     for lock_config in "$HOME/.config/hypr/hypridle.conf" \
                        "$HOME/.config/hypr/hyprland.conf" \
                        "$HOME/.config/hypridle.conf"; do
         if [ -f "$lock_config" ] \
                 && grep -Eqi '(^[[:space:]]*lock_cmd[[:space:]]*=|bind.*exec,.*lock)' "$lock_config" \
-                && ! grep -Eqi '(^[[:space:]]*lock_cmd[[:space:]]*=|bind.*exec,).*qs[[:space:]]+-c[[:space:]]+lock' "$lock_config"; then
+                && ! grep -Eqi '(^[[:space:]]*lock_cmd[[:space:]]*=|bind.*exec,).*(qs[[:space:]]+-c[[:space:]]+lock|quickshell/lock)' "$lock_config"; then
             append_unique LEGACY_COMPONENTS_FOUND "custom-lock-command"
         fi
     done
@@ -427,6 +430,12 @@ stow_configs() {
     
     # Backup existing configs that are about to be stowed
     for dir in "${ALL_CONFIG_DIRS[@]}"; do
+        # ~/.config/systemd is shared with every other tool: it holds the
+        # *.wants/ links that record which user services are enabled. Moving
+        # the whole directory aside silently disabled all of them. Only the
+        # individual unit files this repo ships may conflict, and the
+        # per-file catch-all below backs those up one by one.
+        [ "$dir" = systemd ] && continue
         local dest="$HOME/.config/$dir"
         if [ -e "$dest" ] && [ ! -L "$dest" ]; then
             msg "$C_YELLOW" "  -> Backing up '$dir'..."
@@ -481,10 +490,25 @@ stow_configs() {
     # per-directory loop above handles whole dirs like ~/.config/hypr; this
     # covers loose files that live beside them, e.g. ~/.config/mimeapps.list,
     # which otherwise abort stow with a "neither a link nor a directory" error.
-    local rel target
+    #
+    # On a re-run, ~/.config/hypr and friends are stow-FOLDED symlinks into
+    # this repository, so "$HOME/.config/hypr/hyprland.lua" is a regular file
+    # reached through a symlinked parent: -e true, -L false. Without the
+    # realpath check this loop moved the repository's own files out of the
+    # checkout into the backup. Anything that already resolves into
+    # stow_base is ours and is left alone. Files stow ignores (see
+    # .stow-local-ignore) are never linked, so they cannot conflict either.
+    local rel target src_real
     while IFS= read -r -d '' rel; do
         rel="${rel#./}"
+        case "$rel" in
+            *.in|*.default|*.bak|*.pyc|*/__pycache__/*|.stow-local-ignore) continue ;;
+        esac
         target="$HOME/$rel"
+        src_real="$(readlink -f "$REPO_DIR/stow_base/$rel")"
+        if [ "$(readlink -f "$target" 2>/dev/null || true)" = "$src_real" ]; then
+            continue
+        fi
         if [ -e "$target" ] && [ ! -L "$target" ] && [ ! -d "$target" ]; then
             msg "$C_YELLOW" "  -> Backing up conflicting file '$rel'..."
             mkdir -p "$BACKUP_DIR/$(dirname "$rel")"
@@ -558,6 +582,73 @@ activate_quickshell_replacements() {
 
     msg "$C_GREEN" "✅ Waybar and legacy lockscreen migration complete."
     msg "$C_BLUE" "  -> Previous files are recoverable from $BACKUP_DIR"
+}
+
+# Render the *.in templates (they carry @HOME@/@USER@, which no config format
+# expands on its own) straight into $HOME. .stow-local-ignore keeps stow from
+# linking them, so this is the only way they arrive.
+render_templates() {
+    msg "$C_CYAN" "📝 Rendering templates for this user..."
+    local template target rendered=0
+    while IFS= read -r -d '' template; do
+        target="$HOME/${template#"$REPO_DIR/stow_base/"}"
+        target="${target%.in}"
+        mkdir -p "$(dirname "$target")"
+        # Remove any symlink first. An earlier version of this repository
+        # stowed these files directly, so upgrading leaves a symlink pointing
+        # at the now-renamed .in -- and `>` follows a symlink, which would
+        # write the rendered output back INTO the repository instead of $HOME.
+        if [ -L "$target" ]; then
+            rm -f "$target"
+        fi
+        sed -e "s|@HOME@|$HOME|g" -e "s|@USER@|$USER|g" "$template" > "$target"
+        rendered=$((rendered + 1))
+    done < <(find "$REPO_DIR/stow_base" -type f -name '*.in' -print0)
+    msg "$C_GREEN" "✅ Rendered $rendered template(s)."
+
+    if command -v update-desktop-database &>/dev/null; then
+        update-desktop-database "$HOME/.local/share/applications" &>/dev/null || true
+    fi
+}
+
+# Copy each shipped *.default into place as the user's own file -- but only
+# when there is none yet, so tweaks made in the Settings app survive every
+# re-run and `git pull`. The live files are .gitignored.
+seed_user_state() {
+    msg "$C_CYAN" "🌱 Seeding per-user configuration..."
+    local default target seeded=0 kept=0
+    while IFS= read -r -d '' default; do
+        target="$HOME/${default#"$REPO_DIR/stow_base/"}"
+        target="${target%.default}"
+        if [ -e "$target" ] && [ ! -L "$target" ]; then
+            kept=$((kept + 1))
+            continue
+        fi
+        mkdir -p "$(dirname "$target")"
+        rm -f "$target"
+        sed -e "s|@HOME@|$HOME|g" -e "s|@USER@|$USER|g" "$default" > "$target"
+        seeded=$((seeded + 1))
+    done < <(find "$REPO_DIR/stow_base" -type f -name '*.default' -print0)
+    msg "$C_GREEN" "✅ Seeded $seeded file(s); kept $kept existing user file(s)."
+}
+
+# Placeholder wallust/pywal output so readers of ~/.cache/wal have something
+# to parse before the first wallpaper is applied.
+seed_optional_caches() {
+    msg "$C_CYAN" "🎨 Seeding placeholder colour cache..."
+    local wal_dir="$HOME/.cache/wal"
+    mkdir -p "$wal_dir"
+
+    local stub
+    for stub in colors-hyprland.conf colors.sh; do
+        if [ ! -e "$wal_dir/$stub" ]; then
+            printf '# Placeholder written by Install.sh. Replaced the first time\n# a wallpaper is applied.\n' > "$wal_dir/$stub"
+        fi
+    done
+    if [ ! -e "$wal_dir/colors.json" ]; then
+        printf '{}\n' > "$wal_dir/colors.json"
+    fi
+    msg "$C_GREEN" "✅ Colour cache placeholders in place."
 }
 
 # Refresh the font cache for the fonts stow just linked.
@@ -1126,17 +1217,17 @@ BANNER
     # one no longer ships, before anything tries to write through them.
     clean_dangling_links
     # Templates and defaults come straight after stow so that the rendered
-    # files replace stow's symlinks rather than the other way round.
-    # render_templates, seed_user_state and seed_optional_caches are not yet
-    # implemented; the installer runs without them and the Settings app will
-    # create its own per-user state on first launch.
-    # render_templates
-    # seed_user_state
-    # seed_optional_caches
+    # files replace stow's symlinks rather than the other way round. These
+    # three were dropped by accident in 359809e (an Acer-driver commit), which
+    # left fresh installs with no settings.json, no pinned apps and no
+    # AuraLink menu entries: the .in/.default sources are stow-ignored, so
+    # nothing else ever puts them in place.
+    render_templates
+    seed_user_state
+    seed_optional_caches
     write_hardware_profile
     offer_acer_driver
-    # Scaling reads the seeded settings.json when it exists; without seeding,
-    # it falls back to the stowed defaults.
+    # Scaling rewrites the settings.json seed_user_state just put in place.
     scale_shell_to_screen
     offer_auralink
     offer_usb_resume_hook
@@ -1150,7 +1241,12 @@ BANNER
     # Final instructions
     echo
     msg "$C_YELLOW" "IMPORTANT: Please reboot your system for all changes to take effect properly."
-    read -rp "Reboot now? [y/N] " ans
+    # Under `set -e`, `read` at EOF (piped/non-interactive run) exits 1 and
+    # turned a fully successful install into a failed one on the last line.
+    local ans=""
+    if [ -t 0 ]; then
+        read -rp "Reboot now? [y/N] " ans || true
+    fi
     if [[ "$ans" =~ ^[Yy]$ ]]; then
         msg "$C_BLUE" "Rebooting now..."
         sudo reboot
