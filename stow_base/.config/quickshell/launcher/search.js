@@ -38,6 +38,10 @@ function fuzzy(haystack, needle) {
     for (var ni = 0; ni < n.length; ni++) {
         var c = n[ni];
         var found = -1;
+        // Where the previous match ended. A run is a match landing exactly
+        // there; comparing against `hi` after the scan (which always equals
+        // `found`) scored every match as consecutive.
+        var start = hi;
         while (hi < h.length) {
             if (h[hi] === c) {
                 found = hi;
@@ -56,7 +60,7 @@ function fuzzy(haystack, needle) {
         else
             score += 4;
 
-        run = (found === hi && ni > 0) ? run + 1 : 0;
+        run = (found === start && ni > 0) ? run + 1 : 0;
         score += run * 12;
 
         hi = found + 1;

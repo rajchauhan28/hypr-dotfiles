@@ -29,7 +29,8 @@ case "$stage" in
         # vendored trees are exactly what nobody is searching for, and skipping
         # them is most of the speed. The excludes cover the heavy directories
         # that no VCS ignore file covers.
-        fd --hidden --type f --max-results 150 \
+        # --fixed-strings: a query like "foo(" is a regex parse error to fd.
+        fd --hidden --fixed-strings --type f --max-results 150 \
            --exclude .git --exclude node_modules --exclude .cache \
            --exclude .venv --exclude target --exclude __pycache__ \
            --base-directory "$HOME" -- "$q" 2>/dev/null |

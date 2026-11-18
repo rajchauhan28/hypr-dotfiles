@@ -61,7 +61,13 @@ Scope {
         watchChanges: false
         onLoaded: {
             try {
-                root.stats = JSON.parse(text()) || ({});
+                var parsed = JSON.parse(text()) || ({});
+                // Drop clip:<id> keys written before clips stopped being
+                // bumped; they are never looked up again.
+                for (var k in parsed)
+                    if (k.indexOf("clip:") === 0)
+                        delete parsed[k];
+                root.stats = parsed;
             } catch (e) {
                 root.stats = ({});
             }
@@ -387,7 +393,11 @@ Scope {
             return;
         }
 
-        bumpFrecency(entry.id);
+        // Clipboard rows are ordered by recency, not use count, and each clip
+        // id is single-use: bumping them buried new clips under old restored
+        // ones and filled frecency.json with hundreds of dead clip:<id> keys.
+        if (entry.kind !== "clip")
+            bumpFrecency(entry.id);
 
         if (entry.kind === "app") {
             entry.payload.execute();
@@ -458,6 +468,10 @@ Scope {
         // Called by ~/.local/bin/qs-dmenu. itemsPath is a plain file, one
         // option per line; replyPath is a FIFO the shim is already blocked on.
         function dmenu(itemsPath: string, promptText: string, replyPath: string): void {
+            // Release any menu still waiting on its FIFO first. Overwriting
+            // dmenuReplyPath orphaned it, and that qs-dmenu blocked in `cat`
+            // forever.
+            root.answerDmenu("");
             root.dmenuReplyPath = replyPath;
             root.dmenuAnswered = false;
             root.promptOverride = promptText;
