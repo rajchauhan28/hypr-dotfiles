@@ -37,9 +37,12 @@ Item {
         Behavior on opacity { NumberAnimation { duration: 600 } }
 
         // Slow drift, so a paused track still feels alive rather than static.
+        // Only while actually on screen: a running animation makes Qt redraw
+        // the whole window every frame, so drifting behind the closed top
+        // panel cost ~5% CPU (165 redraws/s) for as long as a track had art.
         scale: 1.15
         SequentialAnimation on x {
-            running: src.status === Image.Ready
+            running: src.status === Image.Ready && backdrop.visible
             loops: Animation.Infinite
             NumberAnimation { from: -14; to: 14; duration: 24000; easing.type: Easing.InOutSine }
             NumberAnimation { from: 14; to: -14; duration: 24000; easing.type: Easing.InOutSine }
