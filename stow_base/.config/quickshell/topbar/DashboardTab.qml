@@ -930,7 +930,10 @@ Item {
                                 anchors.fill: parent
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: dash.openTerminal("rate-mirrors --protocol=https arch | sudo tee /etc/pacman.d/mirrorlist && yay -Syu; echo; echo 'Press Enter to close…'; read")
+                                // Rate into a temp file and install it only if it holds mirrors:
+                                // piping straight into `sudo tee` truncated the live mirrorlist
+                                // whenever rate-mirrors failed, then ran yay against it.
+                                onClicked: dash.openTerminal("tmp=$(mktemp); if rate-mirrors --protocol=https arch > \"$tmp\" && grep -q '^Server' \"$tmp\"; then sudo install -m644 \"$tmp\" /etc/pacman.d/mirrorlist && yay -Syu; else echo 'rate-mirrors failed; /etc/pacman.d/mirrorlist left unchanged.'; fi; rm -f \"$tmp\"; echo; echo 'Press Enter to close…'; read")
                             }
                         }
 

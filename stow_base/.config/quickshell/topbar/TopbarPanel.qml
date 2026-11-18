@@ -128,6 +128,9 @@ Scope {
     Process {
         id: updatesProc
         command: [Quickshell.env("HOME") + "/.config/quickshell/topbar/updates.sh"]
+        // Clear the spinner however the script ends; stdout alone never fires
+        // if it dies or is killed before printing.
+        onExited: root.updatesBusy = false
         stdout: SplitParser {
             onRead: data => {
                 try {

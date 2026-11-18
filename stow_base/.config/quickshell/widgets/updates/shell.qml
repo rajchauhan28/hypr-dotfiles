@@ -278,7 +278,7 @@ ShellRoot {
                             anchors.fill: parent
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
-                                root.runCmd(["ghostty", "-e", "bash", "-c", "rate-mirrors --protocol=https arch | sudo tee /etc/pacman.d/mirrorlist && yay -Syu; echo 'Press Enter to exit...'; read"]);
+                                root.runCmd(["ghostty", "-e", "bash", "-c", "tmp=$(mktemp); if rate-mirrors --protocol=https arch > \"$tmp\" && grep -q '^Server' \"$tmp\"; then sudo install -m644 \"$tmp\" /etc/pacman.d/mirrorlist && yay -Syu; else echo 'rate-mirrors failed; /etc/pacman.d/mirrorlist left unchanged.'; fi; rm -f \"$tmp\"; echo 'Press Enter to exit...'; read"]);
                                 root.closeWidget();
                             }
                         }
