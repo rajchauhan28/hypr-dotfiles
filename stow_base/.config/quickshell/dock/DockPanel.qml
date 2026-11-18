@@ -308,8 +308,8 @@ Scope {
 
         // open/close rather than show/hide: `qs ipc` owns the name `show`.
         function toggle(): void { hideTimer.stop(); root.revealed = !root.revealed; }
-        function open(): void { hideTimer.stop(); root.revealed = true; }
-        function close(): void { hideTimer.stop(); root.revealed = false; }
+        function open(): void { root.openDock(); }
+        function close(): void { root.closeDock(); }
     }
 
     Timer {
@@ -318,6 +318,10 @@ Scope {
         repeat: false
         onTriggered: root.revealed = false
     }
+
+    // Used by the dock IPC and the three-finger swipes (shell.qml).
+    function openDock() { hideTimer.stop(); root.revealed = true; }
+    function closeDock() { hideTimer.stop(); root.revealed = false; }
 
     PanelWindow {
         id: win

@@ -400,16 +400,8 @@ Scope {
         }
         // Named open/close rather than show/hide: `qs ipc` has its own `show`
         // subcommand, and the CLI swallows the name before it reaches us.
-        function open(): void {
-            hideTimer.stop();
-            root.railShown = true;
-            root.revealed = true;
-        }
-        function close(): void {
-            hideTimer.stop();
-            root.revealed = false;
-            root.railShown = false;
-        }
+        function open(): void { root.openDashboard(); }
+        function close(): void { root.dismissDashboard(); }
         // Step 1 on its own: put the rail down without opening the dashboard.
         function rail(): void {
             hideTimer.stop();
@@ -486,6 +478,20 @@ Scope {
         hideTimer.stop();
         root.railShown = true;
         root.revealed = !root.revealed;
+    }
+
+    // Rail and dashboard out / both away, regardless of the pointer. Used by
+    // the panel IPC and the three-finger swipes (swipe-down / swipe-up in
+    // shell.qml).
+    function openDashboard() {
+        hideTimer.stop();
+        root.railShown = true;
+        root.revealed = true;
+    }
+    function dismissDashboard() {
+        hideTimer.stop();
+        root.revealed = false;
+        root.railShown = false;
     }
 
     // Click-away dismissal. Idempotent on purpose so it can never fight a

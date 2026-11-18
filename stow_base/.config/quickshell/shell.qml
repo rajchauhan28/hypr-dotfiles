@@ -19,6 +19,7 @@
 // an unqualified directory import would collide on those names. Each component
 // still resolves Theme/Card from its own directory internally.
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Io
 
 import "topbar" as TopbarNS
@@ -34,9 +35,9 @@ import "wallpaper" as WallpaperNS
 import "cheatsheet" as CheatsheetNS
 
 ShellRoot {
-    TopbarNS.TopbarPanel {}
+    TopbarNS.TopbarPanel { id: topbar }
     LeftbarNS.LeftbarPanel {}
-    DockNS.DockPanel {}
+    DockNS.DockPanel { id: dock }
     SidepanelNS.SidepanelPanel {}
     NotificationsNS.NotificationsPanel {}
     DesktopClockNS.DesktopClockPanel {}
@@ -50,6 +51,30 @@ ShellRoot {
     // it survives the dashboard being closed -- which is the whole point of
     // popping it out.
     TopbarNS.LyricsPopout {}
+
+    // Three-finger vertical swipes (hl.gesture in hyprland.lua). Down pulls the
+    // dashboard out of the top edge, up raises the dock -- and each first puts
+    // the other one away, so a swipe in the opposite direction dismisses.
+    GlobalShortcut {
+        name: "swipe-down"
+        description: "Dashboard, or put the dock away"
+        onPressed: {
+            if (dock.revealed)
+                dock.closeDock();
+            else
+                topbar.openDashboard();
+        }
+    }
+    GlobalShortcut {
+        name: "swipe-up"
+        description: "Dock, or put the dashboard away"
+        onPressed: {
+            if (topbar.revealed)
+                topbar.dismissDashboard();
+            else
+                dock.openDock();
+        }
+    }
 
     // Keeps Hyprland's liquid glass (hypr/glass.lua) in step with the theme.
     // glass.lua reads the mode from settings.json whenever Hyprland evaluates
