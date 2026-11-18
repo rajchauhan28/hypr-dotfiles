@@ -431,6 +431,13 @@ Scope {
         }
     }
 
+    // Keeps the top panel window full height until its close animations
+    // (the longest is the body's, Theme.animPanel) have finished.
+    Timer {
+        id: collapseHold
+        interval: Theme.animPanel + 60
+    }
+
     Timer {
         id: hideTimer
         interval: 320
@@ -519,7 +526,18 @@ Scope {
 
         // No reserved space: windows keep the full screen, the panel floats.
         exclusiveZone: 0
-        implicitHeight: Theme.edgeLine + Math.round(Theme.panelHeight * win.uiScale) + 4
+        // Full height only while the rail or panel is out, or still animating
+        // away; closed, the window is just the trigger strip. A mapped 1866x709
+        // surface kept its buffers (~24 MiB of GPU memory, system RAM on an
+        // iGPU) for a panel that is closed nearly all the time. The window is
+        // anchored to the top edge and grows downward, so a pointer resting on
+        // the strip keeps its coordinates and hover is undisturbed. Nothing
+        // here reads the window's height: layout comes from its width.
+        readonly property bool wantOpen: root.railShown || root.revealed
+        onWantOpenChanged: if (!wantOpen) collapseHold.restart()
+        readonly property bool expanded: wantOpen || collapseHold.running
+        implicitHeight: expanded ? Theme.edgeLine + Math.round(Theme.panelHeight * win.uiScale) + 4
+                                 : Theme.hotspotHeight
         color: "transparent"
 
         WlrLayershell.layer: WlrLayer.Overlay
