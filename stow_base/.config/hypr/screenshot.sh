@@ -32,5 +32,16 @@ esac
 # Notify and copy to clipboard
 if [ -f "$SCREENSHOT_DIR/$FILENAME" ]; then
     wl-copy < "$SCREENSHOT_DIR/$FILENAME"
-    notify-send "Screenshot" "Saved to $SCREENSHOT_DIR/$FILENAME"
+    # Clicking the notification opens the shot in Gwenview. "default" is the
+    # spec's whole-notification click: the Quickshell popup invokes it on a
+    # left-click and shows no button for it. -A makes notify-send wait for
+    # the click or the timeout, so it runs in the background and the script
+    # returns at once; setsid -f lets Gwenview outlive it.
+    (
+        action=$(notify-send -a Screenshot -A default=Open \
+            "Screenshot" "Saved to $SCREENSHOT_DIR/$FILENAME")
+        if [ "$action" = default ]; then
+            setsid -f gwenview "$SCREENSHOT_DIR/$FILENAME" >/dev/null 2>&1
+        fi
+    ) &
 fi
