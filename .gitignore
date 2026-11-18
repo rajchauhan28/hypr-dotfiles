@@ -42,3 +42,12 @@ stow_base/.config/hypr/hardware.lua
 # enables the Bluetooth auto-connect systemd unit.
 stow_base/.local/bin/auralink
 stow_base/.local/bin/auralink-bt
+
+# Personal calendar notes, written at runtime by the topbar's bookmarks and
+# the clock widget. The repo ships an empty events.json.default instead.
+stow_base/.config/quickshell/widgets/clock/events.json
+
+# Never version remote-desktop connection files (hosts, usernames) or
+# archives dropped into the wallpaper folder.
+stow_base/Pictures/wallpapers/*.rdp
+stow_base/Pictures/wallpapers/*.zip
