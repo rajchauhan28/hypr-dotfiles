@@ -3,6 +3,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Wayland
 import "../common" as Common
@@ -566,6 +567,25 @@ Scope {
         root.results = [];
         root.promptOverride = "";
         root.mode = "apps";
+    }
+
+    // Keybinds arrive as Hyprland global shortcuts (hl.dsp.global("quickshell:<name>")
+    // in hyprland.lua), handled in this process: no `qs ipc` process per
+    // keypress. The IpcHandler below stays for scripts and the CLI.
+    GlobalShortcut {
+        name: "launcher-apps"
+        description: "App launcher"
+        onPressed: { root.openMode("apps"); }
+    }
+    GlobalShortcut {
+        name: "launcher-clipboard"
+        description: "Clipboard search"
+        onPressed: { root.openMode("clipboard"); }
+    }
+    GlobalShortcut {
+        name: "launcher-files"
+        description: "File search"
+        onPressed: { root.openMode("files"); }
     }
 
     IpcHandler {

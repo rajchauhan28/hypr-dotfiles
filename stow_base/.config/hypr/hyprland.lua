@@ -58,10 +58,6 @@ hl.monitor({
 ---------------------
 local terminal           = "ghostty"
 local fileManager        = "dolphin"
--- The launcher is a module inside the consolidated Quickshell shell
--- (~/.config/quickshell/launcher), not a separate process. `qs ipc` talks
--- to the already-running shell, so there is no daemon to keep alive.
-local menu               = "qs ipc call launcher apps"
 local browser            = "brave"
 local wallpaperSwitcher  = HOME .. "/.config/hypr/wallpaper_switcher.sh"
 local mainMod            = "SUPER"
@@ -355,22 +351,26 @@ hl.bind(mainMod .. " + B", hl.dsp.exec_cmd(browser), d("Apps: Browser"))
 hl.bind(mainMod .. " + Q", hl.dsp.window.close(), d("Windows: Close window"))
 -- Wallpaper carousel; picking one runs `walllust-cli set`, the same call
 -- wallpaper_switcher.sh makes (which still runs once at login).
-hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("qs ipc call wallpaper toggle"), d("Shell: Wallpaper picker"))
-hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("qs ipc call wallpaper toggle"), d("Shell: Wallpaper picker"))
+-- Shell toggles are Quickshell global shortcuts (GlobalShortcut in each panel):
+-- the running bars get the key straight from Hyprland, with no `qs ipc call`
+-- process per press (~21 ms each). Volume/brightness stay on `qs ipc` below so
+-- holding the key still repeats.
+hl.bind(mainMod .. " + SHIFT + W", hl.dsp.global("quickshell:wallpaper"), d("Shell: Wallpaper picker"))
+hl.bind(mainMod .. " + W", hl.dsp.global("quickshell:wallpaper"), d("Shell: Wallpaper picker"))
 hl.bind(mainMod .. " + TAB", hl.dsp.exec_cmd(HOME .. "/.config/hypr/toggle_overview.sh"), d("Shell: Workspace overview"))
 -- Quick settings, for when reaching the right-edge hotspot is inconvenient.
-hl.bind(mainMod .. " + I", hl.dsp.exec_cmd("qs ipc call sidepanel toggle"), d("Shell: Side panel"))
-hl.bind(mainMod .. " + D", hl.dsp.exec_cmd("qs ipc call dock toggle"), d("Shell: Dock"))
+hl.bind(mainMod .. " + I", hl.dsp.global("quickshell:sidepanel"), d("Shell: Side panel"))
+hl.bind(mainMod .. " + D", hl.dsp.global("quickshell:dock"), d("Shell: Dock"))
 -- Settings for the shell itself: dock apps, panel geometry, palette.
 hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd(HOME .. "/.config/quickshell/settings/launch.sh"), d("Shell: Settings"))
 hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd(HOME .. "/.config/quickshell/reload.sh"), d("Shell: Reload Quickshell"))
 hl.bind(mainMod .. " + O", hl.dsp.exec_cmd(HOME .. "/.config/quickshell/reload.sh"), d("Shell: Reload Quickshell"))
-hl.bind(mainMod .. " + slash", hl.dsp.exec_cmd("qs ipc call cheatsheet toggle"), d("Shell: Keybind cheatsheet"))
+hl.bind(mainMod .. " + slash", hl.dsp.global("quickshell:cheatsheet"), d("Shell: Keybind cheatsheet"))
 hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }), d("Windows: Float / unfloat"))
-hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("qs ipc call launcher clipboard"), d("Shell: Clipboard search"))
-hl.bind(mainMod .. " + SHIFT + V", hl.dsp.exec_cmd("qs ipc call clipboard toggle"), d("Shell: Clipboard panel"))
-hl.bind(mainMod .. " + SHIFT + E", hl.dsp.exec_cmd("qs ipc call launcher files"), d("Shell: File search"))
-hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu), d("Shell: App launcher  (= calc, > run, ? search)"))
+hl.bind(mainMod .. " + C", hl.dsp.global("quickshell:launcher-clipboard"), d("Shell: Clipboard search"))
+hl.bind(mainMod .. " + SHIFT + V", hl.dsp.global("quickshell:clipboard"), d("Shell: Clipboard panel"))
+hl.bind(mainMod .. " + SHIFT + E", hl.dsp.global("quickshell:launcher-files"), d("Shell: File search"))
+hl.bind(mainMod .. " + R", hl.dsp.global("quickshell:launcher-apps"), d("Shell: App launcher  (= calc, > run, ? search)"))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo(), d("Windows: Pseudo-tile"))
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"), d("Windows: Swap split direction"))
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen(), d("Windows: Fullscreen"))
@@ -396,7 +396,7 @@ hl.bind(mainMod .. " + SHIFT + bracketright", hl.dsp.window.move({ monitor = "ri
 hl.bind(mainMod .. " + bracketleft",  hl.dsp.focus({ monitor = "left" }), d("Monitors: Focus left monitor"))
 hl.bind(mainMod .. " + bracketright", hl.dsp.focus({ monitor = "right" }), d("Monitors: Focus right monitor"))
 
-hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("qs ipc call notifications toggleCenter"), d("Shell: Notification centre"))
+hl.bind(mainMod .. " + N", hl.dsp.global("quickshell:notification-centre"), d("Shell: Notification centre"))
 
 -- Workspaces
 for i = 1, 10 do

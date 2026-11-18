@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Wayland
 import Quickshell.Io
 import QtQuick.Shapes
@@ -166,6 +167,15 @@ Scope {
         repeat: true
         triggeredOnStart: true
         onTriggered: if (!actionProc.running) statusProc.running = true
+    }
+
+    // Keybinds arrive as Hyprland global shortcuts (hl.dsp.global("quickshell:<name>")
+    // in hyprland.lua), handled in this process: no `qs ipc` process per
+    // keypress. The IpcHandler below stays for scripts and the CLI.
+    GlobalShortcut {
+        name: "sidepanel"
+        description: "Side panel"
+        onPressed: { hideTimer.stop(); root.revealed = !root.revealed; }
     }
 
     IpcHandler {

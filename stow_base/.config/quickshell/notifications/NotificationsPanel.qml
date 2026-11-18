@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Shapes
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Services.Notifications
@@ -240,6 +241,15 @@ Scope {
     }
 
     // Super+N toggles the center (NotificationCenter.qml).
+    // Keybinds arrive as Hyprland global shortcuts (hl.dsp.global("quickshell:<name>")
+    // in hyprland.lua), handled in this process: no `qs ipc` process per
+    // keypress. The IpcHandler below stays for scripts and the CLI.
+    GlobalShortcut {
+        name: "notification-centre"
+        description: "Notification centre"
+        onPressed: { NotifStore.centerOpen = !NotifStore.centerOpen; }
+    }
+
     IpcHandler {
         target: "notifications"
 

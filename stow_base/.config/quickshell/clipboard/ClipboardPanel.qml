@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Wayland
 import "../common" as Common
@@ -7,7 +8,8 @@ import "../common" as Common
 // Compact popover with the most recent cliphist entries -- the "paste the
 // thing from a minute ago" surface. Full search stays in the launcher (Super+C).
 //
-// Open with: qs ipc call clipboard toggle   (Super+Shift+V)
+// Open with: Super+Shift+V (global shortcut quickshell:clipboard) or
+//            qs ipc call clipboard toggle
 Scope {
     id: root
 
@@ -54,6 +56,15 @@ Scope {
     Process {
         id: deleteProc
         onExited: listProc.running = true
+    }
+
+    // Keybinds arrive as Hyprland global shortcuts (hl.dsp.global("quickshell:<name>")
+    // in hyprland.lua), handled in this process: no `qs ipc` process per
+    // keypress. The IpcHandler below stays for scripts and the CLI.
+    GlobalShortcut {
+        name: "clipboard"
+        description: "Clipboard panel"
+        onPressed: { root.toggle(); }
     }
 
     IpcHandler {

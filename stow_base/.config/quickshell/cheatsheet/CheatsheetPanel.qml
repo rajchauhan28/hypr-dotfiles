@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Wayland
 import "../common" as Common
@@ -9,7 +10,8 @@ import "../common" as Common
 // description) plus the touchpad gestures, and is re-run on every open -- so
 // the sheet can never drift from what is actually bound.
 //
-// Open with: qs ipc call cheatsheet toggle   (Super+/)
+// Open with: Super+/ (global shortcut quickshell:cheatsheet) or
+//            qs ipc call cheatsheet toggle
 // Type to filter; Escape or a click outside closes it.
 Scope {
     id: root
@@ -59,6 +61,15 @@ Scope {
                 }
             }
         }
+    }
+
+    // Keybinds arrive as Hyprland global shortcuts (hl.dsp.global("quickshell:<name>")
+    // in hyprland.lua), handled in this process: no `qs ipc` process per
+    // keypress. The IpcHandler below stays for scripts and the CLI.
+    GlobalShortcut {
+        name: "cheatsheet"
+        description: "Keybind cheatsheet"
+        onPressed: { root.toggle(); }
     }
 
     IpcHandler {

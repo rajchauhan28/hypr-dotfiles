@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Effects
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Io
 import Quickshell.Wayland
 
@@ -10,7 +11,8 @@ import Quickshell.Wayland
 // Applying goes through walllust-cli, the same daemon wallpaper_switcher.sh
 // drives, so palette regeneration happens exactly as it does on rotation.
 //
-// qs ipc call wallpaper {toggle,open,close,next,prev}     (Super+W)
+// Super+W (global shortcut quickshell:wallpaper) toggles it; scripts can use
+// qs ipc call wallpaper {toggle,open,close,next,prev}
 Scope {
     id: root
 
@@ -92,6 +94,15 @@ Scope {
 
     // Build the thumbnail cache at login so the first open is instant.
     Component.onCompleted: listProc.running = true
+
+    // Keybinds arrive as Hyprland global shortcuts (hl.dsp.global("quickshell:<name>")
+    // in hyprland.lua), handled in this process: no `qs ipc` process per
+    // keypress. The IpcHandler below stays for scripts and the CLI.
+    GlobalShortcut {
+        name: "wallpaper"
+        description: "Wallpaper picker"
+        onPressed: { root.toggle(); }
+    }
 
     IpcHandler {
         target: "wallpaper"

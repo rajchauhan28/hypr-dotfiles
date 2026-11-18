@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Wayland
 import Quickshell.Io
 import QtQuick.Shapes
@@ -292,6 +293,15 @@ Scope {
     property string tipText: ""
     property real tipX: 0
     property bool tipOn: false
+
+    // Keybinds arrive as Hyprland global shortcuts (hl.dsp.global("quickshell:<name>")
+    // in hyprland.lua), handled in this process: no `qs ipc` process per
+    // keypress. The IpcHandler below stays for scripts and the CLI.
+    GlobalShortcut {
+        name: "dock"
+        description: "Dock"
+        onPressed: { hideTimer.stop(); root.revealed = !root.revealed; }
+    }
 
     IpcHandler {
         target: "dock"
