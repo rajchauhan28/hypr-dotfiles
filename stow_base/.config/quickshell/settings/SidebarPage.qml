@@ -24,6 +24,7 @@ ColumnLayout {
 
                     app: modelData
                     itemIndex: index
+                    sidebar: true
                     isFirst: index === 0
                     isLast: index === Config.sidebarPinned.length - 1
 

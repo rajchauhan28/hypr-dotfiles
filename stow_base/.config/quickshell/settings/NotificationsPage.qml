@@ -72,7 +72,7 @@ ColumnLayout {
 
     Card {
         title: "BEHAVIOUR"
-        subtitle: "Critical notifications never time out"
+        subtitle: "Critical notifications stay for timeoutCritical seconds (0 = until dismissed)"
         section: "notifications"
         keys: ["maxVisible", "timeoutLow", "timeoutNormal"]
 

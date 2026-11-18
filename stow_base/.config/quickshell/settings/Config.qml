@@ -309,11 +309,9 @@ Singleton {
             }
         }
 
-        for (var j = 0; j < cfg.apps.length; j++) {
-            if (cfg.apps[j].icon && Quickshell.iconPath(cfg.apps[j].icon, true) !== "")
-                return cfg.apps[j].icon;
-        }
-
+        // No "first app with any icon" fallback: that silently saved some
+        // unrelated app's icon into pinned.json. An unresolvable name stays as
+        // typed and the row shows its missing-icon state instead.
         return iconName || appClass || "";
     }
 

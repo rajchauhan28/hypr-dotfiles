@@ -42,7 +42,7 @@ ColumnLayout {
         actionTitle = title;
         actionLog = "Waiting for administrator approval...\n";
         actionResult = "";
-        actionProc.command = ["pkexec", manager, mode, "reign"];
+        actionProc.command = ["pkexec", manager, mode, Quickshell.env("USER")];
         actionProc.running = true;
     }
 

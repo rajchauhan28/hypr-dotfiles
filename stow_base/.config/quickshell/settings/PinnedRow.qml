@@ -12,6 +12,17 @@ Rectangle {
     property bool isFirst: false
     property bool isLast: false
     property bool pickerOpen: false
+    // SidebarPage reuses this row for the leftbar's list. Icon changes must go
+    // to that list: they always went to the dock's, so picking a sidebar icon
+    // rewrote whichever dock app sat at the same index.
+    property bool sidebar: false
+
+    function setIcon(name) {
+        if (entry.sidebar)
+            Config.changeSidebarPinnedIcon(entry.itemIndex, name);
+        else
+            Config.changePinnedIcon(entry.itemIndex, name);
+    }
 
     signal moveUp
     signal moveDown
@@ -237,7 +248,7 @@ Rectangle {
                             var custom = iconSearch.text.trim();
                             if (custom !== "") {
                                 var best = Config.getAvailableIcon(custom, entry.app.name, entry.app["class"]);
-                                Config.changePinnedIcon(entry.itemIndex, best);
+                                entry.setIcon(best);
                                 entry.pickerOpen = false;
                             }
                         }
@@ -266,7 +277,7 @@ Rectangle {
                         cursorShape: Qt.PointingHandCursor
                         onClicked: {
                             var original = entry.app["class"] || entry.app.name || "";
-                            Config.changePinnedIcon(entry.itemIndex, original);
+                            entry.setIcon(original);
                             entry.pickerOpen = false;
                         }
                     }
@@ -365,7 +376,7 @@ Rectangle {
                             onClicked: {
                                 var chosen = modelData.icon;
                                 var validated = Config.getAvailableIcon(chosen, modelData.name, modelData["class"]);
-                                Config.changePinnedIcon(entry.itemIndex, validated);
+                                entry.setIcon(validated);
                                 entry.pickerOpen = false;
                             }
                         }

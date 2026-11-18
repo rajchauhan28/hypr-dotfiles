@@ -223,7 +223,10 @@ def stop():
     while server_pids() and time.time() < deadline:
         time.sleep(0.3)
     for pid in server_pids():
-        os.kill(pid, signal.SIGKILL)
+        try:
+            os.kill(pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass  # exited between the scan and the kill
     print("stopped" if pids else "nothing was running")
     return 0
 
