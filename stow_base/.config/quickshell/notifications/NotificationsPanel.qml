@@ -52,7 +52,12 @@ Scope {
         color: "transparent"
         // The center lists everything already; popups would only sit on top
         // of it. They keep expiring while hidden.
+        // Unmapped while empty: a mapped surface keeps its full-height buffers
+        // (~8 MiB of GPU memory, system RAM on an iGPU) even with nothing on
+        // it. It stays mapped until the last card has finished sliding out.
         visible: !NotifStore.centerOpen
+                 && (shown || bodyHeight > 0.5
+                     || slideX < Theme.panelWidth + Theme.cornerFillet - 0.5)
 
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
