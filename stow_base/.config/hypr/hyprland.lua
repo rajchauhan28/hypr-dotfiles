@@ -181,6 +181,13 @@ hl.window_rule({
     size  = "900 600",
 })
 
+hl.window_rule({
+    name  = "capcut",
+    match = { class = "^(capcut\\.exe)$" },
+    suppress_event = "fullscreen maximize",
+    opacity = "1.0 override 1.0 override",
+})
+
 -------------------------------
 ---- FOCUS NEW WINDOWS --------
 -------------------------------
