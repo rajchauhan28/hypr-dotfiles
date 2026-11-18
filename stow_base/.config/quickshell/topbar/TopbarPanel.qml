@@ -390,7 +390,7 @@ Scope {
     }
 
     // Lets a keybind pin the panel open without using the hotspot:
-    //   qs -c topbar ipc call panel toggle
+    //   qs ipc call panel toggle   (the topbar lives in the default root shell.qml)
     IpcHandler {
         target: "panel"
 
