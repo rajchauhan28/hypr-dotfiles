@@ -31,6 +31,7 @@ import "launcher" as LauncherNS
 import "osd" as OsdNS
 import "clipboard" as ClipboardNS
 import "wallpaper" as WallpaperNS
+import "cheatsheet" as CheatsheetNS
 
 ShellRoot {
     TopbarNS.TopbarPanel {}
@@ -43,6 +44,8 @@ ShellRoot {
     OsdNS.OsdPanel {}
     ClipboardNS.ClipboardPanel {}
     WallpaperNS.WallpaperCarousel {}
+    // Super+/ -- built from the live `hyprctl binds -j` on every open.
+    CheatsheetNS.CheatsheetPanel {}
     // Floating lyrics window. Lives at shell scope, not inside the topbar, so
     // it survives the dashboard being closed -- which is the whole point of
     // popping it out.
