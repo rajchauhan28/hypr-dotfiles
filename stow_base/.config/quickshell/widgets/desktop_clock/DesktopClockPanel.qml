@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Controls
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Io
@@ -63,12 +62,16 @@ Scope {
     PanelWindow {
         id: win
 
-        anchors {
-            top: true
-            bottom: true
-            left: true
-            right: true
-        }
+        // Sized to the text, not the screen: a full-screen surface held ~40 MiB
+        // of GPU buffers (system RAM on an iGPU) to draw a ~640x220 clock.
+        // Anchored to the top edge only, a layer surface is centred
+        // horizontally; this margin puts the text's centre 120 px above the
+        // screen's centre, where the old full-screen layout had it.
+        anchors.top: true
+        margins.top: Math.max(0, Math.round((win.screen ? win.screen.height : 1200) / 2
+                                            - 120 - clockCol.implicitHeight / 2))
+        implicitWidth: Math.ceil(clockCol.implicitWidth)
+        implicitHeight: Math.ceil(clockCol.implicitHeight)
 
         color: "transparent"
 
@@ -80,9 +83,8 @@ Scope {
         mask: Region {}
 
         ColumnLayout {
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.verticalCenterOffset: -120
+            id: clockCol
+            anchors.centerIn: parent
             spacing: 14
 
             // LINE 1: DAY IN ANURATI FONT
