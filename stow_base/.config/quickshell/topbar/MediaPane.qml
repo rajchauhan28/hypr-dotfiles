@@ -181,6 +181,12 @@ ColumnLayout {
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
                 cache: true
+                // Decode at most 512 px: covers arrive at up to 3000 px, but
+                // are shown a few hundred px wide. Fixed rather than bound to
+                // the item, which resizes on every frame of the panel opening;
+                // both cards use the same size, so they share one cached copy.
+                sourceSize.width: 512
+                sourceSize.height: 512
                 rotation: disc.spin
                 visible: status === Image.Ready
             }
