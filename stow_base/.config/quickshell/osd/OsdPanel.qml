@@ -336,7 +336,9 @@ Scope {
                     font.pixelSize: 14
                     font.weight: root.kind === "profile" ? Font.DemiBold : Font.Normal
                     color: Theme.textPrimary
-                    width: root.kind === "profile" ? implicitWidth : 48
+                    // undefined = reset to the natural width. Binding width to
+                    // its own implicitWidth was a binding loop Qt warned about.
+                    width: root.kind === "profile" ? undefined : 48
                     horizontalAlignment: Text.AlignRight
                 }
             }
