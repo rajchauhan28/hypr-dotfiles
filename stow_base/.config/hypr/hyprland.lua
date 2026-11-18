@@ -323,6 +323,10 @@ hl.config({
         force_default_wallpaper = -1,
         disable_hyprland_logo   = true,
         focus_on_activate       = true,
+        -- If the Quickshell lock daemon crashes while locked, Hyprland keeps
+        -- the session locked but, without this, refuses a new lock client:
+        -- the only way out was a TTY. lock.sh's cold path relies on it.
+        allow_session_lock_restore = true,
     },
     render = {
         -- Let a fullscreen window hand its buffer straight to the display

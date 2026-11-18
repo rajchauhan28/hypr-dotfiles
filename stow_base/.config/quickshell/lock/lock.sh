@@ -12,23 +12,38 @@
 # Theme's helper scripts are already resident; asking it to lock over IPC is
 # immediate, where spawning a fresh instance took seconds to show anything.
 #
-# If the daemon is gone (crash, never started), fall back to the cold path
-# rather than leaving the session unlocked.
+# If the daemon is gone (crash, never started) or wedged, fall back to the
+# cold path rather than leaving the session unlocked -- and if even that
+# fails, say so loudly instead of exiting 1 into the void.
 set -u
 
-if qs -p "$HOME/.config/quickshell/lock" ipc call session lock >/dev/null 2>&1; then
+LOCK_DIR="$HOME/.config/quickshell/lock"
+
+# Time-boxed: a daemon wedged in futex_wait (see reload.sh) used to hang this
+# call forever, so the cold path below was never reached.
+ipc_lock() {
+    timeout 2 qs -p "$LOCK_DIR" ipc call session lock >/dev/null 2>&1
+}
+
+if ipc_lock; then
     exit 0
 fi
 
-# Cold path. Note the shell starts unlocked, so a bare `qs -c lock` would come
-# up showing nothing — the daemon has to be started and *then* told to lock.
-qs -d -p "$HOME/.config/quickshell/lock" >/dev/null 2>&1 &
+# Cold path. Clear out a wedged instance first, or the fresh one is just a
+# second unresponsive process. Killing it is safe even mid-lock: the session
+# lock protocol keeps the compositor locked when the client dies, and
+# misc.allow_session_lock_restore (hyprland.lua) lets the new one take over.
+# The shell starts unlocked, so it has to be started and *then* told to lock.
+timeout 3 qs kill -p "$LOCK_DIR" >/dev/null 2>&1 || true
+qs -d -p "$LOCK_DIR" >/dev/null 2>&1 &
 
 for _ in $(seq 1 100); do
-    if qs -p "$HOME/.config/quickshell/lock" ipc call session lock >/dev/null 2>&1; then
+    if ipc_lock; then
         exit 0
     fi
     sleep 0.1
 done
 
+notify-send -u critical "Screen lock FAILED" \
+    "The Quickshell lock daemon did not respond. Your session is NOT locked." 2>/dev/null || true
 exit 1
