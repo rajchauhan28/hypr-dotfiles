@@ -1,0 +1,6 @@
+# gitleaks findings reviewed and confirmed NOT to be secrets, by fingerprint
+# (commit:file:rule:line). Add a line here only after checking the value.
+#
+# A SHA-256 content hash of nvim's keymaps.lua in graphify's file-stat cache,
+# committed once in 21ca579 and untracked later; the same finding as before.
+21ca579197eb54ec64e6e322b49b2ea775c6d6f7:graphify-out/cache/stat-index.json:generic-api-key:1
