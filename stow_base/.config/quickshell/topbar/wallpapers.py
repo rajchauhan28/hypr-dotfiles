@@ -11,6 +11,7 @@ extracted with ffmpeg; images are their own thumbnail.
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 
@@ -184,8 +185,17 @@ def listing():
 def main():
     cmd = sys.argv[1] if len(sys.argv) > 1 else "list"
     if cmd == "set" and len(sys.argv) >= 3:
-        subprocess.run(["walllust-cli", "set", sys.argv[2]],
-                       capture_output=True, timeout=30)
+        # Hyprland's environment has no ~/.local/bin, where walllust-cli
+        # lives, so a bare name raised FileNotFoundError, nothing was printed
+        # and the panel never updated. A failed or slow apply must still
+        # print the listing below.
+        cli = (shutil.which("walllust-cli")
+               or os.path.expanduser("~/.local/bin/walllust-cli"))
+        try:
+            subprocess.run([cli, "set", sys.argv[2]],
+                           capture_output=True, timeout=30)
+        except (OSError, subprocess.TimeoutExpired) as e:
+            print(f"walllust-cli set failed: {e}", file=sys.stderr)
     print(json.dumps(listing()))
 
 

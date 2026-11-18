@@ -87,6 +87,19 @@ hl.env("XDG_CURRENT_DESKTOP", "Hyprland")
 hl.env("XDG_MENU_PREFIX", "arch-")
 hl.env("XDG_SESSION_TYPE", "wayland")
 
+-- ~/.local/bin holds qs-dmenu, walllust-cli, damx-driver-manager and the
+-- AuraLink binaries, but a display-manager login does not read ~/.zshrc, so
+-- nothing Hyprland spawned could find them: applying a wallpaper from the
+-- carousel or dashboard failed with FileNotFoundError. Guarded so a config
+-- reload (which re-runs this file) does not prepend it again each time.
+do
+    local path = os.getenv("PATH") or "/usr/local/bin:/usr/bin"
+    local localbin = HOME .. "/.local/bin"
+    if not (":" .. path .. ":"):find(":" .. localbin .. ":", 1, true) then
+        hl.env("PATH", localbin .. ":" .. path)
+    end
+end
+
 -- Hardware-video-decode driver. Setting the wrong one here is worse than
 -- setting none: iHD on an AMD box breaks decode in every Electron app.
 if hw.igpu == "intel" then
