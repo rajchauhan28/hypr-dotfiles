@@ -539,7 +539,9 @@ Scope {
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
                                 root.powerExpanded = false;
-                                root.launchApp("hyprlock");
+                                // hyprlock is not part of this setup (the lock is quickshell/lock);
+                                // launchApp runs through sh, so $HOME expands there.
+                                root.launchApp("\"$HOME/.config/quickshell/lock/lock.sh\"");
                             }
                             onContainsMouseChanged: root.setTooltip(containsMouse ? "Lock Screen" : "", lockMouse)
                         }

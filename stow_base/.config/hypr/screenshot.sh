@@ -14,8 +14,10 @@ case "$1" in
         grim -g "$(slurp -d -c 00000000 -b 00000000)" "$SCREENSHOT_DIR/$FILENAME"
         ;;
     output)
-        # Capture focused output
-        grim -o "$(hyprctl activewindow -j | jq -r '.monitor')" "$SCREENSHOT_DIR/$FILENAME"
+        # Capture focused output. grim -o wants the output NAME (eDP-1);
+        # activewindow's .monitor is a numeric id, and is null on an empty
+        # workspace, so Super+Print used to fail every time.
+        grim -o "$(hyprctl monitors -j | jq -r '.[] | select(.focused) | .name')" "$SCREENSHOT_DIR/$FILENAME"
         ;;
     active)
         # Capture active window

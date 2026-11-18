@@ -16,8 +16,9 @@ Item {
             glyph: "󰌾",
             label: "Lock",
             colour: Theme.textPrimary,
-            // Matches the Super+L bind in hyprland.lua.
-            cmd: ["hyprlock"],
+            // Matches the Super+L bind in hyprland.lua. Not hyprlock: that
+            // is not installed here, so this button used to do nothing.
+            cmd: ["sh", "-c", "exec \"$HOME/.config/quickshell/lock/lock.sh\""],
             confirm: false
         },
         {
