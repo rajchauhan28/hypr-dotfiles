@@ -8,8 +8,9 @@ every combo that does the same thing (Super+W and Super+Shift+W).
 The source is `hyprctl binds -j`, not hyprland.lua, so the sheet shows what is
 actually bound right now. Each bind's description is "Group: Label" (see the
 `d()` helper in hyprland.lua); a bind with no description is listed under
-"Other" so nothing silently goes missing. Touchpad gestures come from
-libinput-gestures.conf, which Hyprland does not know about.
+"Other" so nothing silently goes missing. Touchpad gestures are not in
+`hyprctl binds`: they come from hyprland.lua's hl.gesture() calls and
+libinput-gestures.conf (see gestures()).
 """
 import json
 import os
@@ -62,31 +63,78 @@ def hypr_binds():
         return []
 
 
-def gestures():
-    """`gesture swipe up 3 <cmd>` lines, labelled by what the command does."""
-    path = os.path.expanduser("~/.config/hypr/libinput-gestures.conf")
-    rows = []
+def shortcut_labels():
+    """{"quickshell:swipe-down": "Dashboard, or put the dock away", ...} from
+    Hyprland's live registry, so a gesture that fires a global shortcut is
+    labelled with that shortcut's own description."""
     try:
-        lines = open(path, encoding="utf-8").read().splitlines()
+        out = subprocess.run(["hyprctl", "globalshortcuts"], capture_output=True,
+                             text=True, timeout=5).stdout
+    except (OSError, subprocess.TimeoutExpired):
+        return {}
+    labels = {}
+    for line in out.splitlines():
+        key, sep, desc = line.partition(" -> ")
+        if sep:
+            labels[key.strip()] = desc.strip()
+    return labels
+
+
+def gesture_label(action, labels):
+    m = re.search(r'quickshell:([\w-]+)|qs_shortcut\("([\w-]+)"\)', action)
+    if m:
+        name = m.group(1) or m.group(2)
+        return labels.get("quickshell:" + name, name)
+    if '"workspace"' in action:
+        return "Switch workspace"
+    if "fullscreen" in action:
+        return "Toggle fullscreen"
+    return action.strip()
+
+
+def gestures():
+    """Touchpad gestures from both places they are defined: Hyprland's native
+    hl.gesture() calls in hyprland.lua (the swipes) and libinput-gestures.conf
+    (the four-finger click, a libinput "hold"). Neither shows up in
+    `hyprctl binds`."""
+    labels = shortcut_labels()
+    rows = []  # (what, direction or "", desc)
+
+    lua = os.path.expanduser("~/.config/hypr/hyprland.lua")
+    try:
+        lines = open(lua, encoding="utf-8").read().splitlines()
     except OSError:
-        return rows
+        lines = []
+    axes = {"horizontal": "left/right", "vertical": "up/down"}
     for line in lines:
-        m = re.match(r"\s*gesture\s+(swipe|pinch)\s+(\S+)\s+(\d+)\s+(.+)", line)
+        m = re.match(r'\s*hl\.gesture\(\{\s*fingers\s*=\s*(\d+)\s*,\s*'
+                     r'direction\s*=\s*"(\w+)"\s*,\s*action\s*=\s*(.+?)\s*\}\)', line)
+        if m:
+            fingers, direction, action = m.groups()
+            rows.append((f"{fingers}-finger swipe", axes.get(direction, direction),
+                         gesture_label(action, labels)))
+
+    conf = os.path.expanduser("~/.config/hypr/libinput-gestures.conf")
+    try:
+        lines = open(conf, encoding="utf-8").read().splitlines()
+    except OSError:
+        lines = []
+    for line in lines:
+        m = re.match(r"\s*gesture\s+(swipe|pinch|hold)\s+(\S+)\s+(\d+)\s+(.+)", line)
         if not m:
             continue
         kind, direction, fingers, cmd = m.groups()
-        if "fullscreen({ mode = 1 })" in cmd:
-            desc = "Maximise"
-        elif "fullscreen" in cmd:
-            desc = "Fullscreen"
+        if kind == "hold":
+            rows.append((f"{fingers}-finger click", "", gesture_label(cmd, labels)))
         else:
-            desc = cmd.strip()
-        rows.append((f"{fingers}-finger {kind}", direction, desc))
-    # "3-finger swipe up" + "3-finger swipe down" doing the same thing -> one row.
+            rows.append((f"{fingers}-finger {kind}", direction, gesture_label(cmd, labels)))
+
+    # "4-finger swipe up" + "4-finger swipe down" doing the same thing -> one row.
     merged = {}
     for what, direction, desc in rows:
         merged.setdefault((what, desc), []).append(direction)
-    return [{"keys": [f"{what} {'/'.join(dirs)}"], "desc": desc}
+    return [{"keys": [" ".join(filter(None, [what, "/".join(d for d in dirs if d)]))],
+             "desc": desc}
             for (what, desc), dirs in merged.items()]
 
 

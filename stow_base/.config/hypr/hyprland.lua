@@ -147,7 +147,10 @@ hl.on("hyprland.start", function()
     -- so the second, prefix-less run was the same rebuild done concurrently.
     hl.exec_cmd("kbuildsycoca6")
     hl.exec_cmd("systemctl --user start hyprpolkitagent")
-    hl.exec_cmd("command -v libinput-gestures-setup >/dev/null && libinput-gestures-setup start")
+    -- Only the four-finger click lives in libinput-gestures (the swipes are
+    -- native, see INPUT & GESTURES). -c, or it reads /etc's defaults instead.
+    hl.exec_cmd("command -v libinput-gestures >/dev/null && libinput-gestures -c "
+        .. HOME .. "/.config/hypr/libinput-gestures.conf")
     hl.exec_cmd("test -x /usr/lib/pam_kwallet_init && /usr/lib/pam_kwallet_init")
     -- Refresh-rate/governor tuning against AC vs battery. Skipped on a
     -- desktop, where the daemon has nothing to react to.
@@ -303,6 +306,23 @@ hl.animation({ leaf = "layers",          enabled = true, speed = 2,   bezier = "
 ---------------------------
 ---- INPUT & GESTURES -----
 ---------------------------
+-- Touchpad gestures. The swipes are Hyprland's own; the four-finger click is
+-- a libinput "hold", which only libinput-gestures sees (libinput-gestures.conf).
+--   3 fingers left/right   workspaces, following the fingers
+--   3 fingers down         dashboard, or put the dock away if it is up
+--   3 fingers up           dock, or put the dashboard away if it is open
+--   4 fingers up/down      toggle fullscreen
+--   4-finger click         app launcher
+local function qs_shortcut(name)
+    return function() hl.dispatch(hl.dsp.global("quickshell:" .. name)) end
+end
+local function toggle_fullscreen() hl.dispatch(hl.dsp.window.fullscreen()) end
+hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })
+hl.gesture({ fingers = 3, direction = "down",       action = qs_shortcut("swipe-down") })
+hl.gesture({ fingers = 3, direction = "up",         action = qs_shortcut("swipe-up") })
+hl.gesture({ fingers = 4, direction = "up",         action = toggle_fullscreen })
+hl.gesture({ fingers = 4, direction = "down",       action = toggle_fullscreen })
+
 hl.config({
     input = {
         follow_mouse = 1,

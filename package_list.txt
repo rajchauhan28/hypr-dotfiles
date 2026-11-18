@@ -36,6 +36,7 @@ kamoso
 kdeconnect
 kdialog
 libc++
+libinput-gestures
 libpulse
 libreoffice-fresh
 linux
