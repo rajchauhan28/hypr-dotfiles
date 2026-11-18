@@ -84,7 +84,29 @@ Singleton {
            + " :: " + MediaService.album)
         : ""
 
-    onTrackKeyChanged: fetchDebounce.restart()
+    // Only query LRCLIB while something can actually show lyrics: the
+    // dashboard/media tab is revealed or the popout is open (that is what
+    // MediaService.active means). This singleton lives for the whole session,
+    // so fetching on every track change sent every song played over the
+    // network for nothing. A track that changed while hidden is fetched the
+    // moment a lyrics view opens.
+    property string fetchedKey: ""
+
+    onTrackKeyChanged: {
+        if (MediaService.active)
+            fetchDebounce.restart();
+    }
+
+    Connections {
+        target: MediaService
+        function onActiveChanged() {
+            // Fetch at once: the track changed while hidden, so its
+            // metadata has long settled and the debounce would only show the
+            // previous song's lyrics for a moment.
+            if (MediaService.active && svc.fetchedKey !== svc.trackKey)
+                svc.fetch();
+        }
+    }
 
     // A track change rewrites artist/title/album in separate steps, so firing
     // on the first of them would query LRCLIB for a half-updated track.
@@ -96,6 +118,7 @@ Singleton {
     }
 
     function fetch() {
+        svc.fetchedKey = svc.trackKey;
         if (!MediaService.hasPlayer || MediaService.title === "") {
             svc.state = "idle";
             svc.lines = [];
@@ -116,7 +139,10 @@ Singleton {
         lyricsProc.running = true;
     }
 
-    Component.onCompleted: svc.fetch()
+    Component.onCompleted: {
+        if (MediaService.active)
+            svc.fetch();
+    }
 
     Process {
         id: lyricsProc

@@ -21,6 +21,12 @@ Scope {
     property var clients: []
     property var pinnedModel: []
     property var extraModel: []
+    // Last-assigned model contents. rebuild() runs on every client poll; a
+    // fresh array, even an identical one, makes the Repeaters destroy and
+    // recreate every icon and preview tile -- clicks spanning the rebuild were
+    // lost, hover bounces replayed and screencopy previews flashed every 2 s.
+    property string pinnedSig: ""
+    property string extraSig: ""
 
     function rebuild() {
         var byKey = {};
@@ -69,8 +75,16 @@ Scope {
                       running: true,
                       windows: w.windows });
         }
-        root.pinnedModel = pm;
-        root.extraModel = em;
+        var pmSig = JSON.stringify(pm);
+        var emSig = JSON.stringify(em);
+        if (pmSig !== root.pinnedSig) {
+            root.pinnedSig = pmSig;
+            root.pinnedModel = pm;
+        }
+        if (emSig !== root.extraSig) {
+            root.extraSig = emSig;
+            root.extraModel = em;
+        }
 
         // Keep an open preview pointing at the refreshed entry rather than a
         // stale copy, so tiles appear/vanish as windows open and close.
@@ -81,7 +95,9 @@ Scope {
                 if (all[i].name === root.previewEntry.name)
                     found = all[i];
             if (found && found.windows.length > 0) {
-                root.previewEntry = found;
+                // Same rule as the models: only a real change re-creates tiles.
+                if (JSON.stringify(found) !== JSON.stringify(root.previewEntry))
+                    root.previewEntry = found;
                 // Arm the preview here too, not only on pointer-enter: hovering
                 // an icon before the first client poll lands (or the instant an
                 // app's first window maps) would otherwise leave the card
