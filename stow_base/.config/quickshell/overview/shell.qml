@@ -225,6 +225,9 @@ ShellRoot {
                                 TextInput {
                                     id: searchInput
                                     Layout.fillWidth: true
+                                    // The footer says "Press Esc"; the window grabs the
+                                    // keyboard exclusively, so nothing else can close it.
+                                    Keys.onEscapePressed: root.closeOverview()
                                     font.pixelSize: 14
                                     color: Theme.textStrong
                                     clip: true

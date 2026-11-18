@@ -108,7 +108,7 @@ Scope {
         var step = Math.abs(delta) * 5;
         var sign = delta >= 0 ? "+" : "-";
         brightProc.command = ["sh", "-c",
-            "brightnessctl -q s " + step + "%" + sign +
+            "brightnessctl -q --min-value=1 s " + step + "%" + sign +  // never fully dark, as syspanel.py
             " && brightnessctl -m | cut -d, -f4 | tr -d '%'"];
         brightProc.running = true;
     }

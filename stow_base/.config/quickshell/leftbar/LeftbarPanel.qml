@@ -20,6 +20,9 @@ Scope {
 
     property bool powerExpanded: false
     property string armedPower: ""
+    // Suspend and Reboot need a second click: the drawer opens on hover, so a
+    // stray click used to reboot the machine. The arm expires on its own.
+    property string armedAction: ""
     property real powerDrawerY: 500
 
     property bool clockPopupOpen: false
@@ -115,6 +118,25 @@ Scope {
         p.running = true;
     }
 
+    Timer {
+        id: actionArmTimer
+        interval: 3000
+        repeat: false
+        onTriggered: root.armedAction = ""
+    }
+
+    function armOrRun(key, cmd) {
+        if (root.armedAction === key) {
+            root.armedAction = "";
+            actionArmTimer.stop();
+            root.powerExpanded = false;
+            root.launchApp(cmd);
+        } else {
+            root.armedAction = key;
+            actionArmTimer.restart();
+        }
+    }
+
     function launchApp(cmd) {
         var p = Qt.createQmlObject('import Quickshell.Io; Process {}', root);
         p.command = ["sh", "-c", "setsid " + cmd + " >/dev/null 2>&1 &"];
@@ -142,7 +164,9 @@ Scope {
         onLoaded: {
             try {
                 var d = JSON.parse(text());
-                root.sidebarPinned = (d.pinned && d.pinned.length > 0)
+                // An empty list is the user's choice, not a missing file: only
+                // a file with no "pinned" array falls back to the defaults.
+                root.sidebarPinned = Array.isArray(d.pinned)
                                        ? d.pinned : root.sidebarPinnedDefaults;
             } catch (e) {
                 root.sidebarPinned = root.sidebarPinnedDefaults;
@@ -557,7 +581,8 @@ Scope {
                         anchors.fill: parent
                         radius: Theme.radiusSmall
                         color: sleepMouse.containsMouse ? Theme.cardHover : Theme.card
-                        border.color: sleepMouse.containsMouse ? Theme.accent : Theme.border
+                        border.color: root.armedAction === "suspend" ? Theme.danger
+                                    : (sleepMouse.containsMouse ? Theme.accent : Theme.border)
                         border.width: 1
 
                         scale: sleepMouse.containsPress ? 0.90 : (sleepMouse.containsMouse ? 1.12 : 1.0)
@@ -576,10 +601,11 @@ Scope {
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
-                                root.powerExpanded = false;
-                                root.launchApp("systemctl suspend");
+                                root.armOrRun("suspend", "systemctl suspend");
+                                if (root.armedAction === "suspend")
+                                    root.setTooltip("Click again to suspend", sleepMouse);
                             }
-                            onContainsMouseChanged: root.setTooltip(containsMouse ? "Sleep / Suspend" : "", sleepMouse)
+                            onContainsMouseChanged: root.setTooltip(containsMouse ? (root.armedAction === "suspend" ? "Click again to suspend" : "Sleep / Suspend") : "", sleepMouse)
                         }
                     }
                 }
@@ -593,7 +619,8 @@ Scope {
                         anchors.fill: parent
                         radius: Theme.radiusSmall
                         color: rebMouse.containsMouse ? Theme.cardHover : Theme.card
-                        border.color: rebMouse.containsMouse ? Theme.good : Theme.border
+                        border.color: root.armedAction === "reboot" ? Theme.danger
+                                    : (rebMouse.containsMouse ? Theme.good : Theme.border)
                         border.width: 1
 
                         scale: rebMouse.containsPress ? 0.90 : (rebMouse.containsMouse ? 1.12 : 1.0)
@@ -612,10 +639,11 @@ Scope {
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
-                                root.powerExpanded = false;
-                                root.launchApp("systemctl reboot");
+                                root.armOrRun("reboot", "systemctl reboot");
+                                if (root.armedAction === "reboot")
+                                    root.setTooltip("Click again to reboot", rebMouse);
                             }
-                            onContainsMouseChanged: root.setTooltip(containsMouse ? "Reboot PC" : "", rebMouse)
+                            onContainsMouseChanged: root.setTooltip(containsMouse ? (root.armedAction === "reboot" ? "Click again to reboot" : "Reboot PC") : "", rebMouse)
                         }
                     }
                 }
@@ -658,7 +686,7 @@ Scope {
                         spacing: 0
 
                         Text {
-                            text: Qt.formatTime(root.now, "hh")
+                            text: Qt.formatTime(root.now, "hh AP").split(" ")[0]  // 12h: Qt only honours AP in the same format
                             font.pixelSize: 12
                             font.bold: true
                             font.family: "JetBrains Mono"
@@ -1151,7 +1179,7 @@ Scope {
                     spacing: 4
 
                     Text {
-                        text: Qt.formatTime(root.now, "hh:mm")
+                        text: Qt.formatTime(root.now, "hh:mm AP").split(" ")[0]  // 12h, to match the AM/PM label
                         font.pixelSize: 34
                         font.bold: true
                         font.family: "JetBrains Mono"
