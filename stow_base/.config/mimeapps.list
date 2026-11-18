@@ -1,25 +1,38 @@
 [Added Associations]
 application/pdf=brave-browser.desktop;onlyoffice-desktopeditors.desktop;firefox.desktop;libreoffice-draw.desktop;
+application/vnd.openxmlformats-officedocument.spreadsheetml.sheet=ai.storyteller.gridcraft.desktop;org.kde.ark.desktop;
 image/jpeg=org.kde.gwenview.desktop;brave-browser.desktop;firefox.desktop;
 image/png=org.kde.gwenview.desktop;brave-browser.desktop;firefox.desktop;
 inode/directory=org.kde.dolphin.desktop;kitty-open.desktop;
 text/csv=onlyoffice-desktopeditors.desktop;libreoffice-calc.desktop;libreoffice-writer.desktop;micro.desktop;org.gnome.TextEditor.desktop;vim.desktop;nvim.desktop;org.x.editor.desktop;
 text/plain=org.gnome.TextEditor.desktop;libreoffice-writer.desktop;onlyoffice-desktopeditors.desktop;nvim.desktop;org.x.editor.desktop;vim.desktop;micro.desktop;
+text/x-qml=nvim.desktop;org.gnome.TextEditor.desktop;libreoffice-writer.desktop;onlyoffice-desktopeditors.desktop;org.x.editor.desktop;vim.desktop;micro.desktop;wine-extension-iss.desktop;
+video/matroska=mpv.desktop;fr.handbrake.ghb.desktop;vlc.desktop;
 video/mp4=mpv.desktop;vlc.desktop;fr.handbrake.ghb.desktop;
+x-scheme-handler/writer=writer.desktop;
 
 [Default Applications]
 application/pdf=brave-browser.desktop;
+application/vnd.openxmlformats-officedocument.spreadsheetml.sheet=ai.storyteller.gridcraft.desktop;
 application/x-bittorrent=freedownloadmanager_torrent.desktop
 image/jpeg=org.kde.gwenview.desktop;
 image/png=org.kde.gwenview.desktop;
 inode/directory=org.kde.dolphin.desktop
 text/csv=onlyoffice-desktopeditors.desktop;
 text/plain=org.gnome.TextEditor.desktop;
+text/x-qml=nvim.desktop;
+video/matroska=mpv.desktop;
 video/mp4=mpv.desktop;
 x-scheme-handler/claude-cli=claude-code-url-handler.desktop
 x-scheme-handler/discord=vesktop.desktop
 x-scheme-handler/fdm=freedownloadmanager_fdm_up.desktop
 x-scheme-handler/flywheel-local=local.desktop
+x-scheme-handler/gh=github-handler.desktop
+x-scheme-handler/ghapp=github-handler.desktop
+x-scheme-handler/github-app=github-handler.desktop
 x-scheme-handler/magnet=freedownloadmanager_magnet_up.desktop
 x-scheme-handler/mailto=brave-browser.desktop
+x-scheme-handler/opencode=ai.opencode.desktop.desktop
 x-scheme-handler/postman=postman.desktop
+x-scheme-handler/rpi-imager=com.raspberrypi.rpi-imager-uri-handler.desktop
+x-scheme-handler/writer=writer.desktop
