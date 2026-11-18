@@ -933,7 +933,10 @@ Item {
                                 // Rate into a temp file and install it only if it holds mirrors:
                                 // piping straight into `sudo tee` truncated the live mirrorlist
                                 // whenever rate-mirrors failed, then ran yay against it.
-                                onClicked: dash.openTerminal("tmp=$(mktemp); if rate-mirrors --protocol=https arch > \"$tmp\" && grep -q '^Server' \"$tmp\"; then sudo install -m644 \"$tmp\" /etc/pacman.d/mirrorlist && yay -Syu; else echo 'rate-mirrors failed; /etc/pacman.d/mirrorlist left unchanged.'; fi; rm -f \"$tmp\"; echo; echo 'Press Enter to close…'; read")
+                                // --save, not `> "$tmp"`: rate-mirrors prints its progress on
+                                // stdout, so redirecting it left a blank terminal for the ~40 s
+                                // of rating before the password prompt appeared from nowhere.
+                                onClicked: dash.openTerminal("echo 'Rating mirrors (takes about 40 s)…'; tmp=$(mktemp); if rate-mirrors --save=\"$tmp\" --protocol=https arch && grep -q '^Server' \"$tmp\"; then echo; echo 'Installing the new mirrorlist (asks for your password), then updating…'; sudo install -m644 \"$tmp\" /etc/pacman.d/mirrorlist && yay -Syu; else echo 'rate-mirrors failed; /etc/pacman.d/mirrorlist left unchanged.'; fi; rm -f \"$tmp\"; echo; echo 'Press Enter to close…'; read")
                             }
                         }
 
