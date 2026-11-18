@@ -108,10 +108,19 @@ end
 ---- AUTOSTART ----
 -------------------
 hl.on("hyprland.start", function()
-    hl.exec_cmd("dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE && systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE && systemctl --user start hyprland-session.target && systemctl --user restart walllust-daemon.service")
+    -- hyprland-session.target (shipped in systemd/user/) binds
+    -- graphical-session.target, which is what cliphist-*, hypridle and
+    -- pyprland are WantedBy. HYPRLAND_INSTANCE_SIGNATURE is imported too:
+    -- pypr and the `hyprctl` calls hypridle makes cannot reach Hyprland from a
+    -- systemd unit without it. The walllust restart is `;`, not `&&`: walllust
+    -- is optional and must not depend on the session target succeeding.
+    hl.exec_cmd("dbus-update-activation-environment --systemd DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE HYPRLAND_INSTANCE_SIGNATURE && systemctl --user import-environment DISPLAY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE HYPRLAND_INSTANCE_SIGNATURE && systemctl --user start hyprland-session.target; systemctl --user restart walllust-daemon.service")
     -- Clipboard history is cliphist now (cliphist-text/image.service), driven
     -- by the Quickshell launcher panel. Nothing to start here.
-    hl.exec_cmd("hypridle")
+    -- hypridle and pypr each ship a user unit too, and Install.sh enables
+    -- hypridle.service. Start the bare binary only when the unit is not
+    -- enabled, or both run: two idle daemons fire every lock and DPMS twice.
+    hl.exec_cmd("systemctl --user -q is-enabled hypridle.service || hypridle")
     -- Consolidated shell: topbar + leftbar + sidepanel + dock + desktop_clock
     -- + notifications all live in ~/.config/quickshell/shell.qml (one process).
     -- start.sh runs `qs -d` (the default config) and retries if it dies on startup.
@@ -119,13 +128,15 @@ hl.on("hyprland.start", function()
     -- The lockscreen stays its OWN process on purpose: reloading the bars must
     -- not be able to drop an active lock. See quickshell/lock/lock.sh.
     hl.exec_cmd("qs -d -p " .. HOME .. "/.config/quickshell/lock &")
-    hl.exec_cmd("pypr")
+    hl.exec_cmd("systemctl --user -q is-enabled pyprland.service || pypr")
     hl.exec_cmd("pactl set-sink-mute @DEFAULT_SINK@ 0")
-    hl.exec_cmd("hyprpm reload -n")
+    -- Sequential, not two parallel hyprpm processes racing on the same plugin
+    -- state: load what is built now, then rebuild if the headers moved.
+    hl.exec_cmd("hyprpm reload -n; hyprpm update")
     hl.exec_cmd(wallpaperSwitcher)
-    hl.exec_cmd("XDG_MENU_PREFIX=arch- kbuildsycoca6")
     hl.exec_cmd(HOME .. "/.config/hypr/mpvpaper-stop.sh &")
-    hl.exec_cmd("hyprpm update")
+    -- Once. XDG_MENU_PREFIX=arch- is already in the environment (hl.env above),
+    -- so the second, prefix-less run was the same rebuild done concurrently.
     hl.exec_cmd("kbuildsycoca6")
     hl.exec_cmd("systemctl --user start hyprpolkitagent")
     hl.exec_cmd("command -v libinput-gestures-setup >/dev/null && libinput-gestures-setup start")
@@ -393,7 +404,8 @@ hl.bind("Print",             hl.dsp.exec_cmd(HOME .. "/.config/hypr/screenshot.s
 hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd(HOME .. "/.config/hypr/screenshot.sh output"))
 
 -- Pyprland & Special Workspaces
-hl.bind(mainMod .. " + slash",     hl.dsp.exec_cmd(HOME .. "/.config/keybinds_gui.py"))
+-- (Super+slash used to run ~/.config/keybinds_gui.py, which this repository
+-- has never shipped -- the bind did nothing on every machine.)
 hl.bind(mainMod .. " + l",         hl.dsp.exec_cmd(HOME .. "/.config/quickshell/lock/lock.sh"))
 hl.bind(mainMod .. " + S",         hl.dsp.workspace.toggle_special("magic"))
 hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:magic" }))
