@@ -29,7 +29,13 @@ fi
 
 make -C "$src" clean >/dev/null
 nice make -C "$src" -j"$(nproc)"
-install -Dm755 "$src/hyprglass.so" "$HOME/.local/lib/hyprland/hyprglass.so"
-rm -f "$HOME/.cache/hyprglass.loading"
+dest="$HOME/.local/lib/hyprland/hyprglass.so"
+# Into place by rename: a running Hyprland may have the old build mapped, and
+# overwriting a mapped library in place can crash it.
+install -Dm755 "$src/hyprglass.so" "$dest.new"
+mv -f "$dest.new" "$dest"
+# glass.lua only loads a build whose stamp matches the running Hyprland.
+printf '%s\n' "$ver" > "$dest.version"
+rm -f "$HOME/.cache/hyprglass.loading" "${XDG_RUNTIME_DIR:-/tmp}/hyprglass-stale-notified"
 echo "hyprglass $(git -C "$src" describe --tags --always) installed for Hyprland $ver."
 echo "It loads on the next Hyprland start (or: hyprctl reload)."

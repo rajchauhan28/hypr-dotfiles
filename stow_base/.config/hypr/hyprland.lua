@@ -143,9 +143,8 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("qs -d -p " .. HOME .. "/.config/quickshell/lock &")
     hl.exec_cmd("systemctl --user -q is-enabled pyprland.service || pypr")
     hl.exec_cmd("pactl set-sink-mute @DEFAULT_SINK@ 0")
-    -- Sequential, not two parallel hyprpm processes racing on the same plugin
-    -- state: load what is built now, then rebuild if the headers moved.
-    hl.exec_cmd("hyprpm reload -n; hyprpm update")
+    -- (No hyprpm: this Hyprland package does not ship it. The only plugin,
+    -- hyprglass, is loaded and version-checked by glass.lua.)
     hl.exec_cmd(wallpaperSwitcher)
     hl.exec_cmd(HOME .. "/.config/hypr/mpvpaper-stop.sh &")
     -- Once. XDG_MENU_PREFIX=arch- is already in the environment (hl.env above),
@@ -340,109 +339,119 @@ hl.config({
 ---------------------
 ---- KEYBINDINGS ----
 ---------------------
-hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd(terminal))
-hl.bind(mainMod .. " + Q", hl.dsp.window.close())
-hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
-hl.bind(mainMod .. " + B", hl.dsp.exec_cmd(browser))
+-- Every bind carries a "Group: Label" description. `hyprctl binds -j` reports
+-- it, and the Super+/ cheatsheet (quickshell/cheatsheet/) is built from that
+-- live list, so it always matches what is actually bound -- add a description
+-- to a new bind and it shows up there under its group.
+local function d(text, opts)
+    opts = opts or {}
+    opts.description = text
+    return opts
+end
+
+hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd(terminal), d("Apps: Terminal"))
+hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager), d("Apps: File manager"))
+hl.bind(mainMod .. " + B", hl.dsp.exec_cmd(browser), d("Apps: Browser"))
+hl.bind(mainMod .. " + Q", hl.dsp.window.close(), d("Windows: Close window"))
 -- Wallpaper carousel; picking one runs `walllust-cli set`, the same call
 -- wallpaper_switcher.sh makes (which still runs once at login).
-hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("qs ipc call wallpaper toggle"))
-hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("qs ipc call wallpaper toggle"))
-hl.bind(mainMod .. " + TAB", hl.dsp.exec_cmd(HOME .. "/.config/hypr/toggle_overview.sh"))
+hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd("qs ipc call wallpaper toggle"), d("Shell: Wallpaper picker"))
+hl.bind(mainMod .. " + W", hl.dsp.exec_cmd("qs ipc call wallpaper toggle"), d("Shell: Wallpaper picker"))
+hl.bind(mainMod .. " + TAB", hl.dsp.exec_cmd(HOME .. "/.config/hypr/toggle_overview.sh"), d("Shell: Workspace overview"))
 -- Quick settings, for when reaching the right-edge hotspot is inconvenient.
-hl.bind(mainMod .. " + I", hl.dsp.exec_cmd("qs ipc call sidepanel toggle"))
-hl.bind(mainMod .. " + D", hl.dsp.exec_cmd("qs ipc call dock toggle"))
+hl.bind(mainMod .. " + I", hl.dsp.exec_cmd("qs ipc call sidepanel toggle"), d("Shell: Side panel"))
+hl.bind(mainMod .. " + D", hl.dsp.exec_cmd("qs ipc call dock toggle"), d("Shell: Dock"))
 -- Settings for the shell itself: dock apps, panel geometry, palette.
-hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd(HOME .. "/.config/quickshell/settings/launch.sh"))
-hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd(HOME .. "/.config/quickshell/reload.sh"))
-hl.bind(mainMod .. " + O", hl.dsp.exec_cmd(HOME .. "/.config/quickshell/reload.sh"))
-hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
-hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("qs ipc call launcher clipboard"))
-hl.bind(mainMod .. " + SHIFT + V", hl.dsp.exec_cmd("qs ipc call clipboard toggle"))
-hl.bind(mainMod .. " + SHIFT + E", hl.dsp.exec_cmd("qs ipc call launcher files"))
-hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))
-hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
-hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))
-hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen())
-hl.bind(mainMod .. " + SHIFT + F", hl.dsp.window.fullscreen({ mode = 1 }))
+hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd(HOME .. "/.config/quickshell/settings/launch.sh"), d("Shell: Settings"))
+hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd(HOME .. "/.config/quickshell/reload.sh"), d("Shell: Reload Quickshell"))
+hl.bind(mainMod .. " + O", hl.dsp.exec_cmd(HOME .. "/.config/quickshell/reload.sh"), d("Shell: Reload Quickshell"))
+hl.bind(mainMod .. " + slash", hl.dsp.exec_cmd("qs ipc call cheatsheet toggle"), d("Shell: Keybind cheatsheet"))
+hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }), d("Windows: Float / unfloat"))
+hl.bind(mainMod .. " + C", hl.dsp.exec_cmd("qs ipc call launcher clipboard"), d("Shell: Clipboard search"))
+hl.bind(mainMod .. " + SHIFT + V", hl.dsp.exec_cmd("qs ipc call clipboard toggle"), d("Shell: Clipboard panel"))
+hl.bind(mainMod .. " + SHIFT + E", hl.dsp.exec_cmd("qs ipc call launcher files"), d("Shell: File search"))
+hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu), d("Shell: App launcher  (= calc, > run, ? search)"))
+hl.bind(mainMod .. " + P", hl.dsp.window.pseudo(), d("Windows: Pseudo-tile"))
+hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"), d("Windows: Swap split direction"))
+hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen(), d("Windows: Fullscreen"))
+hl.bind(mainMod .. " + SHIFT + F", hl.dsp.window.fullscreen({ mode = 1 }), d("Windows: Maximise"))
 
 -- Navigation
-hl.bind(mainMod .. " + left",  hl.dsp.focus({ direction = "left" }))
-hl.bind(mainMod .. " + right", hl.dsp.focus({ direction = "right" }))
-hl.bind(mainMod .. " + up",    hl.dsp.focus({ direction = "up" }))
-hl.bind(mainMod .. " + down",  hl.dsp.focus({ direction = "down" }))
+hl.bind(mainMod .. " + left",  hl.dsp.focus({ direction = "left" }), d("Windows: Focus left"))
+hl.bind(mainMod .. " + right", hl.dsp.focus({ direction = "right" }), d("Windows: Focus right"))
+hl.bind(mainMod .. " + up",    hl.dsp.focus({ direction = "up" }), d("Windows: Focus up"))
+hl.bind(mainMod .. " + down",  hl.dsp.focus({ direction = "down" }), d("Windows: Focus down"))
 
 -- Move Windows
-hl.bind(mainMod .. " + SHIFT + left",  hl.dsp.window.move({ direction = "left" }))
-hl.bind(mainMod .. " + SHIFT + right", hl.dsp.window.move({ direction = "right" }))
-hl.bind(mainMod .. " + SHIFT + up",    hl.dsp.window.move({ direction = "up" }))
-hl.bind(mainMod .. " + SHIFT + down",  hl.dsp.window.move({ direction = "down" }))
+hl.bind(mainMod .. " + SHIFT + left",  hl.dsp.window.move({ direction = "left" }), d("Windows: Move left"))
+hl.bind(mainMod .. " + SHIFT + right", hl.dsp.window.move({ direction = "right" }), d("Windows: Move right"))
+hl.bind(mainMod .. " + SHIFT + up",    hl.dsp.window.move({ direction = "up" }), d("Windows: Move up"))
+hl.bind(mainMod .. " + SHIFT + down",  hl.dsp.window.move({ direction = "down" }), d("Windows: Move down"))
 
 -- Move Window to Monitor
-hl.bind(mainMod .. " + SHIFT + bracketleft",  hl.dsp.window.move({ monitor = "left" }))
-hl.bind(mainMod .. " + SHIFT + bracketright", hl.dsp.window.move({ monitor = "right" }))
+hl.bind(mainMod .. " + SHIFT + bracketleft",  hl.dsp.window.move({ monitor = "left" }), d("Monitors: Move window to left monitor"))
+hl.bind(mainMod .. " + SHIFT + bracketright", hl.dsp.window.move({ monitor = "right" }), d("Monitors: Move window to right monitor"))
 
 -- Focus Monitor
-hl.bind(mainMod .. " + bracketleft",  hl.dsp.focus({ monitor = "left" }))
-hl.bind(mainMod .. " + bracketright", hl.dsp.focus({ monitor = "right" }))
+hl.bind(mainMod .. " + bracketleft",  hl.dsp.focus({ monitor = "left" }), d("Monitors: Focus left monitor"))
+hl.bind(mainMod .. " + bracketright", hl.dsp.focus({ monitor = "right" }), d("Monitors: Focus right monitor"))
 
-hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("qs ipc call notifications toggleCenter"))
+hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("qs ipc call notifications toggleCenter"), d("Shell: Notification centre"))
 
 -- Workspaces
 for i = 1, 10 do
     local key = i % 10
-    hl.bind(mainMod .. " + " .. key,         hl.dsp.focus({ workspace = i }))
-    hl.bind(mainMod .. " + SHIFT + " .. key, hl.dsp.window.move({ workspace = i }))
+    hl.bind(mainMod .. " + " .. key,         hl.dsp.focus({ workspace = i }), d("Workspaces: Go to workspace " .. i))
+    hl.bind(mainMod .. " + SHIFT + " .. key, hl.dsp.window.move({ workspace = i }), d("Workspaces: Move window to workspace " .. i))
 end
 
 -- Media & Brightness (locked = true, repeating = true)
 -- The OSD pill (quickshell/osd/) applies the change and shows the result.
 -- Mute toggles are not repeating: holding the key would flap mute on and off.
-hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("qs ipc call osd volume 1"), { locked = true, repeating = true })
-hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("qs ipc call osd volume -1"), { locked = true, repeating = true })
-hl.bind("XF86AudioMute",        hl.dsp.exec_cmd("qs ipc call osd muteSink"), { locked = true })
-hl.bind("XF86AudioMicMute",     hl.dsp.exec_cmd("qs ipc call osd muteSource"), { locked = true })
-hl.bind("XF86MonBrightnessUp",  hl.dsp.exec_cmd("qs ipc call osd brightness 1"), { locked = true, repeating = true })
-hl.bind("XF86MonBrightnessDown",hl.dsp.exec_cmd("qs ipc call osd brightness -1"), { locked = true, repeating = true })
+hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("qs ipc call osd volume 1"), d("Media: Volume up", { locked = true, repeating = true }))
+hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("qs ipc call osd volume -1"), d("Media: Volume down", { locked = true, repeating = true }))
+hl.bind("XF86AudioMute",        hl.dsp.exec_cmd("qs ipc call osd muteSink"), d("Media: Mute speakers", { locked = true }))
+hl.bind("XF86AudioMicMute",     hl.dsp.exec_cmd("qs ipc call osd muteSource"), d("Media: Mute microphone", { locked = true }))
+hl.bind("XF86MonBrightnessUp",  hl.dsp.exec_cmd("qs ipc call osd brightness 1"), d("Media: Brightness up", { locked = true, repeating = true }))
+hl.bind("XF86MonBrightnessDown",hl.dsp.exec_cmd("qs ipc call osd brightness -1"), d("Media: Brightness down", { locked = true, repeating = true }))
 
 -- Media Controls (locked = true)
-hl.bind("XF86AudioNext",  hl.dsp.exec_cmd("playerctl next"), { locked = true })
-hl.bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
-hl.bind("XF86AudioPlay",  hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
-hl.bind("XF86AudioPrev",  hl.dsp.exec_cmd("playerctl previous"), { locked = true })
+hl.bind("XF86AudioNext",  hl.dsp.exec_cmd("playerctl next"), d("Media: Next track", { locked = true }))
+hl.bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl play-pause"), d("Media: Play / pause", { locked = true }))
+hl.bind("XF86AudioPlay",  hl.dsp.exec_cmd("playerctl play-pause"), d("Media: Play / pause", { locked = true }))
+hl.bind("XF86AudioPrev",  hl.dsp.exec_cmd("playerctl previous"), d("Media: Previous track", { locked = true }))
 -- The Predator/Nitro turbo key. Only Acer gaming laptops have it, and DAMX
 -- only exists once the acer-wmi driver has been installed.
 if hw.acer_gaming then
-    hl.bind("XF86Launch1", hl.dsp.exec_cmd("DAMX"), { locked = true })
+    hl.bind("XF86Launch1", hl.dsp.exec_cmd("DAMX"), d("System: DAMX (fan / performance)", { locked = true }))
 end
 
 -- Screenshots
-hl.bind("Print",             hl.dsp.exec_cmd(HOME .. "/.config/hypr/screenshot.sh region"))
-hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd(HOME .. "/.config/hypr/screenshot.sh output"))
+hl.bind("Print",             hl.dsp.exec_cmd(HOME .. "/.config/hypr/screenshot.sh region"), d("System: Screenshot a region"))
+hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd(HOME .. "/.config/hypr/screenshot.sh output"), d("System: Screenshot this monitor"))
 
 -- Pyprland & Special Workspaces
--- (Super+slash used to run ~/.config/keybinds_gui.py, which this repository
--- has never shipped -- the bind did nothing on every machine.)
-hl.bind(mainMod .. " + l",         hl.dsp.exec_cmd(HOME .. "/.config/quickshell/lock/lock.sh"))
-hl.bind(mainMod .. " + S",         hl.dsp.workspace.toggle_special("magic"))
-hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:magic" }))
-hl.bind(mainMod .. " + SPACE",     hl.dsp.exec_cmd("pypr toggle term"))
-hl.bind(mainMod .. " + G",         hl.dsp.exec_cmd("pypr toggle music"))
-hl.bind(mainMod .. " + T",         hl.dsp.exec_cmd("pypr toggle taskbar"))
-hl.bind(mainMod .. " + ALT + G",   hl.dsp.exec_cmd(HOME .. "/.config/hypr/gamemode.sh"))
+hl.bind(mainMod .. " + l",         hl.dsp.exec_cmd(HOME .. "/.config/quickshell/lock/lock.sh"), d("System: Lock screen"))
+hl.bind(mainMod .. " + S",         hl.dsp.workspace.toggle_special("magic"), d("Workspaces: Show / hide scratch workspace"))
+hl.bind(mainMod .. " + SHIFT + S", hl.dsp.window.move({ workspace = "special:magic" }), d("Workspaces: Send window to scratch workspace"))
+hl.bind(mainMod .. " + SPACE",     hl.dsp.exec_cmd("pypr toggle term"), d("Pop-ups: Terminal"))
+hl.bind(mainMod .. " + G",         hl.dsp.exec_cmd("pypr toggle music"), d("Pop-ups: Audio mixer"))
+hl.bind(mainMod .. " + T",         hl.dsp.exec_cmd("pypr toggle taskbar"), d("Pop-ups: System monitor"))
+hl.bind(mainMod .. " + ALT + G",   hl.dsp.exec_cmd(HOME .. "/.config/hypr/gamemode.sh"), d("System: Game mode"))
 -- gpu_switcher.sh drops its envycontrol entries by itself on a machine
 -- without NVIDIA, so the binding stays useful everywhere: on a non-Optimus
 -- laptop it is just the battery/performance tweak menu.
-hl.bind(mainMod .. " + SHIFT + G", hl.dsp.exec_cmd(HOME .. "/.config/hypr/gpu_switcher.sh"))
+hl.bind(mainMod .. " + SHIFT + G", hl.dsp.exec_cmd(HOME .. "/.config/hypr/gpu_switcher.sh"), d("System: Power & GPU modes"))
 
 -- Mouse Binds (mouse = true)
-hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), { mouse = true })
-hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
+hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(), d("Windows: Move window (drag)", { mouse = true }))
+hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), d("Windows: Resize window (drag)", { mouse = true }))
 
 -- Session Binds
-hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd("wlogout -b 2"))
-hl.bind("ALT + Escape",        hl.dsp.exec_cmd("wlogout -b 2"))
-hl.bind(mainMod .. " + M",       hl.dsp.exit())
+hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd("wlogout -b 2"), d("System: Power menu"))
+hl.bind("ALT + Escape",        hl.dsp.exec_cmd("wlogout -b 2"), d("System: Power menu"))
+-- Asks first: a bare exit() here closed every app on one stray keypress.
+hl.bind(mainMod .. " + M", hl.dsp.exec_cmd(HOME .. "/.config/hypr/confirm-exit.sh"), d("System: Exit Hyprland (asks first)"))
 
 -------------------------
 ---- LIQUID GLASS -------

@@ -8,8 +8,16 @@
 --
 -- The theme itself lives in ~/.config/quickshell/settings.json
 -- ({"theme": {"mode": "glass"}}); this file reads it on every config
--- evaluation, and the shell re-evaluates it on a theme change. Dark and light
--- leave the plugin loaded but idle: layer glass off, window glass off.
+-- evaluation, and the shell re-evaluates it on a theme change. The plugin is
+-- only LOADED in the glass theme; switching back to dark or light leaves an
+-- already-loaded plugin idle (layer glass off, window glass off) until the
+-- next login.
+--
+-- Version guard: build-hyprglass.sh writes the Hyprland version it built
+-- against next to the .so. A build for any other version (every Hyprland
+-- update) is never loaded -- loading a plugin across an ABI change is how a
+-- compositor crashes. Instead hyprglass-stale.sh says so once per login, and
+-- clicking that notification rebuilds it.
 --
 -- Crash guard: a sentinel file is written before the plugin is loaded and
 -- removed 30 s after Hyprland survived it. If Hyprland died while loading
@@ -20,6 +28,7 @@
 
 local HOME = os.getenv("HOME") or ""
 local SO = HOME .. "/.local/lib/hyprland/hyprglass.so"
+local STAMP = SO .. ".version"
 local SENTINEL = HOME .. "/.cache/hyprglass.loading"
 local SETTINGS = HOME .. "/.config/quickshell/settings.json"
 
@@ -46,7 +55,25 @@ local function theme_mode()
     return "dark"
 end
 
-if not hl.plugin.hyprglass and exists(SO) and not exists(SENTINEL) then
+local function first_line(path)
+    local f = io.open(path, "r")
+    if not f then
+        return nil
+    end
+    local line = f:read("*l")
+    f:close()
+    return line and line:match("^%s*(.-)%s*$")
+end
+
+local want_glass = theme_mode() == "glass"
+local built_for = first_line(STAMP)
+local fresh = exists(SO) and built_for ~= nil and built_for == hl.version()
+
+if want_glass and not hl.plugin.hyprglass and not fresh then
+    hl.exec_cmd(HOME .. "/.config/hypr/hyprglass-stale.sh " .. (exists(SO) and "stale" or "missing"))
+end
+
+if want_glass and not hl.plugin.hyprglass and fresh and not exists(SENTINEL) then
     local f = io.open(SENTINEL, "w")
     if f then
         f:write(os.date("%Y-%m-%d %H:%M:%S") .. "\n")
@@ -138,6 +165,7 @@ if hl.plugin.hyprglass then
         "quickshell-overview",
         "quickshell-lyrics",
         "quickshell-floating-clock",
+        "quickshell-cheatsheet",
     }
     for _, ns in ipairs(layers) do
         hg.layer(ns, { mask_threshold = 0.1 })
