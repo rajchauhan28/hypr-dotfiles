@@ -78,23 +78,46 @@ Scope {
         var q = root.queue.slice();
         var a = q.shift();
         root.queue = q;
-        actionProc.command = ["python3", root.script].concat(a);
+        // --lite, like the poll: every action prints a status afterwards, and
+        // the full one ran bluetoothctl three times, a Wi-Fi scan and wpctl
+        // inspect (6 s timeouts) on every volume or brightness step. The strip
+        // reads nothing the lite status lacks.
+        actionProc.command = ["python3", root.script].concat(a).concat(["--lite"]);
         actionProc.running = true;
     }
 
-    function ingest(text) {
+    function ingest(text, fromAction) {
         try {
             root.sys = JSON.parse(text.trim());
-            root.pendBrightness = -1;
-            root.pendVolume = -1;
-            root.pendMic = -1;
-        } catch (e) {}
+        } catch (e) {
+            return;
+        }
+        if (fromAction)
+            root.settlePending();
+    }
+
+    // A pending scroll value is settled only by the action that applied it,
+    // and only once nothing else is debouncing, queued or running. Clearing
+    // it on EVERY status result -- the 4 s poll included -- meant a poll
+    // landing inside the 120 ms debounce reset it to -1, applyTimer then sent
+    // nothing, and the read-out snapped back.
+    function settlePending() {
+        if (applyTimer.running || actionProc.running || root.queue.length > 0)
+            return;
+        root.pendBrightness = -1;
+        root.pendVolume = -1;
+        root.pendMic = -1;
     }
 
     Process {
         id: actionProc
-        stdout: SplitParser { onRead: data => root.ingest(data) }
-        onExited: root.pump()
+        stdout: SplitParser { onRead: data => root.ingest(data, true) }
+        // settlePending here too: an action that failed and printed nothing
+        // would otherwise leave the read-out pinned to its pending value.
+        onExited: {
+            root.pump();
+            root.settlePending();
+        }
     }
 
     Process {
@@ -106,7 +129,7 @@ Scope {
         // Seed volume/brightness even when the strip has not been opened yet,
         // so the first media-key IPC step starts from the real current value.
         running: true
-        stdout: SplitParser { onRead: data => root.ingest(data) }
+        stdout: SplitParser { onRead: data => root.ingest(data, false) }
     }
 
     // Scroll steps are coalesced: one apply ~120ms after the last notch,

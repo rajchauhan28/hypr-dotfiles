@@ -95,36 +95,76 @@ Scope {
     // single shell invocation. Chaining mutate && read in one `sh -c` avoids
     // a race between the setter and the getter and keeps the OSD showing the
     // post-change value, not the pre-change one.
-    function stepVolume(delta) {
-        var step = Math.abs(delta) * 5;
-        var sign = delta >= 0 ? "+" : "-";
-        sinkProc.command = ["sh", "-c",
-            "wpctl set-volume -l 1.5 @DEFAULT_AUDIO_SINK@ " + step + "%" + sign +
-            " && wpctl get-volume @DEFAULT_AUDIO_SINK@"];
-        sinkProc.running = true;
-    }
+    //
+    // Presses are ACCUMULATED, never written straight into a busy Process:
+    // reassigning `command` and setting `running` on a Process that is still
+    // running is a no-op, so held (repeating) keys and a Mute pressed right
+    // after a volume step were silently dropped. Pending steps are flushed as
+    // one command when the previous one exits; mute presses toggle by parity.
+    property int pendSinkDelta: 0
+    property int pendSinkMutes: 0
+    property int pendMicMutes: 0
+    property int pendBrightDelta: 0
 
-    function stepBrightness(delta) {
-        var step = Math.abs(delta) * 5;
-        var sign = delta >= 0 ? "+" : "-";
-        brightProc.command = ["sh", "-c",
-            "brightnessctl -q --min-value=1 s " + step + "%" + sign +  // never fully dark, as syspanel.py
-            " && brightnessctl -m | cut -d, -f4 | tr -d '%'"];
-        brightProc.running = true;
+    function stepVolume(delta) {
+        root.pendSinkDelta += delta;
+        root.flushSink();
     }
 
     function toggleSink() {
-        sinkProc.command = ["sh", "-c",
-            "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
-            + " && wpctl get-volume @DEFAULT_AUDIO_SINK@"];
-        sinkProc.running = true;
+        root.pendSinkMutes += 1;
+        root.flushSink();
+    }
+
+    function stepBrightness(delta) {
+        root.pendBrightDelta += delta;
+        root.flushBright();
     }
 
     function toggleSource() {
+        root.pendMicMutes += 1;
+        root.flushMic();
+    }
+
+    function flushSink() {
+        if (sinkProc.running || (root.pendSinkDelta === 0 && root.pendSinkMutes === 0))
+            return;
+        var parts = [];
+        if (root.pendSinkMutes % 2 === 1)
+            parts.push("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle");
+        if (root.pendSinkDelta !== 0)
+            parts.push("wpctl set-volume -l 1.5 @DEFAULT_AUDIO_SINK@ "
+                       + Math.abs(root.pendSinkDelta) * 5 + "%"
+                       + (root.pendSinkDelta > 0 ? "+" : "-"));
+        parts.push("wpctl get-volume @DEFAULT_AUDIO_SINK@");
+        root.pendSinkDelta = 0;
+        root.pendSinkMutes = 0;
+        sinkProc.command = ["sh", "-c", parts.join(" && ")];
+        sinkProc.running = true;
+    }
+
+    function flushMic() {
+        if (micProc.running || root.pendMicMutes === 0)
+            return;
+        var toggle = root.pendMicMutes % 2 === 1;
+        root.pendMicMutes = 0;
         micProc.command = ["sh", "-c",
-            "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"
-            + " && wpctl get-volume @DEFAULT_AUDIO_SOURCE@"];
+            (toggle ? "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle && " : "")
+            + "wpctl get-volume @DEFAULT_AUDIO_SOURCE@"];
         micProc.running = true;
+    }
+
+    function flushBright() {
+        if (brightProc.running || root.pendBrightDelta === 0)
+            return;
+        var d = root.pendBrightDelta;
+        root.pendBrightDelta = 0;
+        // --min-value=1: never step to a fully dark screen (syspanel.py
+        // clamps the same way).
+        brightProc.command = ["sh", "-c",
+            "brightnessctl -q --min-value=1 s " + Math.abs(d) * 5 + "%" + (d > 0 ? "+" : "-")
+            + " && brightnessctl -m | cut -d, -f4 | tr -d '%'"];
+        brightProc.running = true;
     }
 
     // wpctl's "Volume: 0.42 [MUTED]" output is the same shape for sink and
@@ -138,6 +178,8 @@ Scope {
     Process {
         id: sinkProc
         running: false
+        // Run whatever piled up while this one was busy.
+        onExited: Qt.callLater(root.flushSink)
         stdout: StdioCollector {
             onStreamFinished: root._parseWpctl(text, "volume")
         }
@@ -146,6 +188,8 @@ Scope {
     Process {
         id: micProc
         running: false
+        // Run whatever piled up while this one was busy.
+        onExited: Qt.callLater(root.flushMic)
         stdout: StdioCollector {
             onStreamFinished: root._parseWpctl(text, "mic")
         }
@@ -154,6 +198,8 @@ Scope {
     Process {
         id: brightProc
         running: false
+        // Run whatever piled up while this one was busy.
+        onExited: Qt.callLater(root.flushBright)
         stdout: StdioCollector {
             onStreamFinished: {
                 var pct = parseInt((text || "").trim(), 10);

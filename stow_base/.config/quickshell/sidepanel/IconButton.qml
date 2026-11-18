@@ -47,9 +47,19 @@ Item {
         cursorShape: btn.clickable ? Qt.PointingHandCursor : Qt.ArrowCursor
         acceptedButtons: btn.clickable ? Qt.LeftButton : Qt.NoButton
         onClicked: if (btn.available) btn.activated()
+        // Trackpads send many small deltas, and a sideways swipe arrives with
+        // y == 0, which `y > 0 ? 1 : -1` counted as a full step DOWN. Step
+        // once per 120 units of vertical travel, like one mouse-wheel notch
+        // (the same accumulator WallpaperCarousel uses).
+        property real wheelAcc: 0
         onWheel: wheel => {
-            if (btn.scrollable && btn.available)
-                btn.scrolled(wheel.angleDelta.y > 0 ? 1 : -1);
+            if (!(btn.scrollable && btn.available))
+                return;
+            wheelAcc += wheel.angleDelta.y;
+            while (Math.abs(wheelAcc) >= 120) {
+                btn.scrolled(wheelAcc > 0 ? 1 : -1);
+                wheelAcc -= wheelAcc > 0 ? 120 : -120;
+            }
         }
     }
 }

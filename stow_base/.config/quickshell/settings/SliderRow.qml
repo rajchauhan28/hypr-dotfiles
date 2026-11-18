@@ -117,9 +117,20 @@ Item {
                 cursorShape: Qt.PointingHandCursor
                 onPressed: mouse => row.commit(mouse.x / width)
                 onPositionChanged: mouse => { if (pressed) row.commit(mouse.x / width); }
+                // One step per 120 units of vertical travel (a mouse-wheel
+                // notch): touchpad deltas are small and frequent, and a
+                // sideways swipe (y == 0) used to count as a step down.
+                property real wheelAcc: 0
                 onWheel: wheel => {
-                    var dir = wheel.angleDelta.y > 0 ? 1 : -1;
-                    var next = row.value + dir * row.step;
+                    wheelAcc += wheel.angleDelta.y;
+                    var steps = 0;
+                    while (Math.abs(wheelAcc) >= 120) {
+                        steps += wheelAcc > 0 ? 1 : -1;
+                        wheelAcc -= wheelAcc > 0 ? 120 : -120;
+                    }
+                    if (steps === 0)
+                        return;
+                    var next = row.value + steps * row.step;
                     row.commit((next - row.from) / (row.to - row.from));
                 }
             }
