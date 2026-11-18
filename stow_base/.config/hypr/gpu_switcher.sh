@@ -43,11 +43,13 @@ boot_id() { cat /proc/sys/kernel/random/boot_id 2>/dev/null; }
 # Sets RUNNING_GPU and SELECTED_GPU. They differ only while a switch waits for
 # a reboot; a marker from an earlier boot has been applied and is dropped.
 read_gpu_state() {
-    local running selected id
+    local running id
     SELECTED_GPU="$(configured_gpu)"
     RUNNING_GPU="$SELECTED_GPU"
     [ -r "$GPU_PENDING" ] || return 0
-    read -r running selected id <"$GPU_PENDING"
+    # The middle field (the mode selected at switch time) is superseded by
+    # what envycontrol reports now, so it is read and discarded.
+    read -r running _ id <"$GPU_PENDING"
     if [ "$id" = "$(boot_id)" ] && [ "$running" != "$SELECTED_GPU" ]; then
         RUNNING_GPU="$running"
     else

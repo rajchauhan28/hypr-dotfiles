@@ -63,6 +63,8 @@ while IFS=$'\t' read -r id fmt text; do
     # test below. Only the decoded entry has the real content. Decode just the
     # entries that could plausibly be a file reference -- doing it for every
     # text entry would be 60 pointless DB reads per panel open.
+    # A literal "~/" copied as text is matched on purpose, unexpanded.
+    # shellcheck disable=SC2088
     case "$text" in
         /*|"~/"*|file://*)
             full=$(cliphist decode "$id" 2>/dev/null </dev/null | head -n 1 | head -c 4096)
@@ -76,6 +78,7 @@ while IFS=$'\t' read -r id fmt text; do
     esac
     # Only a bare path is a file reference. A command line that merely mentions
     # one is still a command, and previewing it would be wrong.
+    # shellcheck disable=SC2088 # literal "~/" from the clipboard, expanded below
     case "$path" in
         /*) ;;
         "~/"*) path="$HOME/${path#\~/}" ;;
