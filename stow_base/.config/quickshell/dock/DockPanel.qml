@@ -134,6 +134,14 @@ Scope {
                 try {
                     root.clients = JSON.parse(data.trim());
                 } catch (e) {}
+                // Focus order kept apart from the models: it changes on every
+                // focus switch, and folding it into the entries would rebuild
+                // every icon each time.
+                var order = {};
+                for (var i = 0; i < root.clients.length; i++)
+                    if (root.clients[i])
+                        order[root.clients[i].address] = root.clients[i].focusHistoryID;
+                root.focusOrder = order;
                 root.rebuild();
             }
         }
@@ -167,14 +175,42 @@ Scope {
                      'hl.dispatch(hl.dsp.focus({ window = "address:' + address + '" }))']);
     }
 
+    // address -> Hyprland focusHistoryID (0 = focused now), from the poll.
+    property var focusOrder: ({})
+
+    // Clicking a running app: if one of its windows already has focus, go to
+    // its next window (so repeated clicks cycle through them); otherwise
+    // bring up the window of that app used most recently.
     function activate(e) {
         if (!e)
             return;
-        if (e.running && e.windows.length > 0) {
-            root.focusAddress(e.windows[0].address);
-        } else if (e.exec) {
-            root.launch(e.exec);
+        if (!(e.running && e.windows.length > 0)) {
+            if (e.exec)
+                root.launch(e.exec);
+            return;
         }
+        var ws = e.windows;
+        var current = -1, recent = 0, best = Infinity;
+        for (var i = 0; i < ws.length; i++) {
+            var h = root.focusOrder[ws[i].address];
+            if (h === undefined)
+                continue;
+            if (h === 0)
+                current = i;
+            if (h < best) {
+                best = h;
+                recent = i;
+            }
+        }
+        var target = current >= 0 ? ws[(current + 1) % ws.length] : ws[recent];
+        root.focusAddress(target.address);
+        // The poll is 2 s behind; record the switch now so a quick second
+        // click continues the cycle instead of repeating this one.
+        var order = {};
+        for (var a in root.focusOrder)
+            order[a] = root.focusOrder[a] + 1;
+        order[target.address] = 0;
+        root.focusOrder = order;
     }
 
     // ---- Live previews ------------------------------------------------
