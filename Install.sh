@@ -135,6 +135,7 @@ readonly C_CYAN='\033[0;36m'
 
 # Configuration directories to be installed
 readonly ALL_CONFIG_DIRS=(
+    fastfetch
     ghostty
     hypr
     mpv
