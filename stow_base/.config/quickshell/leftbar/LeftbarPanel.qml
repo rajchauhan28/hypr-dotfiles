@@ -105,11 +105,79 @@ Scope {
         id: clientsDebounce
         interval: 50
         onTriggered: {
-            if (clientsProc.running)
+            if (clientsProc.running) {
                 restart();
-            else
-                clientsProc.running = true;
+                return;
+            }
+            clientsProc.running = true;
+            // Quickshell re-reads workspaces on Hyprland's "fullscreen"
+            // event, which also fires when a fullscreen window closes. Moving
+            // one to another workspace sends no such event, so re-read here
+            // too or the auto-hide below could stick on a workspace whose
+            // fullscreen window has left.
+            Hyprland.refreshWorkspaces();
         }
+    }
+
+    // ---- Auto-hide under fullscreen and maximised windows ---------------
+    // Permanent behaviour, not a setting. hasFullscreen is true for every
+    // Hyprland fullscreen mode, maximised included, on the workspace this
+    // monitor is showing.
+    //
+    // Hidden, the bar gives up its exclusive zone, so a maximised window
+    // takes the full width, and the surface shrinks its input to a
+    // Theme.peekEdge strip on the screen edge. Resting the pointer there for
+    // Theme.peekDwell brings the bar back over the window without taking the
+    // space back; leaving it lets it slide away again.
+    //
+    // The surface moves to the Overlay layer while hidden because Hyprland
+    // stops drawing Top-layer surfaces under a true fullscreen window -- the
+    // peek would otherwise open behind it. The window is never resized for
+    // any of this: resizing a layer surface under a resting pointer is what
+    // made this bar oscillate before (see the tooltip reserve below).
+    readonly property var hyprMonitor: Hyprland.monitorFor(barWindow.screen)
+    readonly property bool fsActive: !!(root.hyprMonitor && root.hyprMonitor.activeWorkspace
+                                        && root.hyprMonitor.activeWorkspace.hasFullscreen)
+    property bool peeking: false
+    readonly property bool barShown: !root.fsActive || root.peeking
+    // Anything that must keep a peeked bar on screen: the pointer on it, an
+    // open drawer, or a tray menu hanging off the drawer.
+    readonly property bool peekHeld: barHover.hovered || edgeHover.hovered
+                                     || root.bgDrawerOpen || root.powerExpanded
+                                     || root.trayMenusOpen > 0
+
+    onFsActiveChanged: if (!root.fsActive) {
+        peekDwellTimer.stop();
+        peekLingerTimer.stop();
+        root.peeking = false;
+    }
+    onPeekHeldChanged: {
+        if (root.peekHeld)
+            peekLingerTimer.stop();
+        else if (root.peeking)
+            peekLingerTimer.restart();
+    }
+    // A drawer left open would come back on the next peek, and the tooltip
+    // would hang beside a bar that is no longer there.
+    onBarShownChanged: if (!root.barShown) {
+        root.bgDrawerOpen = false;
+        root.powerExpanded = false;
+        root.armedPower = "";
+        root.armedAction = "";
+        root.activeTooltip = "";
+    }
+
+    Timer {
+        id: peekDwellTimer
+        interval: Theme.peekDwell
+        onTriggered: if (root.fsActive && edgeHover.hovered) root.peeking = true
+    }
+
+    Timer {
+        id: peekLingerTimer
+        interval: Theme.peekLinger
+        // Re-checked on expiry: the pointer may have come back meanwhile.
+        onTriggered: if (!root.peekHeld) root.peeking = false
     }
 
     // Startup read, plus a slow safety net in case an event is ever missed.
@@ -231,13 +299,36 @@ Scope {
                                   Theme.tooltipReserve)
         color: "transparent"
 
-        WlrLayershell.layer: WlrLayer.Top
+        WlrLayershell.layer: root.fsActive ? WlrLayer.Overlay : WlrLayer.Top
         WlrLayershell.namespace: "leftbar"
-        WlrLayershell.exclusiveZone: Theme.barWidth
+        WlrLayershell.exclusiveZone: root.fsActive ? 0 : Theme.barWidth
 
-        // Wayland input region mask: expands to cover drawers when open
+        // Wayland input region mask: expands to cover drawers when open, and
+        // shrinks to the peek strip while the bar is hidden.
         mask: Region {
-            item: (root.bgDrawerOpen || root.powerExpanded) ? fullMask : barMask
+            item: !root.barShown ? edgeHotspot
+                : (root.bgDrawerOpen || root.powerExpanded) ? fullMask : barMask
+        }
+
+        // The peek trigger. Only reachable while hidden, since the mask is
+        // only this strip then; once the bar is out it sits under the bar's
+        // own left edge and its hover just helps hold the peek open.
+        Item {
+            id: edgeHotspot
+            x: 0
+            y: 0
+            width: Theme.peekEdge
+            height: barWindow.height
+
+            HoverHandler {
+                id: edgeHover
+                onHoveredChanged: {
+                    if (hovered && root.fsActive && !root.peeking)
+                        peekDwellTimer.restart();
+                    else if (!hovered)
+                        peekDwellTimer.stop();
+                }
+            }
         }
 
         Item {
@@ -262,620 +353,199 @@ Scope {
             height: barWindow.height
         }
 
-        // Glassmorphic Left Panel Background (FIXED width Theme.barWidth + Theme.cornerFillet)
+        // Everything the bar draws, so it slides out and back as one piece.
+        // Sized to the whole window: the hover below has to cover the open
+        // drawers and the tooltip as well as the strip itself, and the mask
+        // already keeps the empty part of it from catching anything.
         Item {
-            width: Theme.barWidth + Theme.cornerFillet
-            height: parent.height
+            id: barBody
+            readonly property real hiddenX: -(Theme.barWidth + Theme.cornerFillet + 2)
+            width: barWindow.width
+            height: barWindow.height
+            x: root.barShown ? 0 : hiddenX
+            // Not drawn at all once fully out of sight.
+            visible: x > hiddenX + 0.5
 
-            Shape {
-                anchors.fill: parent
-                visible: !Theme.glass
-                preferredRendererType: Shape.CurveRenderer
-                antialiasing: true
-
-                ShapePath {
-                    fillColor: Theme.panelBg
-                    strokeColor: Theme.panelBorder
-                    strokeWidth: 1
-
-                    startX: 0
-                    startY: 0
-
-                    PathLine { x: Theme.barWidth + Theme.cornerFillet; y: 0 }
-                    PathLine { x: Theme.barWidth + Theme.cornerFillet; y: Theme.edgeLine }
-
-                    PathQuad {
-                        x: Theme.barWidth
-                        y: Theme.edgeLine + Theme.cornerFillet
-                        controlX: Theme.barWidth
-                        controlY: Theme.edgeLine
-                    }
-
-                    PathLine { x: Theme.barWidth; y: barWindow.height - Theme.edgeLine - Theme.cornerFillet }
-
-                    PathQuad {
-                        x: Theme.barWidth + Theme.cornerFillet
-                        y: barWindow.height - Theme.edgeLine
-                        controlX: Theme.barWidth
-                        controlY: barWindow.height - Theme.edgeLine
-                    }
-
-                    PathLine { x: Theme.barWidth + Theme.cornerFillet; y: barWindow.height }
-                    PathLine { x: 0; y: barWindow.height }
-                    PathLine { x: 0; y: 0 }
-                }
+            Behavior on x {
+                NumberAnimation { duration: Theme.animNormal; easing.type: Theme.easeOutQuint }
             }
 
-            // --- Glass theme: a floating card instead of the edge silhouette ---
-            // Frosted, the silhouette's stroke read as a hard bright line down
-            // the screen edge. In glass the bar floats just off the edges as a
-            // rounded card with its own lit rim (common/GlassRim.qml). It is
-            // the strip's own width inset equally on both sides, so the
-            // content -- centred on barWidth / 2 -- stays where it was; the
-            // side gap is smaller than the top/bottom one because the clock
-            // island is only 6 px narrower than the bar.
+            HoverHandler { id: barHover }
+            // Glassmorphic Left Panel Background (FIXED width Theme.barWidth + Theme.cornerFillet)
             Item {
-                anchors.fill: parent
-                visible: Theme.glass
+                width: Theme.barWidth + Theme.cornerFillet
+                height: parent.height
 
-                Rectangle {
-                    readonly property int sideGap: 4
-                    readonly property int endGap: 6
+                Shape {
+                    anchors.fill: parent
+                    visible: !Theme.glass
+                    preferredRendererType: Shape.CurveRenderer
+                    antialiasing: true
 
-                    x: sideGap
-                    y: endGap
-                    width: Theme.barWidth - sideGap * 2
-                    height: parent.height - endGap * 2
-                    visible: width > 1 && height > 1
-                    radius: Theme.radiusPanel
-                    color: Theme.panelBg
+                    ShapePath {
+                        // barBg/barBorder are panelBg/panelBorder unless the
+                        // transparent option is on (Theme.qml).
+                        fillColor: Theme.barBg
+                        strokeColor: Theme.barBorder
+                        strokeWidth: 1
 
-                    Common.GlassRim {
-                        anchors.fill: parent
-                        radius: parent.radius
-                    }
-                }
-            }
-        }
+                        startX: 0
+                        startY: 0
 
-        // Horizontal Background Apps Drawer (System Tray)
-        Rectangle {
-            id: bgDrawer
-            z: 10
-            x: Theme.barWidth + 2
-            y: root.bgDrawerY
-            height: Theme.iconSlot + 14
-            width: root.bgDrawerOpen ? root.trayDrawerWidth : 0
-            opacity: root.bgDrawerOpen ? 1.0 : 0.0
-            visible: opacity > 0.01
-            clip: true
-            radius: Theme.radiusSmall + 4
+                        PathLine { x: Theme.barWidth + Theme.cornerFillet; y: 0 }
+                        PathLine { x: Theme.barWidth + Theme.cornerFillet; y: Theme.edgeLine }
 
-            color: Theme.panelBg
-            border.color: Theme.panelBorder
-            border.width: Theme.glass ? 0 : 1
-
-            Common.GlassRim {
-                anchors.fill: parent
-                radius: parent.radius
-                visible: Theme.glass
-            }
-
-            Behavior on width {
-                NumberAnimation { duration: Theme.animPanel; easing.type: Theme.easeOutExpo }
-            }
-            Behavior on opacity {
-                NumberAnimation { duration: Theme.animFast }
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                hoverEnabled: true
-                onEntered: bgDrawerHideTimer.stop()
-                onExited: bgDrawerHideTimer.restart()
-            }
-
-            RowLayout {
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.left: parent.left
-                anchors.leftMargin: 10
-                spacing: 8
-
-                Repeater {
-                    model: SystemTray.items
-
-                    delegate: Item {
-                        implicitWidth: Theme.iconSlot
-                        implicitHeight: Theme.iconSlot
-
-                        QsMenuAnchor {
-                            id: menuAnchor
-                            menu: modelData.menu
-
-                            // Without an anchor item the popup has no surface
-                            // to parent to and open() silently does nothing —
-                            // which is why right-click menus never appeared.
-                            // The bar sits on the left edge, so hang the menu
-                            // off the icon's right side.
-                            anchor.item: bgAppBtn
-                            anchor.edges: Edges.Right | Edges.Top
-                            anchor.gravity: Edges.Right | Edges.Bottom
-
-                            // The menu is its own surface, so opening it takes
-                            // the pointer off the icon and the drawer's hide
-                            // timer would collapse the anchor out from under
-                            // the popup. Hold the drawer open while it lives.
-                            onOpened: {
-                                bgDrawerHideTimer.stop();
-                                root.trayMenusOpen++;
-                            }
-                            onClosed: {
-                                root.trayMenusOpen = Math.max(0, root.trayMenusOpen - 1);
-                                bgDrawerHideTimer.restart();
-                            }
+                        PathQuad {
+                            x: Theme.barWidth
+                            y: Theme.edgeLine + Theme.cornerFillet
+                            controlX: Theme.barWidth
+                            controlY: Theme.edgeLine
                         }
 
-                        Rectangle {
-                            id: bgAppBtn
-                            anchors.fill: parent
-                            radius: Theme.radiusSmall
-                            color: bgMouse.containsMouse ? Theme.cardHover : Theme.card
-                            border.color: bgMouse.containsMouse ? Theme.accent : Theme.border
-                            border.width: 1
+                        PathLine { x: Theme.barWidth; y: barWindow.height - Theme.edgeLine - Theme.cornerFillet }
 
-                            Behavior on color { ColorAnimation { duration: Theme.animFast } }
-
-                            scale: bgMouse.containsPress ? 0.90 : (bgMouse.containsMouse ? 1.12 : 1.0)
-                            Behavior on scale { NumberAnimation { duration: Theme.animNormal; easing.type: Theme.easeOutBack } }
-
-                            Image {
-                                id: bgIconImg
-                                anchors.centerIn: parent
-                                width: Math.round(Theme.iconSlot * 0.6)
-                                height: width
-                                source: modelData.icon || ""
-                                sourceSize: Qt.size(64, 64)
-                                smooth: true
-                                visible: status === Image.Ready
-                            }
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: "󰖯"
-                                font.pixelSize: 16
-                                color: Theme.textSecondary
-                                visible: bgIconImg.status !== Image.Ready
-                            }
-
-                            Rectangle {
-                                anchors.bottom: parent.bottom
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                anchors.bottomMargin: 2
-                                width: 4
-                                height: 4
-                                radius: 2
-                                color: Theme.good
-                            }
+                        PathQuad {
+                            x: Theme.barWidth + Theme.cornerFillet
+                            y: barWindow.height - Theme.edgeLine
+                            controlX: Theme.barWidth
+                            controlY: barWindow.height - Theme.edgeLine
                         }
 
-                        MouseArea {
-                            id: bgMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
-                            onClicked: (mouse) => {
-                                // onlyMenu items (nm-applet, blueman, …) expose
-                                // no activate action at all, so a left click has
-                                // to fall through to the menu or it does nothing.
-                                var wantsMenu = mouse.button === Qt.RightButton
-                                                || modelData.onlyMenu;
-
-                                if (wantsMenu && modelData.hasMenu) {
-                                    menuAnchor.open();
-                                } else if (mouse.button === Qt.MiddleButton) {
-                                    modelData.secondaryActivate();
-                                } else if (mouse.button === Qt.LeftButton) {
-                                    modelData.activate();
-                                }
-                            }
-                            onWheel: (wheel) => {
-                                if (wheel.angleDelta.y !== 0)
-                                    modelData.scroll(wheel.angleDelta.y, false);
-                                if (wheel.angleDelta.x !== 0)
-                                    modelData.scroll(wheel.angleDelta.x, true);
-                            }
-                            onContainsMouseChanged: {
-                                if (containsMouse) bgDrawerHideTimer.stop();
-                                root.setTooltip(containsMouse ? (modelData.title || "Tray Item") : "", bgMouse);
-                            }
-                        }
+                        PathLine { x: Theme.barWidth + Theme.cornerFillet; y: barWindow.height }
+                        PathLine { x: 0; y: barWindow.height }
+                        PathLine { x: 0; y: 0 }
                     }
                 }
 
-                Text {
-                    visible: root.trayItemCount === 0
-                    text: "No system tray items"
-                    font.pixelSize: 11
-                    color: Theme.textMuted
-                    Layout.alignment: Qt.AlignVCenter
-                }
-            }
-        }
-
-        // Horizontal Power Options Drawer
-        Rectangle {
-            id: powerDrawer
-            z: 10
-            x: Theme.barWidth + 2
-            y: root.powerDrawerY
-            height: Theme.iconSlot + 14
-            width: root.powerExpanded ? root.powerDrawerWidth : 0
-            opacity: root.powerExpanded ? 1.0 : 0.0
-            visible: opacity > 0.01
-            clip: true
-            radius: Theme.radiusSmall + 4
-
-            color: Theme.panelBg
-            border.color: Theme.panelBorder
-            border.width: Theme.glass ? 0 : 1
-
-            Common.GlassRim {
-                anchors.fill: parent
-                radius: parent.radius
-                visible: Theme.glass
-            }
-
-            Behavior on width {
-                NumberAnimation { duration: Theme.animPanel; easing.type: Theme.easeOutExpo }
-            }
-            Behavior on opacity {
-                NumberAnimation { duration: Theme.animFast }
-            }
-
-            Timer {
-                id: pwrArmTimer
-                // Time the drawer stays up once you stop interacting with it.
-                interval: 1500
-                repeat: false
-                onTriggered: {
-                    root.powerExpanded = false;
-                    root.armedPower = "";
-                }
-            }
-
-            MouseArea {
-                anchors.fill: parent
-                hoverEnabled: true
-                // Stop, not restart: entering the drawer means you are aiming
-                // for one of the buttons in it, so the countdown has to be held
-                // rather than merely extended. Restarting here gave you a fixed
-                // window from first hover to land the click no matter where the
-                // cursor was -- survivable at 4s, but at 1.5s the drawer would
-                // close out from under the pointer mid-reach.
-                onEntered: pwrArmTimer.stop()
-                onExited: pwrArmTimer.restart()
-            }
-
-            RowLayout {
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.left: parent.left
-                anchors.leftMargin: 10
-                spacing: 8
-
-                // 1. Lock Screen Button
+                // --- Glass theme: a floating card instead of the edge silhouette ---
+                // Frosted, the silhouette's stroke read as a hard bright line down
+                // the screen edge. In glass the bar floats just off the edges as a
+                // rounded card with its own lit rim (common/GlassRim.qml). It is
+                // the strip's own width inset equally on both sides, so the
+                // content -- centred on barWidth / 2 -- stays where it was; the
+                // side gap is smaller than the top/bottom one because the clock
+                // island is only 6 px narrower than the bar.
                 Item {
-                    implicitWidth: Theme.iconSlot
-                    implicitHeight: Theme.iconSlot
+                    anchors.fill: parent
+                    visible: Theme.glass
 
                     Rectangle {
-                        anchors.fill: parent
-                        radius: Theme.radiusSmall
-                        color: lockMouse.containsMouse ? Theme.cardHover : Theme.card
-                        border.color: lockMouse.containsMouse ? Theme.accent : Theme.border
-                        border.width: 1
+                        readonly property int sideGap: 4
+                        readonly property int endGap: 6
 
-                        scale: lockMouse.containsPress ? 0.90 : (lockMouse.containsMouse ? 1.12 : 1.0)
-                        Behavior on scale { NumberAnimation { duration: Theme.animNormal; easing.type: Theme.easeOutBack } }
+                        x: sideGap
+                        y: endGap
+                        width: Theme.barWidth - sideGap * 2
+                        height: parent.height - endGap * 2
+                        visible: width > 1 && height > 1
+                        radius: Theme.radiusPanel
+                        color: Theme.barBg
 
-                        Text {
-                            anchors.centerIn: parent
-                            text: "󰌾"
-                            font.pixelSize: 16
-                            color: Theme.textPrimary
-                        }
-
-                        MouseArea {
-                            id: lockMouse
+                        Common.GlassRim {
                             anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                root.powerExpanded = false;
-                                // hyprlock is not part of this setup (the lock is quickshell/lock);
-                                // launchApp runs through sh, so $HOME expands there.
-                                root.launchApp("\"$HOME/.config/quickshell/lock/lock.sh\"");
-                            }
-                            onContainsMouseChanged: root.setTooltip(containsMouse ? "Lock Screen" : "", lockMouse)
-                        }
-                    }
-                }
-
-                // 2. Sleep / Suspend Button
-                Item {
-                    implicitWidth: Theme.iconSlot
-                    implicitHeight: Theme.iconSlot
-
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: Theme.radiusSmall
-                        color: sleepMouse.containsMouse ? Theme.cardHover : Theme.card
-                        border.color: root.armedAction === "suspend" ? Theme.danger
-                                    : (sleepMouse.containsMouse ? Theme.accent : Theme.border)
-                        border.width: 1
-
-                        scale: sleepMouse.containsPress ? 0.90 : (sleepMouse.containsMouse ? 1.12 : 1.0)
-                        Behavior on scale { NumberAnimation { duration: Theme.animNormal; easing.type: Theme.easeOutBack } }
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: "󰤄"
-                            font.pixelSize: 16
-                            color: Theme.textPrimary
-                        }
-
-                        MouseArea {
-                            id: sleepMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                root.armOrRun("suspend", "systemctl suspend");
-                                if (root.armedAction === "suspend")
-                                    root.setTooltip("Click again to suspend", sleepMouse);
-                            }
-                            onContainsMouseChanged: root.setTooltip(containsMouse ? (root.armedAction === "suspend" ? "Click again to suspend" : "Sleep / Suspend") : "", sleepMouse)
-                        }
-                    }
-                }
-
-                // 3. Reboot Button
-                Item {
-                    implicitWidth: Theme.iconSlot
-                    implicitHeight: Theme.iconSlot
-
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: Theme.radiusSmall
-                        color: rebMouse.containsMouse ? Theme.cardHover : Theme.card
-                        border.color: root.armedAction === "reboot" ? Theme.danger
-                                    : (rebMouse.containsMouse ? Theme.good : Theme.border)
-                        border.width: 1
-
-                        scale: rebMouse.containsPress ? 0.90 : (rebMouse.containsMouse ? 1.12 : 1.0)
-                        Behavior on scale { NumberAnimation { duration: Theme.animNormal; easing.type: Theme.easeOutBack } }
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: "󰜉"
-                            font.pixelSize: 16
-                            color: rebMouse.containsMouse ? Theme.good : Theme.textPrimary
-                        }
-
-                        MouseArea {
-                            id: rebMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                root.armOrRun("reboot", "systemctl reboot");
-                                if (root.armedAction === "reboot")
-                                    root.setTooltip("Click again to reboot", rebMouse);
-                            }
-                            onContainsMouseChanged: root.setTooltip(containsMouse ? (root.armedAction === "reboot" ? "Click again to reboot" : "Reboot PC") : "", rebMouse)
+                            radius: parent.radius
+                            opacity: Theme.bgOpacity
                         }
                     }
                 }
             }
-        }
 
-        // Inner Content Container (aligned inside Theme.barWidth)
-        Item {
-            x: 0
-            y: Theme.edgeLine
-            width: Theme.barWidth
-            height: parent.height - (Theme.edgeLine * 2)
+            // Horizontal Background Apps Drawer (System Tray)
+            Rectangle {
+                id: bgDrawer
+                z: 10
+                x: Theme.barWidth + 2
+                y: root.bgDrawerY
+                height: Theme.iconSlot + 14
+                width: root.bgDrawerOpen ? root.trayDrawerWidth : 0
+                opacity: root.bgDrawerOpen ? 1.0 : 0.0
+                visible: opacity > 0.01
+                clip: true
+                radius: Theme.radiusSmall + 4
 
-            ColumnLayout {
-                anchors.fill: parent
-                anchors.topMargin: Theme.barPadding
-                anchors.bottomMargin: Theme.barPadding
-                spacing: 16
+                color: Theme.panelBg
+                border.color: Theme.panelBorder
+                border.width: Theme.glass ? 0 : 1
 
-                // ---- 1. Dynamic Clock Island (Stacked HH / MM / AP) ----
-                Rectangle {
-                    Layout.alignment: Qt.AlignHCenter
-                    // Glass: the same width as the app buttons below, so the
-                    // island keeps their margins inside the bar's glass card
-                    // instead of crowding its rim.
-                    implicitWidth: Theme.glass ? Theme.iconSlot : Math.max(34, Theme.barWidth - 12)
-                    implicitHeight: 56
-                    radius: Theme.radiusSmall
-                    color: clockMouse.containsMouse ? Theme.cardHover : Theme.card
-                    border.color: clockMouse.containsMouse ? Theme.borderStrong : Theme.border
-                    border.width: 1
-
-                    Behavior on color { ColorAnimation { duration: Theme.animFast } }
-
-                    scale: clockMouse.containsPress ? 0.92 : (clockMouse.containsMouse ? 1.06 : 1.0)
-                    Behavior on scale { NumberAnimation { duration: Theme.animNormal; easing.type: Theme.easeOutBack } }
-
-                    ColumnLayout {
-                        anchors.centerIn: parent
-                        spacing: 0
-
-                        Text {
-                            text: Qt.formatTime(root.now, "hh AP").split(" ")[0]  // 12h: Qt only honours AP in the same format
-                            font.pixelSize: 12
-                            font.bold: true
-                            font.family: "JetBrains Mono"
-                            color: Theme.textPrimary
-                            Layout.alignment: Qt.AlignHCenter
-                        }
-                        Text {
-                            text: Qt.formatTime(root.now, "mm")
-                            font.pixelSize: 12
-                            font.bold: true
-                            font.family: "JetBrains Mono"
-                            color: Theme.accent
-                            Layout.alignment: Qt.AlignHCenter
-                        }
-                        Text {
-                            text: Qt.formatTime(root.now, "AP")
-                            font.pixelSize: 8
-                            font.bold: true
-                            color: Theme.textMuted
-                            Layout.alignment: Qt.AlignHCenter
-                        }
-                    }
-
-                    MouseArea {
-                        id: clockMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.clockPopupOpen = !root.clockPopupOpen
-                    }
+                Common.GlassRim {
+                    anchors.fill: parent
+                    radius: parent.radius
+                    visible: Theme.glass
                 }
 
-                // ---- 2. Vertical Workspaces Switcher ----
-                Item {
-                    Layout.alignment: Qt.AlignHCenter
-                    implicitWidth: Theme.iconSlot
-                    implicitHeight: 5 * 34
-
-                    // Glass: styled as a hovered app button (card fill +
-                    // strong hairline, full button width) rather than a flat
-                    // accent wash, so it matches the buttons it sits above.
-                    Rectangle {
-                        width: Theme.glass ? Theme.iconSlot : Theme.iconSlot - 4
-                        height: 30
-                        radius: Theme.radiusSmall
-                        color: Theme.glass ? Theme.cardHover : Theme.accent
-                        opacity: Theme.glass ? 1.0 : 0.25
-                        border.color: Theme.glass ? Theme.borderStrong : Theme.accent
-                        border.width: 1
-                        x: Theme.glass ? 0 : 2
-                        y: Math.max(0, Math.min(4, root.activeWs - 1)) * 34 + 2
-
-                        Behavior on y {
-                            NumberAnimation { duration: Theme.animNormal; easing.type: Theme.easeOutQuint }
-                        }
-                    }
-
-                    Column {
-                        anchors.fill: parent
-                        spacing: 4
-
-                        Repeater {
-                            model: 5
-                            delegate: Item {
-                                readonly property int wsNum: index + 1
-                                width: Theme.iconSlot
-                                height: 30
-
-                                Rectangle {
-                                    id: wsItemBg
-                                    anchors.centerIn: parent
-                                    width: Theme.iconSlot - 6
-                                    height: 28
-                                    radius: Theme.radiusSmall - 2
-                                    color: wsMouse.containsMouse ? Theme.cardHover : "transparent"
-                                    Behavior on color { ColorAnimation { duration: Theme.animFast } }
-
-                                    scale: wsMouse.containsPress ? 0.90 : (wsMouse.containsMouse ? 1.08 : 1.0)
-                                    Behavior on scale { NumberAnimation { duration: Theme.animNormal; easing.type: Theme.easeOutBack } }
-
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: wsNum
-                                        font.pixelSize: 12
-                                        font.bold: root.activeWs === wsNum
-                                        color: root.activeWs === wsNum ? Theme.textPrimary : Theme.textMuted
-                                    }
-
-                                    Rectangle {
-                                        anchors.bottom: parent.bottom
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                        anchors.bottomMargin: 2
-                                        width: 3
-                                        height: 3
-                                        radius: 1.5
-                                        color: Theme.good
-                                        visible: !!root.wsWindows[wsNum] && root.activeWs !== wsNum
-                                    }
-                                }
-
-                                MouseArea {
-                                    id: wsMouse
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: root.dispatchHypr("workspace", String(wsNum))
-                                }
-                            }
-                        }
-                    }
+                Behavior on width {
+                    NumberAnimation { duration: Theme.animPanel; easing.type: Theme.easeOutExpo }
+                }
+                Behavior on opacity {
+                    NumberAnimation { duration: Theme.animFast }
                 }
 
-                // Divider line
-                Rectangle {
-                    Layout.alignment: Qt.AlignHCenter
-                    implicitWidth: Math.max(20, Theme.iconSlot - 10)
-                    implicitHeight: 1
-                    color: Theme.border
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onEntered: bgDrawerHideTimer.stop()
+                    onExited: bgDrawerHideTimer.restart()
                 }
 
-                // ---- 3. Pinned Apps ----
-                ColumnLayout {
-                    Layout.alignment: Qt.AlignHCenter
+                RowLayout {
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left: parent.left
+                    anchors.leftMargin: 10
                     spacing: 8
 
-                    // Pinned Sidebar Apps
                     Repeater {
-                        model: root.sidebarPinned
+                        model: SystemTray.items
 
                         delegate: Item {
                             implicitWidth: Theme.iconSlot
                             implicitHeight: Theme.iconSlot
-                            Layout.alignment: Qt.AlignHCenter
+
+                            QsMenuAnchor {
+                                id: menuAnchor
+                                menu: modelData.menu
+
+                                // Without an anchor item the popup has no surface
+                                // to parent to and open() silently does nothing —
+                                // which is why right-click menus never appeared.
+                                // The bar sits on the left edge, so hang the menu
+                                // off the icon's right side.
+                                anchor.item: bgAppBtn
+                                anchor.edges: Edges.Right | Edges.Top
+                                anchor.gravity: Edges.Right | Edges.Bottom
+
+                                // The menu is its own surface, so opening it takes
+                                // the pointer off the icon and the drawer's hide
+                                // timer would collapse the anchor out from under
+                                // the popup. Hold the drawer open while it lives.
+                                onOpened: {
+                                    bgDrawerHideTimer.stop();
+                                    root.trayMenusOpen++;
+                                }
+                                onClosed: {
+                                    root.trayMenusOpen = Math.max(0, root.trayMenusOpen - 1);
+                                    bgDrawerHideTimer.restart();
+                                }
+                            }
 
                             Rectangle {
-                                id: appBtn
+                                id: bgAppBtn
                                 anchors.fill: parent
                                 radius: Theme.radiusSmall
-                                color: appMouse.containsMouse ? Theme.cardHover : Theme.card
-                                border.color: appMouse.containsMouse ? Theme.borderStrong : Theme.border
+                                color: bgMouse.containsMouse ? Theme.cardHover : Theme.card
+                                border.color: bgMouse.containsMouse ? Theme.accent : Theme.border
                                 border.width: 1
 
                                 Behavior on color { ColorAnimation { duration: Theme.animFast } }
 
-                                scale: appMouse.containsPress ? 0.90 : (appMouse.containsMouse ? 1.12 : 1.0)
+                                scale: bgMouse.containsPress ? 0.90 : (bgMouse.containsMouse ? 1.12 : 1.0)
                                 Behavior on scale { NumberAnimation { duration: Theme.animNormal; easing.type: Theme.easeOutBack } }
 
                                 Image {
-                                    id: pinnedIconImg
+                                    id: bgIconImg
                                     anchors.centerIn: parent
                                     width: Math.round(Theme.iconSlot * 0.6)
                                     height: width
-                                    // There is no Config singleton here, so the
-                                    // fallback is the class name and then the
-                                    // glyph below -- not a theme-wide search.
-                                    source: {
-                                        var direct = Quickshell.iconPath(modelData.icon || "", true);
-                                        if (direct !== "") return direct;
-                                        return Quickshell.iconPath(modelData["class"] || "", true);
-                                    }
+                                    source: modelData.icon || ""
                                     sourceSize: Qt.size(64, 64)
                                     smooth: true
                                     visible: status === Image.Ready
@@ -883,220 +553,663 @@ Scope {
 
                                 Text {
                                     anchors.centerIn: parent
-                                    text: "󰣆"
+                                    text: "󰖯"
                                     font.pixelSize: 16
-                                    color: Theme.textPrimary
-                                    visible: pinnedIconImg.status !== Image.Ready
+                                    color: Theme.textSecondary
+                                    visible: bgIconImg.status !== Image.Ready
+                                }
+
+                                Rectangle {
+                                    anchors.bottom: parent.bottom
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    anchors.bottomMargin: 2
+                                    width: 4
+                                    height: 4
+                                    radius: 2
+                                    color: Theme.good
                                 }
                             }
 
                             MouseArea {
-                                id: appMouse
+                                id: bgMouse
                                 anchors.fill: parent
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
-                                onClicked: root.launchApp(modelData.exec)
-                                onContainsMouseChanged: root.setTooltip(containsMouse ? (modelData.name || modelData.exec) : "", appMouse)
+                                acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+                                onClicked: (mouse) => {
+                                    // onlyMenu items (nm-applet, blueman, …) expose
+                                    // no activate action at all, so a left click has
+                                    // to fall through to the menu or it does nothing.
+                                    var wantsMenu = mouse.button === Qt.RightButton
+                                                    || modelData.onlyMenu;
+
+                                    if (wantsMenu && modelData.hasMenu) {
+                                        menuAnchor.open();
+                                    } else if (mouse.button === Qt.MiddleButton) {
+                                        modelData.secondaryActivate();
+                                    } else if (mouse.button === Qt.LeftButton) {
+                                        modelData.activate();
+                                    }
+                                }
+                                onWheel: (wheel) => {
+                                    if (wheel.angleDelta.y !== 0)
+                                        modelData.scroll(wheel.angleDelta.y, false);
+                                    if (wheel.angleDelta.x !== 0)
+                                        modelData.scroll(wheel.angleDelta.x, true);
+                                }
+                                onContainsMouseChanged: {
+                                    if (containsMouse) bgDrawerHideTimer.stop();
+                                    root.setTooltip(containsMouse ? (modelData.title || "Tray Item") : "", bgMouse);
+                                }
                             }
                         }
                     }
 
-                    // Separator at end of pinned apps
+                    Text {
+                        visible: root.trayItemCount === 0
+                        text: "No system tray items"
+                        font.pixelSize: 11
+                        color: Theme.textMuted
+                        Layout.alignment: Qt.AlignVCenter
+                    }
+                }
+            }
+
+            // Horizontal Power Options Drawer
+            Rectangle {
+                id: powerDrawer
+                z: 10
+                x: Theme.barWidth + 2
+                y: root.powerDrawerY
+                height: Theme.iconSlot + 14
+                width: root.powerExpanded ? root.powerDrawerWidth : 0
+                opacity: root.powerExpanded ? 1.0 : 0.0
+                visible: opacity > 0.01
+                clip: true
+                radius: Theme.radiusSmall + 4
+
+                color: Theme.panelBg
+                border.color: Theme.panelBorder
+                border.width: Theme.glass ? 0 : 1
+
+                Common.GlassRim {
+                    anchors.fill: parent
+                    radius: parent.radius
+                    visible: Theme.glass
+                }
+
+                Behavior on width {
+                    NumberAnimation { duration: Theme.animPanel; easing.type: Theme.easeOutExpo }
+                }
+                Behavior on opacity {
+                    NumberAnimation { duration: Theme.animFast }
+                }
+
+                Timer {
+                    id: pwrArmTimer
+                    // Time the drawer stays up once you stop interacting with it.
+                    interval: 1500
+                    repeat: false
+                    onTriggered: {
+                        root.powerExpanded = false;
+                        root.armedPower = "";
+                    }
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    // Stop, not restart: entering the drawer means you are aiming
+                    // for one of the buttons in it, so the countdown has to be held
+                    // rather than merely extended. Restarting here gave you a fixed
+                    // window from first hover to land the click no matter where the
+                    // cursor was -- survivable at 4s, but at 1.5s the drawer would
+                    // close out from under the pointer mid-reach.
+                    onEntered: pwrArmTimer.stop()
+                    onExited: pwrArmTimer.restart()
+                }
+
+                RowLayout {
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.left: parent.left
+                    anchors.leftMargin: 10
+                    spacing: 8
+
+                    // 1. Lock Screen Button
+                    Item {
+                        implicitWidth: Theme.iconSlot
+                        implicitHeight: Theme.iconSlot
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: Theme.radiusSmall
+                            color: lockMouse.containsMouse ? Theme.cardHover : Theme.card
+                            border.color: lockMouse.containsMouse ? Theme.accent : Theme.border
+                            border.width: 1
+
+                            scale: lockMouse.containsPress ? 0.90 : (lockMouse.containsMouse ? 1.12 : 1.0)
+                            Behavior on scale { NumberAnimation { duration: Theme.animNormal; easing.type: Theme.easeOutBack } }
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "󰌾"
+                                font.pixelSize: 16
+                                color: Theme.textPrimary
+                            }
+
+                            MouseArea {
+                                id: lockMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    root.powerExpanded = false;
+                                    // hyprlock is not part of this setup (the lock is quickshell/lock);
+                                    // launchApp runs through sh, so $HOME expands there.
+                                    root.launchApp("\"$HOME/.config/quickshell/lock/lock.sh\"");
+                                }
+                                onContainsMouseChanged: root.setTooltip(containsMouse ? "Lock Screen" : "", lockMouse)
+                            }
+                        }
+                    }
+
+                    // 2. Sleep / Suspend Button
+                    Item {
+                        implicitWidth: Theme.iconSlot
+                        implicitHeight: Theme.iconSlot
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: Theme.radiusSmall
+                            color: sleepMouse.containsMouse ? Theme.cardHover : Theme.card
+                            border.color: root.armedAction === "suspend" ? Theme.danger
+                                        : (sleepMouse.containsMouse ? Theme.accent : Theme.border)
+                            border.width: 1
+
+                            scale: sleepMouse.containsPress ? 0.90 : (sleepMouse.containsMouse ? 1.12 : 1.0)
+                            Behavior on scale { NumberAnimation { duration: Theme.animNormal; easing.type: Theme.easeOutBack } }
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "󰤄"
+                                font.pixelSize: 16
+                                color: Theme.textPrimary
+                            }
+
+                            MouseArea {
+                                id: sleepMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    root.armOrRun("suspend", "systemctl suspend");
+                                    if (root.armedAction === "suspend")
+                                        root.setTooltip("Click again to suspend", sleepMouse);
+                                }
+                                onContainsMouseChanged: root.setTooltip(containsMouse ? (root.armedAction === "suspend" ? "Click again to suspend" : "Sleep / Suspend") : "", sleepMouse)
+                            }
+                        }
+                    }
+
+                    // 3. Reboot Button
+                    Item {
+                        implicitWidth: Theme.iconSlot
+                        implicitHeight: Theme.iconSlot
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: Theme.radiusSmall
+                            color: rebMouse.containsMouse ? Theme.cardHover : Theme.card
+                            border.color: root.armedAction === "reboot" ? Theme.danger
+                                        : (rebMouse.containsMouse ? Theme.good : Theme.border)
+                            border.width: 1
+
+                            scale: rebMouse.containsPress ? 0.90 : (rebMouse.containsMouse ? 1.12 : 1.0)
+                            Behavior on scale { NumberAnimation { duration: Theme.animNormal; easing.type: Theme.easeOutBack } }
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "󰜉"
+                                font.pixelSize: 16
+                                color: rebMouse.containsMouse ? Theme.good : Theme.textPrimary
+                            }
+
+                            MouseArea {
+                                id: rebMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    root.armOrRun("reboot", "systemctl reboot");
+                                    if (root.armedAction === "reboot")
+                                        root.setTooltip("Click again to reboot", rebMouse);
+                                }
+                                onContainsMouseChanged: root.setTooltip(containsMouse ? (root.armedAction === "reboot" ? "Click again to reboot" : "Reboot PC") : "", rebMouse)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Inner Content Container (aligned inside Theme.barWidth)
+            Item {
+                x: 0
+                y: Theme.edgeLine
+                width: Theme.barWidth
+                height: parent.height - (Theme.edgeLine * 2)
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.topMargin: Theme.barPadding
+                    anchors.bottomMargin: Theme.barPadding
+                    spacing: 16
+
+                    // ---- 1. Dynamic Clock Island (Stacked HH / MM / AP) ----
+                    Rectangle {
+                        Layout.alignment: Qt.AlignHCenter
+                        // Glass: the same width as the app buttons below, so the
+                        // island keeps their margins inside the bar's glass card
+                        // instead of crowding its rim.
+                        implicitWidth: Theme.glass ? Theme.iconSlot : Math.max(34, Theme.barWidth - 12)
+                        implicitHeight: 56
+                        radius: Theme.radiusSmall
+                        color: clockMouse.containsMouse ? Theme.cardHover : Theme.card
+                        border.color: clockMouse.containsMouse ? Theme.borderStrong : Theme.border
+                        border.width: 1
+
+                        Behavior on color { ColorAnimation { duration: Theme.animFast } }
+
+                        scale: clockMouse.containsPress ? 0.92 : (clockMouse.containsMouse ? 1.06 : 1.0)
+                        Behavior on scale { NumberAnimation { duration: Theme.animNormal; easing.type: Theme.easeOutBack } }
+
+                        ColumnLayout {
+                            anchors.centerIn: parent
+                            spacing: 0
+
+                            Text {
+                                text: Qt.formatTime(root.now, "hh AP").split(" ")[0]  // 12h: Qt only honours AP in the same format
+                                font.pixelSize: 12
+                                font.bold: true
+                                font.family: "JetBrains Mono"
+                                color: Theme.textPrimary
+                                Layout.alignment: Qt.AlignHCenter
+                            }
+                            Text {
+                                text: Qt.formatTime(root.now, "mm")
+                                font.pixelSize: 12
+                                font.bold: true
+                                font.family: "JetBrains Mono"
+                                color: Theme.accent
+                                Layout.alignment: Qt.AlignHCenter
+                            }
+                            Text {
+                                text: Qt.formatTime(root.now, "AP")
+                                font.pixelSize: 8
+                                font.bold: true
+                                color: Theme.textMuted
+                                Layout.alignment: Qt.AlignHCenter
+                            }
+                        }
+
+                        MouseArea {
+                            id: clockMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.clockPopupOpen = !root.clockPopupOpen
+                        }
+                    }
+
+                    // ---- 2. Vertical Workspaces Switcher ----
+                    Item {
+                        Layout.alignment: Qt.AlignHCenter
+                        implicitWidth: Theme.iconSlot
+                        implicitHeight: 5 * 34
+
+                        // Glass: styled as a hovered app button (card fill +
+                        // strong hairline, full button width) rather than a flat
+                        // accent wash, so it matches the buttons it sits above.
+                        Rectangle {
+                            width: Theme.glass ? Theme.iconSlot : Theme.iconSlot - 4
+                            height: 30
+                            radius: Theme.radiusSmall
+                            color: Theme.glass ? Theme.cardHover : Theme.accent
+                            opacity: Theme.glass ? 1.0 : 0.25
+                            border.color: Theme.glass ? Theme.borderStrong : Theme.accent
+                            border.width: 1
+                            x: Theme.glass ? 0 : 2
+                            y: Math.max(0, Math.min(4, root.activeWs - 1)) * 34 + 2
+
+                            Behavior on y {
+                                NumberAnimation { duration: Theme.animNormal; easing.type: Theme.easeOutQuint }
+                            }
+                        }
+
+                        Column {
+                            anchors.fill: parent
+                            spacing: 4
+
+                            Repeater {
+                                model: 5
+                                delegate: Item {
+                                    readonly property int wsNum: index + 1
+                                    width: Theme.iconSlot
+                                    height: 30
+
+                                    Rectangle {
+                                        id: wsItemBg
+                                        anchors.centerIn: parent
+                                        width: Theme.iconSlot - 6
+                                        height: 28
+                                        radius: Theme.radiusSmall - 2
+                                        color: wsMouse.containsMouse ? Theme.cardHover : "transparent"
+                                        Behavior on color { ColorAnimation { duration: Theme.animFast } }
+
+                                        scale: wsMouse.containsPress ? 0.90 : (wsMouse.containsMouse ? 1.08 : 1.0)
+                                        Behavior on scale { NumberAnimation { duration: Theme.animNormal; easing.type: Theme.easeOutBack } }
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: wsNum
+                                            font.pixelSize: 12
+                                            font.bold: root.activeWs === wsNum
+                                            color: root.activeWs === wsNum ? Theme.textPrimary : Theme.textMuted
+                                        }
+
+                                        Rectangle {
+                                            anchors.bottom: parent.bottom
+                                            anchors.horizontalCenter: parent.horizontalCenter
+                                            anchors.bottomMargin: 2
+                                            width: 3
+                                            height: 3
+                                            radius: 1.5
+                                            color: Theme.good
+                                            visible: !!root.wsWindows[wsNum] && root.activeWs !== wsNum
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        id: wsMouse
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: root.dispatchHypr("workspace", String(wsNum))
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Divider line
                     Rectangle {
                         Layout.alignment: Qt.AlignHCenter
                         implicitWidth: Math.max(20, Theme.iconSlot - 10)
                         implicitHeight: 1
                         color: Theme.border
                     }
-                }
 
-                // Flexible spacer pushing bottom controls down
-                Item {
-                    Layout.fillHeight: true
-                }
-
-                // ---- 4. Bottom Controls (Background Apps Drawer Arrow, Overview & Power Button) ----
-                ColumnLayout {
-                    Layout.alignment: Qt.AlignHCenter
-                    spacing: 10
-
-                    // > (Chevron Arrow) Button for Background Apps Drawer (Shifted ABOVE Overview)
-                    Rectangle {
-                        id: chevronBtn
+                    // ---- 3. Pinned Apps ----
+                    ColumnLayout {
                         Layout.alignment: Qt.AlignHCenter
-                        implicitWidth: Theme.iconSlot
-                        implicitHeight: Theme.iconSlot
-                        radius: Theme.radiusSmall
-                        color: (root.bgDrawerOpen || chevronMouse.containsMouse) ? Theme.cardHover : Theme.card
-                        border.color: (root.bgDrawerOpen || chevronMouse.containsMouse) ? Theme.accent : Theme.border
-                        border.width: 1
+                        spacing: 8
 
-                        Behavior on color { ColorAnimation { duration: Theme.animFast } }
-                        Behavior on border.color { ColorAnimation { duration: Theme.animFast } }
+                        // Pinned Sidebar Apps
+                        Repeater {
+                            model: root.sidebarPinned
 
-                        scale: chevronMouse.containsPress ? 0.90 : (chevronMouse.containsMouse ? 1.12 : 1.0)
-                        Behavior on scale { NumberAnimation { duration: Theme.animNormal; easing.type: Theme.easeOutBack } }
+                            delegate: Item {
+                                implicitWidth: Theme.iconSlot
+                                implicitHeight: Theme.iconSlot
+                                Layout.alignment: Qt.AlignHCenter
 
-                        Text {
-                            anchors.centerIn: parent
-                            text: root.bgDrawerOpen ? "󰅁" : "󰅂"
-                            font.pixelSize: 16
-                            color: (root.bgDrawerOpen || chevronMouse.containsMouse) ? Theme.textPrimary : Theme.textMuted
+                                Rectangle {
+                                    id: appBtn
+                                    anchors.fill: parent
+                                    radius: Theme.radiusSmall
+                                    color: appMouse.containsMouse ? Theme.cardHover : Theme.card
+                                    border.color: appMouse.containsMouse ? Theme.borderStrong : Theme.border
+                                    border.width: 1
+
+                                    Behavior on color { ColorAnimation { duration: Theme.animFast } }
+
+                                    scale: appMouse.containsPress ? 0.90 : (appMouse.containsMouse ? 1.12 : 1.0)
+                                    Behavior on scale { NumberAnimation { duration: Theme.animNormal; easing.type: Theme.easeOutBack } }
+
+                                    Image {
+                                        id: pinnedIconImg
+                                        anchors.centerIn: parent
+                                        width: Math.round(Theme.iconSlot * 0.6)
+                                        height: width
+                                        // There is no Config singleton here, so the
+                                        // fallback is the class name and then the
+                                        // glyph below -- not a theme-wide search.
+                                        source: {
+                                            var direct = Quickshell.iconPath(modelData.icon || "", true);
+                                            if (direct !== "") return direct;
+                                            return Quickshell.iconPath(modelData["class"] || "", true);
+                                        }
+                                        sourceSize: Qt.size(64, 64)
+                                        smooth: true
+                                        visible: status === Image.Ready
+                                    }
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "󰣆"
+                                        font.pixelSize: 16
+                                        color: Theme.textPrimary
+                                        visible: pinnedIconImg.status !== Image.Ready
+                                    }
+                                }
+
+                                MouseArea {
+                                    id: appMouse
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.launchApp(modelData.exec)
+                                    onContainsMouseChanged: root.setTooltip(containsMouse ? (modelData.name || modelData.exec) : "", appMouse)
+                                }
+                            }
                         }
 
-                        MouseArea {
-                            id: chevronMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                var pt = mapToItem(null, 0, height / 2);
-                                root.bgDrawerY = pt.y - (Theme.iconSlot + 14) / 2;
-                                root.bgDrawerOpen = !root.bgDrawerOpen;
-                                if (root.bgDrawerOpen) bgDrawerHideTimer.stop();
+                        // Separator at end of pinned apps
+                        Rectangle {
+                            Layout.alignment: Qt.AlignHCenter
+                            implicitWidth: Math.max(20, Theme.iconSlot - 10)
+                            implicitHeight: 1
+                            color: Theme.border
+                        }
+                    }
+
+                    // Flexible spacer pushing bottom controls down
+                    Item {
+                        Layout.fillHeight: true
+                    }
+
+                    // ---- 4. Bottom Controls (Background Apps Drawer Arrow, Overview & Power Button) ----
+                    ColumnLayout {
+                        Layout.alignment: Qt.AlignHCenter
+                        spacing: 10
+
+                        // > (Chevron Arrow) Button for Background Apps Drawer (Shifted ABOVE Overview)
+                        Rectangle {
+                            id: chevronBtn
+                            Layout.alignment: Qt.AlignHCenter
+                            implicitWidth: Theme.iconSlot
+                            implicitHeight: Theme.iconSlot
+                            radius: Theme.radiusSmall
+                            color: (root.bgDrawerOpen || chevronMouse.containsMouse) ? Theme.cardHover : Theme.card
+                            border.color: (root.bgDrawerOpen || chevronMouse.containsMouse) ? Theme.accent : Theme.border
+                            border.width: 1
+
+                            Behavior on color { ColorAnimation { duration: Theme.animFast } }
+                            Behavior on border.color { ColorAnimation { duration: Theme.animFast } }
+
+                            scale: chevronMouse.containsPress ? 0.90 : (chevronMouse.containsMouse ? 1.12 : 1.0)
+                            Behavior on scale { NumberAnimation { duration: Theme.animNormal; easing.type: Theme.easeOutBack } }
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: root.bgDrawerOpen ? "󰅁" : "󰅂"
+                                font.pixelSize: 16
+                                color: (root.bgDrawerOpen || chevronMouse.containsMouse) ? Theme.textPrimary : Theme.textMuted
                             }
-                            onContainsMouseChanged: {
-                                if (containsMouse) {
+
+                            MouseArea {
+                                id: chevronMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
                                     var pt = mapToItem(null, 0, height / 2);
                                     root.bgDrawerY = pt.y - (Theme.iconSlot + 14) / 2;
-                                    root.bgDrawerOpen = true;
-                                    bgDrawerHideTimer.stop();
-                                    root.setTooltip("Background Apps (Drawer)", chevronMouse);
-                                } else {
-                                    bgDrawerHideTimer.restart();
-                                    root.setTooltip("", chevronMouse);
+                                    root.bgDrawerOpen = !root.bgDrawerOpen;
+                                    if (root.bgDrawerOpen) bgDrawerHideTimer.stop();
+                                }
+                                onContainsMouseChanged: {
+                                    if (containsMouse) {
+                                        var pt = mapToItem(null, 0, height / 2);
+                                        root.bgDrawerY = pt.y - (Theme.iconSlot + 14) / 2;
+                                        root.bgDrawerOpen = true;
+                                        bgDrawerHideTimer.stop();
+                                        root.setTooltip("Background Apps (Drawer)", chevronMouse);
+                                    } else {
+                                        bgDrawerHideTimer.restart();
+                                        root.setTooltip("", chevronMouse);
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    // Overview Toggle Pill (Tiles Button -> Super+Tab Workspace & Window Overview)
-                    Rectangle {
-                        Layout.alignment: Qt.AlignHCenter
-                        implicitWidth: Theme.iconSlot
-                        implicitHeight: Theme.iconSlot
-                        radius: Theme.radiusSmall
-                        color: ovMouse.containsMouse ? Theme.cardHover : Theme.card
-                        border.color: ovMouse.containsMouse ? Theme.accent : Theme.border
-                        border.width: 1
+                        // Overview Toggle Pill (Tiles Button -> Super+Tab Workspace & Window Overview)
+                        Rectangle {
+                            Layout.alignment: Qt.AlignHCenter
+                            implicitWidth: Theme.iconSlot
+                            implicitHeight: Theme.iconSlot
+                            radius: Theme.radiusSmall
+                            color: ovMouse.containsMouse ? Theme.cardHover : Theme.card
+                            border.color: ovMouse.containsMouse ? Theme.accent : Theme.border
+                            border.width: 1
 
-                        Behavior on color { ColorAnimation { duration: Theme.animFast } }
-                        Behavior on border.color { ColorAnimation { duration: Theme.animFast } }
-
-                        scale: ovMouse.containsPress ? 0.90 : (ovMouse.containsMouse ? 1.12 : 1.0)
-                        Behavior on scale { NumberAnimation { duration: Theme.animNormal; easing.type: Theme.easeOutBack } }
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: "󰕮"
-                            font.pixelSize: 16
-                            color: ovMouse.containsMouse ? Theme.textPrimary : Theme.textSecondary
-                        }
-
-                        MouseArea {
-                            id: ovMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.launchApp(Quickshell.env("HOME") + "/.config/hypr/toggle_overview.sh")
-                            onContainsMouseChanged: root.setTooltip(containsMouse ? "Overview (Super+Tab)" : "", ovMouse)
-                        }
-                    }
-
-                    // Main Power Button
-                    Rectangle {
-                        id: mainPwrBtn
-                        Layout.alignment: Qt.AlignHCenter
-                        implicitWidth: Theme.iconSlot
-                        implicitHeight: Theme.iconSlot
-                        radius: Theme.radiusSmall
-                        color: (root.armedPower === "shutdown" || pwrMouse.containsMouse || root.powerExpanded)
-                               ? Theme.dangerWash : Theme.card
-                        border.color: (root.armedPower === "shutdown" || pwrMouse.containsMouse || root.powerExpanded)
-                                      ? Theme.danger : Theme.border
-                        border.width: (root.armedPower === "shutdown" || root.powerExpanded) ? 2 : 1
-
-                        Behavior on color { ColorAnimation { duration: Theme.animFast } }
-                        Behavior on border.color { ColorAnimation { duration: Theme.animFast } }
-
-                        scale: pwrMouse.containsPress ? 0.90 : (pwrMouse.containsMouse ? 1.12 : 1.0)
-                        Behavior on scale { NumberAnimation { duration: Theme.animNormal; easing.type: Theme.easeOutBack } }
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: "󰐥"
-                            font.pixelSize: 16
-                            color: (root.armedPower === "shutdown" || pwrMouse.containsMouse || root.powerExpanded) ? Theme.danger : Theme.textSecondary
                             Behavior on color { ColorAnimation { duration: Theme.animFast } }
+                            Behavior on border.color { ColorAnimation { duration: Theme.animFast } }
+
+                            scale: ovMouse.containsPress ? 0.90 : (ovMouse.containsMouse ? 1.12 : 1.0)
+                            Behavior on scale { NumberAnimation { duration: Theme.animNormal; easing.type: Theme.easeOutBack } }
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "󰕮"
+                                font.pixelSize: 16
+                                color: ovMouse.containsMouse ? Theme.textPrimary : Theme.textSecondary
+                            }
+
+                            MouseArea {
+                                id: ovMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: root.launchApp(Quickshell.env("HOME") + "/.config/hypr/toggle_overview.sh")
+                                onContainsMouseChanged: root.setTooltip(containsMouse ? "Overview (Super+Tab)" : "", ovMouse)
+                            }
                         }
 
-                        MouseArea {
-                            id: pwrMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                var pt = mapToItem(null, 0, height / 2);
-                                root.powerDrawerY = pt.y - (Theme.iconSlot + 14) / 2;
-                                root.powerExpanded = !root.powerExpanded;
-                                if (root.powerExpanded) {
-                                    root.armedPower = "shutdown";
-                                    pwrArmTimer.restart();
-                                } else {
-                                    root.armedPower = "";
-                                }
+                        // Main Power Button
+                        Rectangle {
+                            id: mainPwrBtn
+                            Layout.alignment: Qt.AlignHCenter
+                            implicitWidth: Theme.iconSlot
+                            implicitHeight: Theme.iconSlot
+                            radius: Theme.radiusSmall
+                            color: (root.armedPower === "shutdown" || pwrMouse.containsMouse || root.powerExpanded)
+                                   ? Theme.dangerWash : Theme.card
+                            border.color: (root.armedPower === "shutdown" || pwrMouse.containsMouse || root.powerExpanded)
+                                          ? Theme.danger : Theme.border
+                            border.width: (root.armedPower === "shutdown" || root.powerExpanded) ? 2 : 1
+
+                            Behavior on color { ColorAnimation { duration: Theme.animFast } }
+                            Behavior on border.color { ColorAnimation { duration: Theme.animFast } }
+
+                            scale: pwrMouse.containsPress ? 0.90 : (pwrMouse.containsMouse ? 1.12 : 1.0)
+                            Behavior on scale { NumberAnimation { duration: Theme.animNormal; easing.type: Theme.easeOutBack } }
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "󰐥"
+                                font.pixelSize: 16
+                                color: (root.armedPower === "shutdown" || pwrMouse.containsMouse || root.powerExpanded) ? Theme.danger : Theme.textSecondary
+                                Behavior on color { ColorAnimation { duration: Theme.animFast } }
                             }
-                            onContainsMouseChanged: {
-                                if (containsMouse) {
+
+                            MouseArea {
+                                id: pwrMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
                                     var pt = mapToItem(null, 0, height / 2);
                                     root.powerDrawerY = pt.y - (Theme.iconSlot + 14) / 2;
-                                    root.powerExpanded = true;
-                                    root.armedPower = "shutdown";
-                                    pwrArmTimer.restart();
-                                    root.setTooltip("Power Options", pwrMouse);
-                                } else {
-                                    root.setTooltip("", pwrMouse);
+                                    root.powerExpanded = !root.powerExpanded;
+                                    if (root.powerExpanded) {
+                                        root.armedPower = "shutdown";
+                                        pwrArmTimer.restart();
+                                    } else {
+                                        root.armedPower = "";
+                                    }
+                                }
+                                onContainsMouseChanged: {
+                                    if (containsMouse) {
+                                        var pt = mapToItem(null, 0, height / 2);
+                                        root.powerDrawerY = pt.y - (Theme.iconSlot + 14) / 2;
+                                        root.powerExpanded = true;
+                                        root.armedPower = "shutdown";
+                                        pwrArmTimer.restart();
+                                        root.setTooltip("Power Options", pwrMouse);
+                                    } else {
+                                        root.setTooltip("", pwrMouse);
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-        }
 
-        // Floating Side Tooltip Label Pill
-        Rectangle {
-            id: tooltipPill
-            x: Theme.barWidth + 10
-            y: Math.max(10, root.tooltipY - height / 2)
-            visible: root.activeTooltip !== "" && !root.bgDrawerOpen && !root.powerExpanded
-            opacity: visible ? 1.0 : 0.0
-            Behavior on opacity { NumberAnimation { duration: Theme.animFast } }
-            Behavior on y { NumberAnimation { duration: 150; easing.type: Theme.easeOutQuint } }
+            // Floating Side Tooltip Label Pill
+            Rectangle {
+                id: tooltipPill
+                x: Theme.barWidth + 10
+                y: Math.max(10, root.tooltipY - height / 2)
+                visible: root.activeTooltip !== "" && !root.bgDrawerOpen && !root.powerExpanded
+                opacity: visible ? 1.0 : 0.0
+                Behavior on opacity { NumberAnimation { duration: Theme.animFast } }
+                Behavior on y { NumberAnimation { duration: 150; easing.type: Theme.easeOutQuint } }
 
-            implicitWidth: Math.min(tooltipLabel.implicitWidth,
-                                    Theme.tooltipReserve - 28) + 20
-            implicitHeight: 26
-            radius: 6
-            color: Theme.tooltipBg
-            border.color: Theme.panelBorder
-            border.width: Theme.glass ? 0 : 1
+                implicitWidth: Math.min(tooltipLabel.implicitWidth,
+                                        Theme.tooltipReserve - 28) + 20
+                implicitHeight: 26
+                radius: 6
+                color: Theme.tooltipBg
+                border.color: Theme.panelBorder
+                border.width: Theme.glass ? 0 : 1
 
-            Common.GlassRim {
-                anchors.fill: parent
-                radius: parent.radius
-                visible: Theme.glass
-            }
+                Common.GlassRim {
+                    anchors.fill: parent
+                    radius: parent.radius
+                    visible: Theme.glass
+                }
 
-            Text {
-                id: tooltipLabel
-                anchors.centerIn: parent
-                width: Math.min(implicitWidth, Theme.tooltipReserve - 28)
-                text: root.activeTooltip
-                elide: Text.ElideRight
-                font.pixelSize: 11
-                font.bold: true
-                color: Theme.textPrimary
+                Text {
+                    id: tooltipLabel
+                    anchors.centerIn: parent
+                    width: Math.min(implicitWidth, Theme.tooltipReserve - 28)
+                    text: root.activeTooltip
+                    elide: Text.ElideRight
+                    font.pixelSize: 11
+                    font.bold: true
+                    color: Theme.textPrimary
+                }
             }
         }
     }

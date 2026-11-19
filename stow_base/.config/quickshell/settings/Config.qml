@@ -73,7 +73,11 @@ Singleton {
             "iconSlot": 38,
             "barPadding": 10,
             "radiusPanel": 16,
-            "radiusSmall": 10
+            "radiusSmall": 10,
+            // Must mirror leftbar/Theme.qml: bgOpacity is a percentage of the
+            // theme's panel alpha, used only while transparent is on.
+            "transparent": false,
+            "bgOpacity": 35
         },
         // Must mirror notifications/Theme.qml's own defaults: Card.reset() and
         // SliderRow both read this table, and a missing section throws.

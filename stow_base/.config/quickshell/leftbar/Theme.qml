@@ -103,6 +103,33 @@ Singleton {
     readonly property int edgeLine: theme.num("leftbar", "edgeLine", 5)
     readonly property int cornerFillet: theme.num("leftbar", "cornerFillet", 20)
 
+    // ---- Transparent bar ------------------------------------------------
+    // Settings > Sidebar. Only the bar's own silhouette fades: the buttons,
+    // drawers and tooltip keep the theme's opaque fills, so icons and labels
+    // stay readable over a busy wallpaper. bgOpacity is a percentage of the
+    // theme's panelBg alpha, not an absolute alpha, so it means the same thing
+    // in dark, light and glass.
+    readonly property bool transparent: {
+        var s = theme.cfg.leftbar;
+        return !!(s && s.transparent === true);
+    }
+    readonly property real bgOpacity: theme.transparent
+        ? Math.max(0, Math.min(100, theme.num("leftbar", "bgOpacity", 35))) / 100
+        : 1
+    readonly property color barBg: Qt.rgba(theme.panelBg.r, theme.panelBg.g, theme.panelBg.b,
+                                           theme.panelBg.a * theme.bgOpacity)
+    readonly property color barBorder: Qt.rgba(theme.panelBorder.r, theme.panelBorder.g, theme.panelBorder.b,
+                                               theme.panelBorder.a * theme.bgOpacity)
+
+    // ---- Fullscreen auto-hide -------------------------------------------
+    // Width of the strip on the left edge that brings the hidden bar back,
+    // and how long the pointer has to rest there first. Kept thin: over a
+    // fullscreen game this strip is the only part of the bar that can catch
+    // a click.
+    readonly property int peekEdge: 2
+    readonly property int peekDwell: 250
+    readonly property int peekLinger: 400
+
     // Width held open beside the bar for the hover tooltip. It is a fixed
     // reserve rather than a fit-to-text size on purpose: resizing a layer
     // surface under a resting pointer makes the compositor re-send

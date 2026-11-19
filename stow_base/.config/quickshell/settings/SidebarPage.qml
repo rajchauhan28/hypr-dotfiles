@@ -190,7 +190,7 @@ ColumnLayout {
 
     Card {
         title: "LEFT SIDEBAR — GEOMETRY & SIZE"
-        subtitle: "The always-visible vertical sidebar on the left screen edge"
+        subtitle: "The vertical sidebar on the left screen edge"
         section: "leftbar"
         keys: ["barWidth", "iconSlot", "barPadding", "radiusPanel", "radiusSmall"]
 
@@ -199,5 +199,30 @@ ColumnLayout {
         SliderRow { section: "leftbar"; key: "barPadding"; label: "Bar padding"; from: 4; to: 24; suffix: " px" }
         SliderRow { section: "leftbar"; key: "radiusPanel"; label: "Corner radius"; from: 0; to: 32; suffix: " px" }
         SliderRow { section: "leftbar"; key: "radiusSmall"; label: "Button corner radius"; from: 0; to: 20; suffix: " px" }
+    }
+
+    Card {
+        title: "LEFT SIDEBAR — TRANSPARENCY & AUTO-HIDE"
+        subtitle: "Buttons, drawers and tooltips stay opaque; only the background fades"
+        section: "leftbar"
+        keys: ["transparent", "bgOpacity"]
+
+        ToggleRow { section: "leftbar"; key: "transparent"; label: "Transparent sidebar" }
+        SliderRow {
+            visible: Config.get("leftbar", "transparent") === true
+            section: "leftbar"; key: "bgOpacity"; label: "Background opacity"; from: 0; to: 100; suffix: " %"
+            zeroLabel: "Clear"
+        }
+
+        // Auto-hide is permanent rather than a knob, so it only needs saying
+        // somewhere you would look for it.
+        Text {
+            Layout.fillWidth: true
+            Layout.topMargin: 4
+            wrapMode: Text.WordWrap
+            text: "Auto-hide is always on: the sidebar slides away while a window is fullscreen or maximised, and the window gets its space. Rest the pointer on the left screen edge for a moment to bring it back over the window."
+            font.pixelSize: 11
+            color: Theme.textMuted
+        }
     }
 }
