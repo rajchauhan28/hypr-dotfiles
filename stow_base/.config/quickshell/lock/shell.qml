@@ -149,7 +149,13 @@ ShellRoot {
     IpcHandler {
         target: "session"
 
+        function isLocked(): bool {
+            return sessionLock.locked;
+        }
+
         function lock(): void {
+            if (sessionLock.locked)
+                return;
             root.currentPassword = "";
             root.authFailed = false;
             root.authInProgress = false;
@@ -197,45 +203,58 @@ ShellRoot {
                         visible: source.toString() !== ""
                     }
 
-                    VideoOutput {
-                        id: backgroundVideo
+                    // Instantiate QtMultimedia / FFmpeg lazily only for video
+                    // wallpapers. Constructing MediaPlayer unconditionally
+                    // triggers FFmpeg hardware-decoder probing on the first
+                    // lock, waking a D3cold dGPU and stalling the GUI/IPC
+                    // thread for >2s even on static image wallpapers.
+                    Loader {
                         anchors.fill: parent
-                        fillMode: VideoOutput.PreserveAspectCrop
-                        visible: Theme.backgroundIsVideo && Theme.backgroundSource !== ""
-                    }
+                        active: Theme.backgroundIsVideo && Theme.backgroundSource !== ""
+                        asynchronous: true
+                        sourceComponent: Item {
+                            anchors.fill: parent
 
-                    MediaPlayer {
-                        id: backgroundPlayer
-                        source: Theme.backgroundIsVideo ? Theme.backgroundSource : ""
-                        videoOutput: backgroundVideo
-                        autoPlay: true
-                        loops: MediaPlayer.Infinite
+                            VideoOutput {
+                                id: backgroundVideo
+                                anchors.fill: parent
+                                fillMode: VideoOutput.PreserveAspectCrop
+                            }
 
-                        onSourceChanged: {
-                            if (source.toString() !== "")
-                                play();
-                        }
-                        onMediaStatusChanged: {
-                            if (mediaStatus === MediaPlayer.LoadedMedia
-                                    || mediaStatus === MediaPlayer.BufferedMedia)
-                                play();
-                        }
-                        onErrorOccurred: (error, message) =>
-                            console.warn("Lockscreen video error:", error, message)
-                    }
+                            MediaPlayer {
+                                id: backgroundPlayer
+                                source: Theme.backgroundSource
+                                videoOutput: backgroundVideo
+                                autoPlay: true
+                                loops: MediaPlayer.Infinite
 
-                    // Some FFmpeg/hardware-decoder combinations expose the
-                    // first frame before transitioning to PlayingState. Keep
-                    // nudging the silent background player until it advances.
-                    Timer {
-                        running: Theme.backgroundIsVideo
-                                 && Theme.backgroundSource !== ""
-                        repeat: true
-                        interval: 1000
-                        onTriggered: {
-                            if (backgroundPlayer.playbackState
-                                    !== MediaPlayer.PlayingState)
-                                backgroundPlayer.play();
+                                onSourceChanged: {
+                                    if (source.toString() !== "")
+                                        play();
+                                }
+                                onMediaStatusChanged: {
+                                    if (mediaStatus === MediaPlayer.LoadedMedia
+                                            || mediaStatus === MediaPlayer.BufferedMedia)
+                                        play();
+                                }
+                                onErrorOccurred: (error, message) =>
+                                    console.warn("Lockscreen video error:", error, message)
+                            }
+
+                            // Some FFmpeg/hardware-decoder combinations expose the
+                            // first frame before transitioning to PlayingState. Keep
+                            // nudging the silent background player until it advances.
+                            Timer {
+                                running: Theme.backgroundIsVideo
+                                         && Theme.backgroundSource !== ""
+                                repeat: true
+                                interval: 1000
+                                onTriggered: {
+                                    if (backgroundPlayer.playbackState
+                                            !== MediaPlayer.PlayingState)
+                                        backgroundPlayer.play();
+                                }
+                            }
                         }
                     }
                 }

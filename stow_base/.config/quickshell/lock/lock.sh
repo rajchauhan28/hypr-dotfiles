@@ -18,28 +18,79 @@
 set -u
 
 LOCK_DIR="$HOME/.config/quickshell/lock"
+LOCK_FILE="${XDG_RUNTIME_DIR:-/tmp}/quickshell-lock.lock"
 
-# Time-boxed: a daemon wedged in futex_wait (see reload.sh) used to hang this
-# call forever, so the cold path below was never reached.
-ipc_lock() {
-    timeout 2 qs -p "$LOCK_DIR" ipc call session lock >/dev/null 2>&1
+# Prevent concurrent lock.sh invocations (e.g. idle timer + lid close / double
+# Super+L) from racing and killing each other's lock daemon.
+exec 9>"$LOCK_FILE"
+flock -n 9 || exit 0
+
+# Fast, non-mutating liveness check: distinguishes a wedged/missing daemon from
+# a healthy daemon that simply takes >2s to compile shaders or load a video
+# wallpaper on its first lock.
+ipc_ready() {
+    timeout 2 qs ipc -n -p "$LOCK_DIR" show 2>/dev/null | grep -q 'target session'
 }
 
-if ipc_lock; then
-    exit 0
-fi
+ipc_lock() {
+    timeout 10 qs ipc -n -p "$LOCK_DIR" call session lock >/dev/null 2>&1
+}
 
-# Cold path. Clear out a wedged instance first, or the fresh one is just a
-# second unresponsive process. Killing it is safe even mid-lock: the session
-# lock protocol keeps the compositor locked when the client dies, and
-# misc.allow_session_lock_restore (hyprland.lua) lets the new one take over.
-# The shell starts unlocked, so it has to be started and *then* told to lock.
-timeout 3 qs kill -p "$LOCK_DIR" >/dev/null 2>&1 || true
-qs -d -p "$LOCK_DIR" >/dev/null 2>&1 &
+lock_pids() {
+    qs list -j -p "$LOCK_DIR" 2>/dev/null \
+        | python3 -c 'import json,sys; print(" ".join(str(i["pid"]) for i in json.load(sys.stdin)))' 2>/dev/null || true
+}
 
-for _ in $(seq 1 100); do
+if ipc_ready; then
     if ipc_lock; then
         exit 0
+    fi
+    # If the lock call timed out, do NOT kill a daemon that actually finished
+    # locking Hyprland -- killing a live session-lock client trips Hyprland's
+    # red dead-lockscreen (lockdead.png).
+    if [ "$(hyprctl locked 2>/dev/null)" = "true" ] && ipc_ready; then
+        exit 0
+    fi
+fi
+
+# Cold path: daemon is missing or genuinely wedged.
+# Record PIDs before killing, wait for them to actually exit (SIGKILL if stuck
+# in futex_wait, matching reload.sh), then spawn a fresh daemon and wait for
+# `ipc show` to advertise `target session` before calling `session lock` once.
+# Close fd 9 on the spawned daemon so it never inherits the flock.
+pids=$(lock_pids)
+if [ -n "$pids" ]; then
+    timeout 3 qs kill -p "$LOCK_DIR" >/dev/null 2>&1 || true
+    alive=""
+    for _ in 1 2 3 4 5 6; do
+        alive=""
+        for p in $pids; do
+            kill -0 "$p" 2>/dev/null && alive="$alive $p"
+        done
+        [ -z "$alive" ] && break
+        sleep 0.5
+    done
+    for p in $alive; do
+        kill -9 "$p" 2>/dev/null || true
+    done
+    for _ in 1 2 3 4 5; do
+        still=""
+        for p in $alive; do
+            kill -0 "$p" 2>/dev/null && still="$still $p"
+        done
+        [ -z "$still" ] && break
+        sleep 0.1
+    done
+fi
+
+qs -d -p "$LOCK_DIR" </dev/null >/dev/null 2>&1 9>&-
+
+for _ in $(seq 1 100); do
+    if ipc_ready; then
+        if ipc_lock; then
+            exit 0
+        fi
+        break
     fi
     sleep 0.1
 done
